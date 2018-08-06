@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "79356637662",
+    "firebase_url": "https://tank-trouble-android.firebaseio.com",
+    "project_id": "tank-trouble-android",
+    "storage_bucket": "tank-trouble-android.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:79356637662:android:840d787905ce9107",
+        "android_client_info": {
+          "package_name": "com.wztlei.tanktrouble"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "79356637662-gb6uj02vqd44fag30dc2e0j94n3pipe7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wztlei.tanktrouble",
+            "certificate_hash": "fc9d9d083ee4a3f6bf61b87e6b0e2538080ba147"
+          }
+        },
+        {
+          "client_id": "79356637662-lbv8ssoap7bc2buc4b5vmoltr4bic0ia.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZuTUY0X0V1x4Knni9X97CH55zvGCh57k"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "79356637662-lbv8ssoap7bc2buc4b5vmoltr4bic0ia.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
