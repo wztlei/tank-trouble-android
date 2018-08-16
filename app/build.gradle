@@ -10,15 +10,6 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
-<<<<<<< HEAD
-        vectorDrawables.useSupportLibrary = true
-<<<<<<< HEAD
-=======
->>>>>>> parent of 4c2d6ed... Connect to Firebase
-=======
->>>>>>> parent of b5802da... Change some UI stuff
-=======
->>>>>>> parent of b380c09... Revert back to "Connect to Firebase"
     }
     buildTypes {
         release {
@@ -41,12 +32,5 @@ dependencies {
 }
 
 apply plugin: 'com.google.gms.google-services'
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> parent of 4c2d6ed... Connect to Firebase
-=======
 
->>>>>>> parent of b5802da... Change some UI stuff
-=======
->>>>>>> parent of b380c09... Revert back to "Connect to Firebase"
+
