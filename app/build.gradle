@@ -9,18 +9,20 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-<<<<<<< HEAD
         multiDexEnabled true
 <<<<<<< HEAD
         vectorDrawables.useSupportLibrary = true
+<<<<<<< HEAD
 =======
 >>>>>>> parent of 4c2d6ed... Connect to Firebase
 =======
 >>>>>>> parent of b5802da... Change some UI stuff
+=======
+>>>>>>> parent of b380c09... Revert back to "Connect to Firebase"
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -33,13 +35,18 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation 'com.android.support:multidex:1.0.3'
+    implementation 'com.google.firebase:firebase-core:16.0.1'
+    implementation 'com.google.firebase:firebase-firestore:17.0.4'
 }
-<<<<<<< HEAD
 
 apply plugin: 'com.google.gms.google-services'
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 >>>>>>> parent of 4c2d6ed... Connect to Firebase
 =======
 
 >>>>>>> parent of b5802da... Change some UI stuff
+=======
+>>>>>>> parent of b380c09... Revert back to "Connect to Firebase"
