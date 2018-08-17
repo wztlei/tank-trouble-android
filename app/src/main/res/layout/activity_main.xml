@@ -13,29 +13,29 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Game Title"
+        android:text="@string/app_name"
         android:textSize="30sp" />
 
     <Button
         android:id="@+id/button_play"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="testFirestore"
-        android:text="Play" />
+        android:onClick="onClickPlayButton"
+        android:text="@string/str_play" />
 
     <Button
         android:id="@+id/button_play_test"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="testFirestore"
-        android:text="Play Test" />
+        android:onClick="onClickPlayTestButton"
+        android:text="@string/str_play_test" />
 
     <Button
         android:id="@+id/button_settings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="testFirestore"
-        android:text="Settings" />
+        android:onClick="onClickSettingsButton"
+        android:text="@string/str_settings" />
 
     <Button
         android:id="@+id/button"

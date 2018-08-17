@@ -1,6 +1,7 @@
 package com.wztlei.tanktrouble;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -27,6 +28,22 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
+    public void onClickPlayButton(View view) {
+        Intent intent = new Intent(this, PlayActivity.class);
+        startActivity(intent);
+    }
+
+    public void onClickPlayTestButton(View view) {
+        Intent intent = new Intent(this, PlayTestActivity.class);
+        startActivity(intent);
+    }
+
+    public void onClickSettingsButton (View view) {
+        Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
+    }
+
+
     public void testFirestore (View view) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -37,7 +54,8 @@ public class MainActivity extends AppCompatActivity {
         user.put("born", 1815);
 
         final String TAG = "TAG";
-// Add a new document with a generated ID
+
+        // Add a new document with a generated ID
         db.collection("users")
                 .add(user)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
