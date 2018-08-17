@@ -8,12 +8,27 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Game Title"
+        android:textSize="30sp" />
+
     <Button
         android:id="@+id/button_play"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="testFirestore"
         android:text="Play" />
+
+    <Button
+        android:id="@+id/button_play_test"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="testFirestore"
+        android:text="Play Test" />
 
     <Button
         android:id="@+id/button_settings"
