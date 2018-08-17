@@ -1,8 +1,13 @@
 <resources>
     <string name="app_name">Tank Trouble</string>
 
-    <!-- Main Activity (Welcome Screen) -->
+    <!-- Main Activity - Welcome Screen -->
     <string name="str_play">Play</string>
     <string name="str_play_test">Play Test</string>
     <string name="str_settings">Settings</string>
+
+    <!-- Settings Activity -->
+    <string name="str_username">Username</string>
+    <string name="str_save">Save</string>
+
 </resources>
