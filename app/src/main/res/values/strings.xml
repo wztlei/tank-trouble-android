@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">TankTrouble</string>
+    <string name="app_name">Tank Trouble</string>
+
+    <!-- Main Activity (Welcome Screen) -->
+    <string name="str_play">Play</string>
+    <string name="str_play_test">Play Test</string>
+    <string name="str_settings">Settings</string>
 </resources>
