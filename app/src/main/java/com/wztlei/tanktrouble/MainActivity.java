@@ -1,23 +1,13 @@
 package com.wztlei.tanktrouble;
 
-import android.app.Activity;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatDialog;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.WindowManager;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,6 +18,10 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         hideFirestoreLogWarning();
+
+        FirestoreUserUtils mFirestoreUserUtils = new FirestoreUserUtils(this);
+        mFirestoreUserUtils.setUsername();
+
     }
 
     public void onClickPlayButton(View view) {
@@ -45,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-
+/*
     public void testFirestore (View view) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -72,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.w(TAG, "Error adding document", e);
                     }
                 });
-    }
+    }*/
 
     private void hideFirestoreLogWarning () {
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
