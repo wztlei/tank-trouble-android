@@ -35,6 +35,7 @@ public class SettingsActivity extends AppCompatActivity {
     private EditText mEditUsername;
     private String mUserId;
     private String mUsername;
+    private boolean inCreatedState;
     //private Context mContext;
 
     private static final String sTag = "WL: SettingsActivity";
@@ -48,6 +49,7 @@ public class SettingsActivity extends AppCompatActivity {
         //mContext = getApplicationContext();
         mAdjectiveList = getResources().getStringArray(R.array.adjective_list);
         mNounList = getResources().getStringArray(R.array.noun_list);
+        inCreatedState = true;
 
 
         mFirestore = FirebaseFirestore.getInstance();
@@ -79,7 +81,7 @@ public class SettingsActivity extends AppCompatActivity {
                 });
     }
 
-    private void checkForDuplicateUsernames() {
+    private void setUserNameWithoutUserId() {
         mFirestore.collection(sUsersKey)
                 .whereEqualTo(sUsernameKey, mUsername)
                 .get()
@@ -94,19 +96,16 @@ public class SettingsActivity extends AppCompatActivity {
                             switch (userDocuments.size()) {
                                 // No users with the user name, mUsername
                                 case 0:
-                                    if (mUserId.length() == 0) {
-                                        mEditUsername.setText(mUsername);
-                                        putStringInPrefs (sUsernameKey, mUsername);
-                                        addFirestoreUser();
-                                    }
-                                    else {
-                                        setUsernameWithUserId();
-                                    }
-
+                                    mEditUsername.setText(mUsername);
+                                    putStringInPrefs (sUsernameKey, mUsername);
+                                    addFirestoreUser();
                                     break;
                                 // One user has the username, mUsername
                                 case 1:
-                                    if (mUserId.length() > 0) {
+                                    if (inCreatedState) {
+                                        mEditUsername.setText(mUsername);
+                                        putStringInPrefs (sUsernameKey, mUsername);
+                                    } else {
                                         createOkAlertDialog("Username taken",
                                                 "Please try again.");
                                     }
@@ -140,7 +139,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         if (mUserId.length() == 0) {
-            checkForDuplicateUsernames();
+            setUserNameWithoutUserId();
         } else {
             setUsernameWithUserId();
         }
