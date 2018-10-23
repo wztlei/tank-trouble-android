@@ -21,107 +21,66 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Scanner;
 
 public class SettingsActivity extends AppCompatActivity {
 
     private SharedPreferences mSharedPref;
     private FirebaseFirestore mFirestore;
-    private ArrayList<String> mAdjectiveList;
-    private ArrayList<String> mNounList;
+    private String[] mAdjectiveList;
+    private String[] mNounList;
     private EditText mEditUsername;
-    private SharedPreferences.Editor mSharedPrefEditor;
     private String mUserId;
     private String mUsername;
-    private Context mContext;
+    //private Context mContext;
 
     private static final String sTag = "WL: SettingsActivity";
-    private static final String sUserIdKey = "userId";
+    private static final String sUsersKey = "users";
     private static final String sUsernameKey = "username";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mContext = getApplicationContext();
         setContentView(R.layout.activity_settings);
+        //mContext = getApplicationContext();
+        mAdjectiveList = getResources().getStringArray(R.array.adjective_list);
+        mNounList = getResources().getStringArray(R.array.noun_list);
+
+
         mFirestore = FirebaseFirestore.getInstance();
         mSharedPref = this.getPreferences(Context.MODE_PRIVATE);
         mEditUsername = findViewById(R.id.edit_username);
-        setUserId();
-
         mUsername = mSharedPref.getString(sUsernameKey, "");
+        mUserId = "";
+
+        setUserId();
         setUsername();
     }
 
-
-    private void setUsername () {
-
-        new Thread(new Runnable() {
-            public void run() {
-                if (mAdjectiveList == null || mNounList == null) {
-                    Log.d(sTag, "Read files");
-                    // Read adjective_list.txt
-                    InputStream inputStream = mContext.getResources().openRawResource(R.raw.adjective_list);
-                    Scanner scanner = new Scanner(inputStream);
-                    mAdjectiveList = new ArrayList<>();
-
-                    while(scanner.hasNextLine()) {
-                        String word = scanner.nextLine();
-                        mAdjectiveList.add(word);
+    private void setUsernameWithUserId() {
+        mFirestore.collection(sUsersKey).document(mUserId)
+                .update(sUsernameKey, mUsername)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        mEditUsername.setText(mUsername);
+                        putStringInPrefs (sUsernameKey, mUsername);
+                        Log.d(sTag, "DocumentSnapshot successfully updated!");
                     }
-
-                    // Read noun_list.txt
-                    inputStream = mContext.getResources().openRawResource(R.raw.noun_list);
-                    scanner = new Scanner(inputStream);
-                    mNounList = new ArrayList<>();
-
-                    while(scanner.hasNextLine()) {
-                        String word = scanner.nextLine();
-                        mNounList.add(word);
-                    }
-                }
-
-                Log.d(sTag, "inside setUsername");
-                 mEditUsername.post(new Runnable() {
-
-                    public void run() {
-                        Log.d(sTag, "call setEditTextUsername");
-                        setEditTextUsername();
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(sTag, "Error updating document", e);
                     }
                 });
-            }
-        }).start();
     }
 
-    /**
-     * Sets the username of the EditText field with data from SharedPreferences variable
-     * or generates a random one if a username was not previously set.
-     */
-    private void setEditTextUsername () {
-        mUsername = mSharedPref.getString(sUsernameKey, "");
-        Log.d(sTag, "set username");
-
-        if (mUsername.length() == 0) {
-            Log.d(sTag, "Randomize username");
-            mUsername = generateRandomUsername();
-        }
-
-        mEditUsername.setText(mUsername);
-        mSharedPrefEditor = mSharedPref.edit();
-        mSharedPrefEditor.putString(sUsernameKey, mUsername);
-        mSharedPrefEditor.apply();
-
-        addFirestoreUser();
-    }
-
-    private void setUserId() {
-        mFirestore.collection("users")
+    private void checkForDuplicateUsernames() {
+        mFirestore.collection(sUsersKey)
                 .whereEqualTo(sUsernameKey, mUsername)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -129,15 +88,93 @@ public class SettingsActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             QuerySnapshot querySnapshot = task.getResult();
-                            List<DocumentSnapshot> documents = querySnapshot.getDocuments();
+                            List<DocumentSnapshot> userDocuments = querySnapshot.getDocuments();
 
-                            if (documents.size() == 0) {
-                                addFirestoreUser();
-                            } else if (documents.size() == 1) {
-                                mUserId = documents.get(0).getId();
-                            } else {
+                            // Check the user document's size
+                            switch (userDocuments.size()) {
+                                // No users with the user name, mUsername
+                                case 0:
+                                    if (mUserId.length() == 0) {
+                                        mEditUsername.setText(mUsername);
+                                        putStringInPrefs (sUsernameKey, mUsername);
+                                        addFirestoreUser();
+                                    }
+                                    else {
+                                        setUsernameWithUserId();
+                                    }
+
+                                    break;
+                                // One user has the username, mUsername
+                                case 1:
+                                    if (mUserId.length() > 0) {
+                                        createOkAlertDialog("Username taken",
+                                                "Please try again.");
+                                    }
+
+                                    Log.d(sTag,"setUsernameWithoutUserId");
+                                    break;
+                                    // 2+ users have the username, mUsername
+                                default:
+                                    createOkAlertDialog("This should not happen.",
+                                            "Two or more users have the same username.");
+                                    Log.e(sTag, "ERROR: 2+ users have the same username." +
+                                            "setUsernameWithoutUserId");
+                                    break;
+                            }
+                        } else {
+                            createOkAlertDialog("", "Task failed.");
+                        }
+                    }
+                });
+    }
+
+
+    /**
+     * Sets the username of the EditText field with data from SharedPreferences variable
+     * or generates a random one if a username was not previously set.
+     */
+    private void setUsername() {
+
+        if (mUsername.length() == 0) {
+            mUsername = generateRandomUsername();
+        }
+
+        if (mUserId.length() == 0) {
+            checkForDuplicateUsernames();
+        } else {
+            setUsernameWithUserId();
+        }
+    }
+
+    private void putStringInPrefs (String key, String value) {
+        SharedPreferences.Editor mSharedPrefEditor = mSharedPref.edit();
+        mSharedPrefEditor.putString(key, value);
+        mSharedPrefEditor.apply();
+    }
+
+    private void setUserId() {
+        if (mUsername.length() == 0) {
+            mUserId = "";
+            return;
+        }
+
+        mFirestore.collection(sUsersKey)
+                .whereEqualTo(sUsernameKey, mUsername)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            QuerySnapshot querySnapshot = task.getResult();
+                            List<DocumentSnapshot> userDocuments = querySnapshot.getDocuments();
+
+                            if (userDocuments.size() == 1) {
+                                mUserId = userDocuments.get(0).getId();
+                                Log.d(sTag, "User Id is set" + mUserId);
+                            } else if (userDocuments.size() > 1) {
                                 createOkAlertDialog("This should not happen.",
-                                                 "Two or more users have the same username.");
+                                                 "Two or more users have the same username." +
+                                                         "setUserId");
                                 Log.e(sTag, "ERROR: Two or more users have the same username.");
                             }
                         } else {
@@ -147,17 +184,18 @@ public class SettingsActivity extends AppCompatActivity {
                 });
     }
 
-    private void addFirestoreUser () {
+    private void addFirestoreUser() {
         Map<String, Object> user = new HashMap<>();
         user.put(sUsernameKey, mUsername);
 
         // Add a new document with a generated ID
-        mFirestore.collection("users")
+        mFirestore.collection(sUsersKey)
                     .add(user)
                     .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                         @Override
                         public void onSuccess(DocumentReference documentReference) {
                             Log.d(sTag, "Add a user with username: " + mUsername);
+                            setUserId();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -186,70 +224,46 @@ public class SettingsActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private String generateRandomUsername () {
-        if (mAdjectiveList == null || mNounList == null) {
-            return "";
-        }
-        else {
-            Random random = new Random();
 
-            // Get two adjectives and one noun
-            String adjective1 = mAdjectiveList.get(random.nextInt(mAdjectiveList.size()));
-            String adjective2 = mAdjectiveList.get(random.nextInt(mAdjectiveList.size()));
-            String noun = mNounList.get(random.nextInt(mNounList.size()));
-
-            // Capitalize each string with the rest of the string being lowercase characters
-            adjective1 = adjective1.substring(0, 1).toUpperCase()
-                    + adjective1.substring(1).toLowerCase();
-            adjective2 = adjective2.substring(0, 1).toUpperCase()
-                    + adjective2.substring(1).toLowerCase();
-            noun = noun.substring(0, 1).toUpperCase()
-                    + noun.substring(1).toLowerCase();
-
-            return adjective1 + adjective2 + noun;
-        }
-
-    }
 
     /**
      *  Saves the user's inputted settings into Firestore.
      */
     public void onClickSaveButton(View view) {
-
+        startActivity(new Intent(this, MainActivity.class));
     }
 
-    private void setFirestoreUsername (String username) {
-        // Create a new user with a first and last name
-        Map<String, Object> user = new HashMap<>();
-        user.put("username", username);
-
-        // Add a new document with a generated ID
-        Task<DocumentReference> documentReferenceTask = mFirestore.collection("users")
-                .add(user)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d(sTag, "User updated successfully.");
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w(sTag, "User failed to add", e);
-                    }
-                });
-    }
 
     public void onClickCancelButton(View view) {
         startActivity(new Intent(this, MainActivity.class));
 
     }
 
+
+    private String generateRandomUsername() {
+
+        Random random = new Random();
+
+        // Get two adjectives and one noun
+        String adjective1 = mAdjectiveList[random.nextInt(mAdjectiveList.length)];
+        String adjective2 = mAdjectiveList[random.nextInt(mAdjectiveList.length)];
+        String noun = mNounList[random.nextInt(mNounList.length)];
+
+        // Capitalize each string with the rest of the string being lowercase characters
+        adjective1 = adjective1.substring(0, 1).toUpperCase()
+                + adjective1.substring(1).toLowerCase();
+        adjective2 = adjective2.substring(0, 1).toUpperCase()
+                + adjective2.substring(1).toLowerCase();
+        noun = noun.substring(0, 1).toUpperCase()
+                + noun.substring(1).toLowerCase();
+
+        return adjective1 + adjective2 + noun;
+    }
+
+
     public void onClickRandomizeButton(View view) {
-        mSharedPrefEditor = mSharedPref.edit();
-        mSharedPrefEditor.putString(sUsernameKey, "");
-        mSharedPrefEditor.apply();
-        mUsername = "";
+        mUsername = generateRandomUsername();
         setUsername();
     }
+
 }
