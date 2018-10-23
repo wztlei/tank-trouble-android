@@ -8,6 +8,10 @@
 
     <!-- Settings Activity -->
     <string name="str_username">Username</string>
+    <string name="str_email">Email</string>
+    <string name="str_randomize">Randomize Username</string>
     <string name="str_save">Save</string>
+    <string name="str_cancel">Cancel</string>
+    <string name="str_username_exists_error">Username has already been taken.</string>
 
 </resources>

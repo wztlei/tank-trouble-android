@@ -20,15 +20,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SettingsActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <activity android:name=".PlayActivity" />
         <activity android:name=".PlayTestActivity" />
-        <activity android:name=".PlayActivity"></activity>
+        <activity android:name=".SettingsActivity" />
     </application>
 
 </manifest>
