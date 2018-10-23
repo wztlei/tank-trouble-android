@@ -1393,7 +1393,7 @@ jolly
 kind
 long
 lazy
-magnificent 
+magnificent?
 magenta
 many
 mighty
