@@ -43,8 +43,13 @@ public class PlayerTank {
     }
 
     public void move() {
-        x += 2;
-        y += 1;
-        Log.d(sTag, Integer.toString(x));
+        if (x <= 600) {
+            x += 2;
+            y += 1;
+            Log.d(sTag, Integer.toString(x));
+        }
+
+
+
     }
 }
