@@ -19,15 +19,9 @@ public class SettingsActivity extends AppCompatActivity {
         mFirestoreUserUtils.setUsername();
     }
 
-
-
-    /**
-     *  Saves the user's inputted settings into Firestore.
-     */
     public void onClickSaveButton(View view) {
         startActivity(new Intent(this, MainActivity.class));
     }
-
 
     public void onClickCancelButton(View view) {
         startActivity(new Intent(this, MainActivity.class));

@@ -1,3 +1,13 @@
+/**
+ * The MainActivity class is the activity entered by the user upon opening the app. It consists of a start
+ * menu with various buttons like "Play" and "Settings" which lead to the commencement of other
+ * activities.
+ *
+ * @author  William Lei
+ * @version 1.0
+ * @since   2018-10-23
+ */
+
 package com.wztlei.tanktrouble;
 
 import android.content.Intent;
@@ -8,6 +18,7 @@ import android.view.WindowManager;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.wztlei.tanktrouble.battle.BattleActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
 
         FirestoreUserUtils mFirestoreUserUtils = new FirestoreUserUtils(this);
         mFirestoreUserUtils.setUsername();
-
     }
 
     public void onClickPlayButton(View view) {
@@ -30,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickPlayTestButton(View view) {
-        Intent intent = new Intent(this, PlayTestActivity.class);
+        Intent intent = new Intent(this, BattleActivity.class);
         startActivity(intent);
     }
 

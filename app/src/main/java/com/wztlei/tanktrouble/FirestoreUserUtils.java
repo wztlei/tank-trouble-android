@@ -35,12 +35,16 @@ public class FirestoreUserUtils {
     private boolean objectJustInitialized;
     private Activity mActivity;
 
-    private static final String sTag = "WL: SettingsActivity";
+    private static final String sTag = "WL: FirestoreUserUtils";
     private static final String sUsersKey = "users";
     private static final String sUsernameKey = "username";
     private static final String sUserIdKey = "userId";
 
-    // Constructor function for the FirestoreUserUtils
+    /**
+     * Constructor function for the FirestoreUserUtils class.
+     *
+     * @param activity  the activity in which the FirestoreUserUtils class is instantiated
+     */
     FirestoreUserUtils(Activity activity) {
         this.mActivity = activity;
         mAdjectiveList = activity.getResources().getStringArray(R.array.adjective_list);
