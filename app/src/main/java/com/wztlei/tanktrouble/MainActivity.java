@@ -9,6 +9,8 @@ import android.view.WindowManager;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
 
+import com.wztlei.tanktrouble.battle.BattleActivity;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -21,7 +23,6 @@ public class MainActivity extends AppCompatActivity {
 
         FirestoreUserUtils mFirestoreUserUtils = new FirestoreUserUtils(this);
         mFirestoreUserUtils.setUsername();
-
     }
 
     public void onClickPlayButton(View view) {
@@ -30,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClickPlayTestButton(View view) {
-        Intent intent = new Intent(this, PlayTestActivity.class);
+        Intent intent = new Intent(this, BattleActivity.class);
         startActivity(intent);
     }
 
