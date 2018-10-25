@@ -20,20 +20,22 @@ import com.wztlei.tanktrouble.R;
 
 public class BattleView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
 
-    private Canvas mCanvas;
     private BattleThread mBattleThread;
     private PlayerTank mUserTank;
     private PlayerTank mOpponentTank;
     private Activity mActivity;
+    private Bitmap mFireBitmap;
+    private Canvas mCanvas;
     private int mScreenHeight;
     private int mScreenWidth;
-    private Bitmap mFireBitmap;
-    private int mFireDiameter = 200;
-    private int mJoystickRadius = 150;
-    private int mJoystickMargin = 100;
     private int mJoystickCenterX;
     private int mJoystickCenterY;
-    private static String sTag = "BattleView";
+    private int mTouchEventX;
+    private int mTouchEventY;
+
+    private static final String TAG = "WL: BattleView.java";
+    private static final int FIRE_BUTTON_DIAMETER = 200;
+    private static final int JOYSTICK_RADIUS = 150;
 
     public BattleView(Activity activity) {
         super(activity);
@@ -51,10 +53,14 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
         mFireBitmap = Bitmap.createScaledBitmap
                 (BitmapFactory.decodeResource(mActivity.getResources(), R.drawable.crosshairs),
-                        mFireDiameter, mFireDiameter, false);
+                        FIRE_BUTTON_DIAMETER, FIRE_BUTTON_DIAMETER, false);
 
-        mJoystickCenterX = mJoystickMargin + mJoystickRadius;
-        mJoystickCenterY = mScreenHeight - 2*mJoystickMargin - mJoystickRadius;
+        int mJoystickMargin = 100;
+
+        mJoystickCenterX = mJoystickMargin + JOYSTICK_RADIUS;
+        mJoystickCenterY = mScreenHeight - 2* mJoystickMargin - JOYSTICK_RADIUS;
+        mTouchEventX = mJoystickCenterX;
+        mTouchEventY = mJoystickCenterY;
 
         setOnTouchListener(this);
     }
@@ -94,29 +100,17 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     public void update() {
-        mUserTank.move();
+        mUserTank.move(mTouchEventX-mJoystickCenterX, mTouchEventY-mJoystickCenterY);
     }
 
-    public void drawJoystick(Canvas canvas) {
-
-        int controlRadius = mJoystickRadius / 2;
-
-        Paint colors = new Paint();
-        colors.setARGB(50, 50, 50, 50);
-        canvas.drawCircle(mJoystickCenterX, mJoystickCenterY, mJoystickRadius, colors);
-
-        colors.setARGB(255, 79, 121, 255);
-        canvas.drawCircle(mJoystickCenterX, mJoystickCenterY, controlRadius, colors);
-
-    }
 
     public void drawJoystick(Canvas canvas, int controlX, int controlY) {
 
-        int controlRadius = mJoystickRadius / 2;
+        int controlRadius = JOYSTICK_RADIUS / 2;
 
         Paint colors = new Paint();
         colors.setARGB(50, 50, 50, 50);
-        canvas.drawCircle(mJoystickCenterX, mJoystickCenterY, mJoystickRadius, colors);
+        canvas.drawCircle(mJoystickCenterX, mJoystickCenterY, JOYSTICK_RADIUS, colors);
 
         colors.setARGB(255, 79, 121, 255);
         canvas.drawCircle(controlX, controlY, controlRadius, colors);
@@ -125,8 +119,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
     public void drawFireButton(Canvas canvas) {
 
-        int x = mScreenWidth - 100 - mFireDiameter;
-        int y = mScreenHeight - 240 - mFireDiameter;
+        int x = mScreenWidth - 100 - FIRE_BUTTON_DIAMETER;
+        int y = mScreenHeight - 240 - FIRE_BUTTON_DIAMETER;
 
         canvas.drawBitmap(mFireBitmap, x, y, null);
     }
@@ -139,23 +133,47 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mUserTank.draw(canvas);
         mOpponentTank.draw(canvas);
         drawFireButton(canvas);
+        drawJoystick(mCanvas, getJoystickX(), getJoystickY());
+
     }
 
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
 
         if (view.equals(this)) {
-            /*if(motionEvent.getAction() != MotionEvent.ACTION_UP) {
-                drawJoystick(mCanvas, (int) motionEvent.getX(), (int) motionEvent.getY());
-                Log.d(sTag, "move joystick");
-
+            if(motionEvent.getAction() != MotionEvent.ACTION_UP) {
+                mTouchEventX = (int) motionEvent.getX();
+                mTouchEventY = (int) motionEvent.getY();
             } else {
-                drawJoystick(mCanvas, mJoystickCenterX, mJoystickCenterY);
-            }*/
-
-            Log.d(sTag, "onTouch");
+                mTouchEventX = mJoystickCenterX;
+                mTouchEventY = mJoystickCenterY;
+            }
         }
 
         return true;
+    }
+
+    public int getJoystickX() {
+        int deltaX = mTouchEventX - mJoystickCenterX;
+        int deltaY = mTouchEventY - mJoystickCenterY;
+        int displacement = (int) Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+
+        if (displacement < JOYSTICK_RADIUS*1.5) {
+            return mTouchEventX;
+        } else {
+            return mJoystickCenterX;
+        }
+    }
+
+    public int getJoystickY() {
+        int deltaX = mTouchEventX - mJoystickCenterX;
+        int deltaY = mTouchEventY - mJoystickCenterY;
+        int displacement = (int) Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+
+        if (displacement < JOYSTICK_RADIUS*1.5) {
+            return mTouchEventY;
+        } else {
+            return mJoystickCenterY;
+        }
     }
 }

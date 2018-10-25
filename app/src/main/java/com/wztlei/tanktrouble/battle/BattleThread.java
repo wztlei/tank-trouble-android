@@ -5,8 +5,8 @@ import android.view.SurfaceHolder;
 
 public class BattleThread extends Thread {
 
-    private final SurfaceHolder mSurfaceHolder;
     private BattleView mBattleView;
+    private final SurfaceHolder mSurfaceHolder;
     private boolean mRunning;
 
     /**
