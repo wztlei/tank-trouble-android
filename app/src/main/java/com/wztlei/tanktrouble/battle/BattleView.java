@@ -32,6 +32,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private int mJoystickCenterY;
     private int mTouchEventX;
     private int mTouchEventY;
+    private float mTouchEventDegrees;
 
     private static final String TAG = "WL: BattleView.java";
     private static final int FIRE_BUTTON_DIAMETER = 200;
@@ -100,7 +101,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     public void update() {
-        mUserTank.move(mTouchEventX-mJoystickCenterX, mTouchEventY-mJoystickCenterY);
+        int deltaX = mTouchEventX-mJoystickCenterX;
+        int deltaY = mTouchEventY-mJoystickCenterY;
+        mUserTank.moveAndRotate(deltaX, deltaY, (float) getAngle(deltaX, deltaY));
     }
 
 
@@ -168,12 +171,27 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     public int getJoystickY() {
         int deltaX = mTouchEventX - mJoystickCenterX;
         int deltaY = mTouchEventY - mJoystickCenterY;
-        int displacement = (int) Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+        int displacement = getDisplacement(deltaX, deltaY);
 
         if (displacement < JOYSTICK_RADIUS*1.5) {
             return mTouchEventY;
         } else {
             return mJoystickCenterY;
+        }
+    }
+
+    private int getDisplacement (int x, int y) {
+        return (int) Math.sqrt(x*x + y*y);
+    }
+
+    public double getAngle(int x, int y) {
+        double displacement = getDisplacement(x, y);
+        double angle = Math.acos(x/displacement);
+
+        if (y >= 0) {
+            return Math.toDegrees(angle);
+        } else {
+            return -Math.toDegrees(angle);
         }
     }
 }
