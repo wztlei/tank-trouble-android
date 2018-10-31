@@ -22,7 +22,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private PlayerTank mUserTank;
     private PlayerTank mOpponentTank;
     private Activity mActivity;
-    private Bitmap mFireBitmap;
+    private Bitmap mFireBitmap, mFirePressedBitmap;
     private Canvas mCanvas;
     private int mScreenHeight;
     private int mScreenWidth;
@@ -31,9 +31,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private int mTouchEventX;
     private int mTouchEventY;
     private int mAngle;
+    private int mFireButtonCenterX, mFireButtonCenterY;
 
     //private static final String TAG = "WL: BattleView.java";
     private static final int FIRE_BUTTON_DIAMETER = 200;
+    private static final int FIRE_BUTTON_PRESSED_DIAMETER = 150;
     private static final int JOYSTICK_BASE_RADIUS = 150;
     private static final int JOYSTICK_THRESHOLD_RADIUS = (int) (JOYSTICK_BASE_RADIUS * 1.5);
 
@@ -58,12 +60,18 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mFireBitmap = Bitmap.createScaledBitmap
                 (BitmapFactory.decodeResource(mActivity.getResources(), R.drawable.crosshairs),
                         FIRE_BUTTON_DIAMETER, FIRE_BUTTON_DIAMETER, false);
+        mFirePressedBitmap = Bitmap.createScaledBitmap
+                (BitmapFactory.decodeResource(mActivity.getResources(), R.drawable.crosshairs),
+                        FIRE_BUTTON_PRESSED_DIAMETER, FIRE_BUTTON_PRESSED_DIAMETER, false);
 
-        // Set the center of the joystick base and the starting touch events
+        // Set the center of the joystick base, the center of the fire button,
+        // and the starting touch events
         mJoystickBaseCenterX = 100 + JOYSTICK_BASE_RADIUS;
         mJoystickBaseCenterY = mScreenHeight - 200 - JOYSTICK_BASE_RADIUS;
         mTouchEventX = mJoystickBaseCenterX;
         mTouchEventY = mJoystickBaseCenterY;
+        mFireButtonCenterX = mScreenWidth - 100 - FIRE_BUTTON_DIAMETER/2;
+        mFireButtonCenterY =  mScreenHeight - 240 - FIRE_BUTTON_DIAMETER/2;
 
         setOnTouchListener(this);
     }
@@ -108,13 +116,16 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         int deltaX = mTouchEventX-mJoystickBaseCenterX;
         int deltaY = mTouchEventY-mJoystickBaseCenterY;
 
-        // Only change the angle of the tank if the tank has actually moved
-        if (deltaX != 0 || deltaY != 0) {
-            mAngle = calcAngle(deltaX, deltaY);
-        }
+
 
         // Only move and rotate the tank if the user has moved the joystick
         if (calcDistance(deltaX, deltaY) <= JOYSTICK_THRESHOLD_RADIUS) {
+
+            // Only change the angle of the tank if the tank has actually moved
+            if (deltaX != 0 || deltaY != 0) {
+                mAngle = calcAngle(deltaX, deltaY);
+            }
+
             mUserTank.moveAndRotate(deltaX, deltaY, mAngle);
         }
     }
@@ -146,9 +157,25 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * @param canvas the canvas on which the fire button is drawn
      */
     public void drawFireButton(Canvas canvas) {
-        int x = mScreenWidth - 100 - FIRE_BUTTON_DIAMETER;
-        int y = mScreenHeight - 240 - FIRE_BUTTON_DIAMETER;
-        canvas.drawBitmap(mFireBitmap, x, y, null);
+        // Get the displacement in the x and y direction of the
+        // most recent touch event from the fire button's center
+        int deltaX = mTouchEventX - mFireButtonCenterX;
+        int deltaY = mTouchEventY - mFireButtonCenterY;
+
+        // Determine whether to draw the smaller pressed fire button bitmap
+        // or the larger unpressed fire button bitmap
+        if (calcDistance(deltaX, deltaY) <= FIRE_BUTTON_DIAMETER) {
+            double x = mScreenWidth - 100 - FIRE_BUTTON_PRESSED_DIAMETER
+                    - 0.5*(FIRE_BUTTON_DIAMETER-FIRE_BUTTON_PRESSED_DIAMETER);
+            double y = mScreenHeight - 240 - FIRE_BUTTON_PRESSED_DIAMETER
+                    - 0.5*(FIRE_BUTTON_DIAMETER-FIRE_BUTTON_PRESSED_DIAMETER);
+
+            canvas.drawBitmap(mFirePressedBitmap, (int) x, (int) y, null);
+        } else {
+            int x = mScreenWidth - 100 - FIRE_BUTTON_DIAMETER;
+            int y = mScreenHeight - 240 - FIRE_BUTTON_DIAMETER;
+            canvas.drawBitmap(mFireBitmap, x, y, null);
+        }
     }
 
     /**
@@ -206,7 +233,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         int displacement = (int) Math.sqrt(deltaX*deltaX + deltaY*deltaY);
 
         // Check whether the user has touched sufficiently close to the joystick center
-        if (displacement < 1.5*JOYSTICK_BASE_RADIUS) {
+        if (displacement <= JOYSTICK_THRESHOLD_RADIUS) {
             return mTouchEventX;
         } else {
             return mJoystickBaseCenterX;
@@ -228,7 +255,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         int displacement = calcDistance(deltaX, deltaY);
 
         // Check whether the user has touched sufficiently close to the joystick center
-        if (displacement < JOYSTICK_BASE_RADIUS*1.5) {
+        if (displacement <= JOYSTICK_THRESHOLD_RADIUS) {
             return mTouchEventY;
         } else {
             return mJoystickBaseCenterY;
