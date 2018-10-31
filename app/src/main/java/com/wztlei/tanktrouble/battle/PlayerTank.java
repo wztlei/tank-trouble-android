@@ -11,14 +11,12 @@ import com.wztlei.tanktrouble.R;
 
 public class PlayerTank {
 
-    private Bitmap[] mBitmapsByAngle;
+    private Bitmap mBitmap;
     private float mX, mY, mAngle;
     private int mMapHeight, mMapWidth;
 
     //private static final String TAG = "PlayerTank.java";
     private static final double SPEED = 0.1;
-    private static final double BITMAP_SCALE = 0.8;
-    private static final int MAX_ANGLE = 360;
 
     /**
      * Constructor function for the Player Tank class.
@@ -28,36 +26,14 @@ public class PlayerTank {
      */
     PlayerTank(Context context, boolean isUserTank) {
 
-        Bitmap mResourceBitmap;
-
         // Get the blue tank bitmap if it is the user tank or
         // get the red tank bitmap if it is an opponent's tank
         if (isUserTank) {
-            mResourceBitmap = BitmapFactory.decodeResource
+            mBitmap = BitmapFactory.decodeResource
                     (context.getResources(), R.drawable.blue_tank);
-            mResourceBitmap = Bitmap.createScaledBitmap(mResourceBitmap,
-                    (int) (mResourceBitmap.getWidth()*BITMAP_SCALE),
-                    (int) (mResourceBitmap.getHeight()*BITMAP_SCALE), false);
         } else {
-            mResourceBitmap = BitmapFactory.decodeResource
+            mBitmap = BitmapFactory.decodeResource
                     (context.getResources(), R.drawable.red_tank);
-            mResourceBitmap = Bitmap.createScaledBitmap(mResourceBitmap,
-                    (int) (mResourceBitmap.getWidth()*BITMAP_SCALE),
-                    (int) (mResourceBitmap.getHeight()*BITMAP_SCALE), false);
-        }
-
-        // I have to store the rotated bitmaps in advance since
-        // for some reason I cannot rotate a bitmap outside of the constructor
-        Matrix matrix = new Matrix();
-        int bitmapWidth = mResourceBitmap.getWidth();
-        int bitmapHeight =  mResourceBitmap.getHeight();
-        mBitmapsByAngle = new Bitmap[MAX_ANGLE+1];
-
-        // Store all the rotated bitmaps, one for each angle from 0 to 360 degrees
-        for (int angle = 0; angle <= MAX_ANGLE; angle++) {
-            matrix.setRotate(angle);
-            mBitmapsByAngle[angle] = Bitmap.createBitmap(mResourceBitmap, 0, 0,
-                    bitmapWidth, bitmapHeight, matrix, false);
         }
 
         // Set the initial x and y coordinate for the tank
@@ -81,11 +57,11 @@ public class PlayerTank {
      */
     public void draw(Canvas canvas) {
 
-        if (mAngle >= 0) {
-            canvas.drawBitmap(mBitmapsByAngle[(int) mAngle], mX, mY, null);
-        } else {
-            canvas.drawBitmap(mBitmapsByAngle[(int) (360 + mAngle)], mX, mY, null);
-        }
+        Matrix matrix = new Matrix();
+        matrix.setRotate(mAngle);
+        Bitmap rotatedBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
+                mBitmap.getWidth(), mBitmap.getHeight(), matrix, false);
+        canvas.drawBitmap(rotatedBitmap, mX, mY, null);
     }
 
     /**
@@ -117,5 +93,4 @@ public class PlayerTank {
             mY = mMapHeight;
         }
     }
-
 }
