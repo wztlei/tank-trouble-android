@@ -52,7 +52,7 @@ public class BattleThread extends Thread {
                 e.printStackTrace();
             }
 
-            // Check to see if canvas is instantiated and if so, unlock the canvas
+            // Check whether canvas is instantiated and if so, unlock the canvas
             if (canvas != null) {
                 try {
                     mSurfaceHolder.unlockCanvasAndPost(canvas);

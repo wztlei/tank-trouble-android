@@ -77,7 +77,7 @@ public class FirestoreUserUtils {
             mUsername = generateRandomUsername();
         }
 
-        // Check to see if the user has an ID stored and store the username accordingly
+        // Check whether the user has an ID stored and store the username accordingly
         if (mUserId.length() == 0) {
             storeUserNameWithoutUserId();
         } else {
@@ -111,12 +111,12 @@ public class FirestoreUserUtils {
                                     break;
                                 // If one Firebase user has the username, mUsername
                                 case 1:
-                                    // Check to see if the ID of the Firebase document
+                                    // Check whether the ID of the Firebase document
                                     // matches the ID of the current user
                                     if (userDocuments.get(0).getId().equals(mUserId)) {
                                         // The two IDs match so we just update the username
                                         updateUserNameWithUserId();
-                                        Log.d(TAG, "One Firebase user with the username" +
+                                        Log.d(TAG, "One Firebase user with the username " +
                                                 "mUsername, but assumed to be current user.");
                                     } else {
                                         // The two IDs don't match so the user tried to change
@@ -210,7 +210,7 @@ public class FirestoreUserUtils {
                                     break;
                                 // If one Firebase user has the username, mUsername
                                 case 1:
-                                    // Check to see if the object has just been initialized
+                                    // Check whether the object has just been initialized
                                     if (objectJustInitialized) {
                                         // The FirestoreUserUtils object is just initialized so we
                                         // assume that the Firebase user is the current user since
@@ -227,7 +227,7 @@ public class FirestoreUserUtils {
                                             mEditUsername.setText(mUsername);
                                         }
 
-                                        Log.d(TAG, "One Firebase user with the username" +
+                                        Log.d(TAG, "One Firebase user with the username " +
                                                 "mUsername, but assumed to be current user.");
                                     } else {
                                         // The FirestoreUserUtils object is already initialized so
