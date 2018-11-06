@@ -167,14 +167,14 @@ public class FirestoreUserUtils {
 
                         // Put the string in the SharedPreferences object
                         putStringInPrefs (USERNAME_KEY, mUsername);
-                        Log.d(TAG, "User document successfully updated with username" +
+                        Log.d(TAG, "User document successfully updated with username " +
                                 mUsername);
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Log.w(TAG, "User document failed to update with username" +
+                        Log.w(TAG, "User document failed to update with username " +
                                 mUsername);
                     }
                 });

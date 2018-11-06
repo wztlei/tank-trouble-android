@@ -16,7 +16,7 @@ public class PlayerTank {
     private int mMapHeight, mMapWidth;
 
     //private static final String TAG = "PlayerTank.java";
-    private static final double SPEED = 0.1;
+    private static final double SPEED = 0.05;
 
     /**
      * Constructor function for the Player Tank class.

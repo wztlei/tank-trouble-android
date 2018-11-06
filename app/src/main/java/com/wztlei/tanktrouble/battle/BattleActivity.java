@@ -1,15 +1,9 @@
 package com.wztlei.tanktrouble.battle;
 
-import android.graphics.Canvas;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-
-import com.wztlei.tanktrouble.R;
+import android.support.v7.app.AppCompatActivity;
 
 public class BattleActivity extends AppCompatActivity {
-
-    private String mOpponentUserId;
-    private String mOpponentUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
