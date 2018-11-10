@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -20,28 +19,25 @@ import com.wztlei.tanktrouble.R;
 @SuppressLint("ViewConstructor")
 public class BattleView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
 
-    private BattleThread mBattleThread;
-    private PlayerTank mUserTank;
-    private PlayerTank mOpponentTank;
     private Activity mActivity;
     private Bitmap mFireBitmap, mFirePressedBitmap;
     private Canvas mCanvas;
-    private int mScreenWidth, mScreenHeight;
+    private BattleThread mBattleThread;
+    private PlayerTank mUserTank;
+    private PlayerTank mOpponentTank;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
     private int mAngle;
-    private int mFireButtonCenterX, mFireButtonCenterY;
+    private int mFireButtonOffsetX, mFireButtonOffsetY;
     private int mJoystickX, mJoystickY;
     private int mJoystickPointerId, mFireButtonPointerId;
     private boolean mFireButtonPressed;
-    private int mFireButtonDiameter = 200;
-    private int mFireButtonPressedDiameter = 150;
-
 
     private static final String TAG = "WL: BattleView.java";
-
-    private static final int JOYSTICK_BASE_RADIUS = 150;
-    private static final int JOYSTICK_THRESHOLD_RADIUS = (int) (JOYSTICK_BASE_RADIUS * 1.5);
-    private static final int CONTROL_X_MARGIN = 100;
+    private static final int JOYSTICK_BASE_RADIUS = 165;
+    private static final int JOYSTICK_THRESHOLD_RADIUS = (int) (JOYSTICK_BASE_RADIUS * 1.4);
+    private static final int CONTROL_X_MARGIN = 110;
+    private static final int FIRE_BUTTON_DIAMETER = 200;
+    private static final int FIRE_BUTTON_PRESSED_DIAMETER = 150;
 
     /**
      * Constructor function for the Battle View class.
@@ -59,13 +55,15 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         setFocusable(true);
 
         // Get the height and width of the device in pixels
-        mScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
-        mScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+        int mScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+        int mScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
 
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
         mFireBitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeResource
-                (mActivity.getResources(), R.drawable.crosshairs), 200, 200, false);
-        mFirePressedBitmap = Bitmap.createScaledBitmap(mFireBitmap, 150, 150, false);
+                (mActivity.getResources(), R.drawable.crosshairs),
+                FIRE_BUTTON_DIAMETER, FIRE_BUTTON_DIAMETER, false);
+        mFirePressedBitmap = Bitmap.createScaledBitmap(mFireBitmap,
+                FIRE_BUTTON_PRESSED_DIAMETER, FIRE_BUTTON_PRESSED_DIAMETER, false);
 
         // Set the center of the joystick base, the center of the fire button,
         // and the starting touch events
@@ -73,11 +71,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mJoystickBaseCenterY = mScreenHeight - 200 - JOYSTICK_BASE_RADIUS;
         mJoystickX = mJoystickBaseCenterX;
         mJoystickY = mJoystickBaseCenterY;
-        mFireButtonCenterX = mScreenWidth - CONTROL_X_MARGIN - mFireButtonDiameter/2;
-        mFireButtonCenterY =  mScreenHeight - 240 - mFireButtonDiameter/2;
-        //mFireButtonCenterX = 100;
-        //mFireButtonCenterY = 100;
-        mJoystickPointerId = -1;
+        mFireButtonOffsetX = (int)(mScreenWidth - CONTROL_X_MARGIN*1.5 - FIRE_BUTTON_DIAMETER);
+        mFireButtonOffsetY =  mJoystickBaseCenterY - FIRE_BUTTON_DIAMETER/2;
+        mJoystickPointerId = MotionEvent.INVALID_POINTER_ID;
+        mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
 
         setOnTouchListener(this);
     }
@@ -119,9 +116,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * by the user.
      */
     public void update() {
+        // Determine the displacement of the joystick in the x and y axes
         int deltaX = mJoystickX-mJoystickBaseCenterX;
         int deltaY = mJoystickY-mJoystickBaseCenterY;
-
 
         // Only move and rotate the tank if the user has moved the joystick
         if (calcDistance(deltaX, deltaY) <= JOYSTICK_THRESHOLD_RADIUS) {
@@ -136,7 +133,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     /**
-     *
+     * Draws the joystick onto the canvas and draws the blue joystick controller based on how 
+     * the user is moving the joystick.
+     * 
      * @param canvas    the canvas on which the joystick is drawn
      */
     public void drawJoystick(Canvas canvas) {
@@ -155,7 +154,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     /**
-     * Draws a red crosshairs bitmap on the canvas which is the "fire" button for the user.
+     * Draws a red crosshairs bitmap on the canvas which is the fire button for the user.
      *
      * @param canvas the canvas on which the fire button is drawn
      */
@@ -164,19 +163,12 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Determine whether to draw the smaller pressed fire button bitmap
         // or the larger unpressed fire button bitmap
         if (mFireButtonPressed) {
-            double x = mScreenWidth - 100 - mFireButtonPressedDiameter
-                    - 0.5*(mFireButtonDiameter-mFireButtonPressedDiameter);
-            double y = mScreenHeight - 240 - mFireButtonPressedDiameter
-                    - 0.5*(mFireButtonDiameter-mFireButtonPressedDiameter);
+            double x = mFireButtonOffsetX + (FIRE_BUTTON_DIAMETER-FIRE_BUTTON_PRESSED_DIAMETER)/2;
+            double y = mJoystickBaseCenterY - 0.5*FIRE_BUTTON_PRESSED_DIAMETER;
 
             canvas.drawBitmap(mFirePressedBitmap, (int) x, (int) y, null);
-            //canvas.drawBitmap(mFirePressedBitmap, 100, 100, null);
         } else {
-            int x = mScreenWidth - 100 - mFireButtonDiameter;
-            int y = mScreenHeight - 240 - mFireButtonDiameter;
-            canvas.drawBitmap(mFireBitmap, x, y, null);
-           // canvas.drawBitmap(mFireBitmap, 100, 100, null);
-
+            canvas.drawBitmap(mFireBitmap, mFireButtonOffsetX, mFireButtonOffsetY, null);
         }
     }
 
@@ -196,113 +188,135 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     /**
-     *
+     * Intercepts touch events to get user input for joystick and fire button control.
+     * 
      * @param   view        the view from which the listener is called
      * @param   motionEvent the type of touch motion detected
      * @return              true if the listener has consumed the event, false otherwise.
      */
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
-        if (view.equals(this)) {
 
+        // Get the pointer index and ID from the motion event object
+        int pointerIndex = motionEvent.getActionIndex();
+        int pointerId = motionEvent.getPointerId(pointerIndex);
 
+        // Get the pointer's x and y
+        int pointerX = (int) motionEvent.getX(pointerIndex);
+        int pointerY = (int) motionEvent.getY(pointerIndex);
 
-            // Get the pointer index and ID from the motion event object
-            int pointerIndex = motionEvent.getActionIndex();
-            int pointerId = motionEvent.getPointerId(pointerIndex);
+        // Get masked (not specific to a pointer) action
+        int action = motionEvent.getActionMasked();
+        
+        // Determine the type of touch event action
+        switch (action) {
+            // User has put a new pointer down on the screen
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
+                // Only update the joystick data if there is no pointer id
+                // associated with the joystick touch events yet
+                if (mJoystickPointerId == MotionEvent.INVALID_POINTER_ID) {
+                    updateJoystickData(pointerX, pointerY, pointerId);
+                }
 
-            // Get the pointer's x and y
-            int pointerX = (int) motionEvent.getX(pointerIndex);
-            int pointerY = (int) motionEvent.getY(pointerIndex);
+                // Only update the fire button data if there is no pointer id
+                // associated with the fire button touch events yet
+                if (mFireButtonPointerId == MotionEvent.INVALID_POINTER_ID) {
+                    updateFireButtonData(pointerX, pointerY, pointerId);
+                }
+                break;
 
-            // Get masked (not specific to a pointer) action
-            int action = motionEvent.getActionMasked();
+            // User has moved a pointer on the screen
+            case MotionEvent.ACTION_MOVE:
+                // Go through all the pointers since getActionIndex() will always be 0 
+                // because MotionEvent.ACTION_MOVE is only interested in the primary pointer
+                for (int index = 0; index < motionEvent.getPointerCount(); index++) {
+                    int id = motionEvent.getPointerId(index);
+                    int x = (int) motionEvent.getX(index);
+                    int y = (int) motionEvent.getY(index);
 
-            //
-            switch (action) {
-
-                // User has pressed down on the screen so there is a new pointer on the screen
-                case MotionEvent.ACTION_DOWN:
-                case MotionEvent.ACTION_POINTER_DOWN:
-                    if (mJoystickPointerId == -1) {
-                        setJoystickInfo(pointerX, pointerY, pointerId);
+                    // Determine if the moving pointer is a joystick or fire button pointer
+                    // If so, update the joystick or fire button data accordingly
+                    if (id == mJoystickPointerId) {
+                        updateJoystickData(x, y, id);
+                    } else if (id == mFireButtonPointerId){
+                        updateFireButtonData(x, y, id);
                     }
+                }
+                break;
 
-                    if (mFireButtonPointerId == -1) {
-                        setFireButtonInfo(pointerX, pointerY, pointerId);
-                    }
-                    break;
-                // User has moved their finger on the screen
-                case MotionEvent.ACTION_MOVE:
-                    Log.d(TAG, "pointerX=" + pointerX);
-                    if (pointerId == mJoystickPointerId) {
-                        setJoystickInfo(pointerX, pointerY, pointerId);
-                    } else if (pointerId == mFireButtonPointerId){
-                        setFireButtonInfo(pointerX, pointerY, pointerId);
-                    }
-                    break;
+            // User has removed a pointer up and off the screen
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+            case MotionEvent.ACTION_CANCEL:
+                // Determine if  the removed pointer is a joystick or fire button pointer
+                // If so, reset the joystick or fire button data accordingly to default values
+                if (pointerId == mJoystickPointerId) {
+                    mJoystickX = mJoystickBaseCenterX;
+                    mJoystickY = mJoystickBaseCenterY;
+                    mJoystickPointerId = MotionEvent.INVALID_POINTER_ID;
+                } else if (pointerId == mFireButtonPointerId){
+                    mFireButtonPressed = false;
+                    mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
+                }
+                break;
 
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_POINTER_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    if (pointerId == mJoystickPointerId) {
-                        mJoystickX = mJoystickBaseCenterX;
-                        mJoystickY = mJoystickBaseCenterY;
-                        mJoystickPointerId = -1;
-                    } else if (pointerId == mFireButtonPointerId){
-                        mFireButtonPressed = false;
-                        mFireButtonPointerId = -1;
-                    }
-
-                    break;
-
-            }
+            default:
+                break;
         }
 
         return true;
     }
 
-    
     /**
-     * Returns the y-coordinate for where the blue joystick control circle should be drawn.
-     * It only moves the joystick circle if the user has touched within 1.5x the radius
-     * of the base. Otherwise, it resets the joystick to the center of the base.
+     * Updates the joystick's coordinate and pointer ID data using values retrieved from a touch
+     * event. It changes the joystick's coordinates and pointer ID when the user moves the joystick
+     * and resets this data when the user touches outside the joystick threshold boundaries.
+     *
+     * @param pointerX  the x coordinate of the touch event
+     * @param pointerY  the y coordinate of the touch event
+     * @param pointerId the pointer ID of the touch event
      */
-    private void setJoystickInfo(int touchEventX, int touchEventY, int pointerId) {
-
+    private void updateJoystickData(int pointerX, int pointerY, int pointerId) {
         // Calculate the displacement from the center of the joystick
-        int deltaX = touchEventX - mJoystickBaseCenterX;
-        int deltaY = touchEventY - mJoystickBaseCenterY;
+        int deltaX = pointerX - mJoystickBaseCenterX;
+        int deltaY = pointerY - mJoystickBaseCenterY;
         int displacement = calcDistance(deltaX, deltaY);
 
-        // Check whether the user has touched sufficiently close to the joystick center
+        // Determine whether the user has touched sufficiently close to the joystick center
         if (displacement <= JOYSTICK_THRESHOLD_RADIUS) {
-            mJoystickX = touchEventX;
-            mJoystickY = touchEventY;
+            mJoystickX = pointerX;
+            mJoystickY = pointerY;
             mJoystickPointerId = pointerId;
         } else {
             mJoystickX = mJoystickBaseCenterX;
             mJoystickY = mJoystickBaseCenterY;
-            mJoystickPointerId = -1;
         }
     }
 
-    private void setFireButtonInfo(int touchEventX, int touchEventY, int pointerId) {
-        // Get the displacement in the x and y direction of the
-        // most recent touch event from the fire button's center
-        int deltaX = touchEventX - mFireButtonCenterX;
-        int deltaY = touchEventY - mFireButtonCenterY;
+    /**
+     * Updates a boolean value storing whether the fire button has been pressed and the ID for the
+     * pointer that has pressed the button using values retrieved from a touch event.
+     *
+     * @param pointerX  the x coordinate of the touch event
+     * @param pointerY  the y coordinate of the touch event
+     * @param pointerId the pointer ID of the touch event
+     */
+    private void updateFireButtonData(int pointerX, int pointerY, int pointerId) {
+        // Calculate the displacement from the center of the fire button
+        int deltaX = pointerX - (mFireButtonOffsetX + FIRE_BUTTON_DIAMETER/2);
+        int deltaY = pointerY - (mFireButtonOffsetY + FIRE_BUTTON_DIAMETER/2);
+        int displacement = calcDistance(deltaX, deltaY);
 
-        // Determine whether to draw the smaller pressed fire button bitmap
-        // or the larger unpressed fire button bitmap
-        if (calcDistance(deltaX, deltaY) <= mFireButtonDiameter) {
+        // Determine whether the user has touched close enough to the
+        if (displacement <= FIRE_BUTTON_DIAMETER) {
+            Log.d(TAG, "Projectile fired at " + mAngle + "degrees");
             mFireButtonPressed = true;
             mFireButtonPointerId = pointerId;
         } else {
             mFireButtonPressed = false;
-            mFireButtonPointerId = -1;
+            mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
         }
-
     }
 
     /**
