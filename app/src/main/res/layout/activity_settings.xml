@@ -27,7 +27,8 @@
         android:focusable="false"
         android:inputType="textPersonName"
         android:textAllCaps="false"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        tools:ignore="LabelFor" />
 
     <TextView
         android:id="@+id/text_email"
@@ -46,7 +47,8 @@
         android:ems="10"
         android:inputType="textEmailAddress"
         android:textAllCaps="false"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        tools:ignore="LabelFor" />
 
     <Button
         android:id="@+id/button_randomize"
@@ -72,7 +74,9 @@
             android:text="@string/str_save"
             android:textAllCaps="false"
             android:textColor="@color/colorBlack"
-            android:textSize="18sp" />
+            android:textSize="18sp"
+            tools:ignore="ButtonStyle"
+            android:layout_marginEnd="10dp" />
 
         <Button
             android:id="@+id/button_cancel"
@@ -84,7 +88,9 @@
             android:text="@string/str_cancel"
             android:textAllCaps="false"
             android:textColor="@color/colorBlack"
-            android:textSize="18sp" />
+            android:textSize="18sp"
+            android:layout_marginStart="10dp"
+            tools:ignore="ButtonStyle" />
     </TableRow>
 
 </TableLayout>

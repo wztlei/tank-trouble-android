@@ -22,7 +22,6 @@
         </activity>
 
         <activity android:name=".PlayActivity" />
-        <activity android:name=".PlayTestActivity" />
         <activity android:name=".SettingsActivity" />
         <activity android:name=".battle.BattleActivity" />
     </application>

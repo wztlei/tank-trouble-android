@@ -1,25 +1,20 @@
 package com.wztlei.tanktrouble;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.EditText;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -33,7 +28,6 @@ public class FirestoreUserUtils {
     private String[] mNounList;
     private String mUserId;
     private String mUsername;
-    private boolean objectJustInitialized;
 
     private static final String TAG = "WL: FirestoreUserUtils";
     private static final String USERS_KEY = "users";
@@ -46,16 +40,17 @@ public class FirestoreUserUtils {
      * @param activity  the activity in which the FirestoreUserUtils class is instantiated
      */
     FirestoreUserUtils(Activity activity) {
-        this.mActivity = activity;
+        mActivity = activity;
         mAdjectiveList = activity.getResources().getStringArray(R.array.adjective_list);
         mNounList = activity.getResources().getStringArray(R.array.noun_list);
         mEditUsername = activity.findViewById(R.id.edit_username);
         mFirestore = FirebaseFirestore.getInstance();
-        mSharedPref = activity.getPreferences(Context.MODE_PRIVATE);
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
 
         mUsername = mSharedPref.getString(USERNAME_KEY, "");
         mUserId = mSharedPref.getString(USER_ID_KEY, "");
-        objectJustInitialized = true;
+        Log.d(TAG, "mUsername=" + mUsername);
+        Log.d(TAG, "mUserId=" + mUserId);
     }
     
     /**
@@ -77,84 +72,26 @@ public class FirestoreUserUtils {
             mUsername = generateRandomUsername();
         }
 
+        Log.d(TAG, "mUsername=" + mUsername);
+        Log.d(TAG, "mUserId=" + mUserId);
+
         // Check whether the user has an ID stored and store the username accordingly
         if (mUserId.length() == 0) {
-            storeUserNameWithoutUserId();
+            Log.d(TAG, "addFirestoreUser()");
+            addFirestoreUser();
         } else {
-            storeUserNameWithUserId();
+            Log.d(TAG, "updateUserName()");
+            updateUserName();
         }
-    }
-
-    /**
-     * Queries Firestore to determine if any users have the new username, mUsername.
-     * If possible, it will update and store the new username in Firestore while ensuring that
-     * all usernames in Firestore are unique.
-     */
-    private void storeUserNameWithUserId() {
-
-        // Get all the documents where the username property of the document is mUsername
-        mFirestore.collection(USERS_KEY)
-                .whereEqualTo(USERNAME_KEY, mUsername)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            // Get a list of the documents with the username, mUsername
-                            List<DocumentSnapshot> userDocuments = task.getResult().getDocuments();
-
-                            // Check the user document's size
-                            switch (userDocuments.size()) {
-                                // If zero Firebase users have the user name, mUsername
-                                case 0:
-                                    updateUserNameWithUserId();
-                                    break;
-                                // If one Firebase user has the username, mUsername
-                                case 1:
-                                    // Check whether the ID of the Firebase document
-                                    // matches the ID of the current user
-                                    if (userDocuments.get(0).getId().equals(mUserId)) {
-                                        // The two IDs match so we just update the username
-                                        updateUserNameWithUserId();
-                                        Log.d(TAG, "One Firebase user with the username " +
-                                                "mUsername, but assumed to be current user.");
-                                    } else {
-                                        // The two IDs don't match so the user tried to change
-                                        // their username to that of another user in Firebase
-
-                                        createOkAlertDialog("Username taken",
-                                                "Please try again.");
-
-                                        // TODO: Add code to reset mUsername to the old username
-                                        // TODO: before the user tried to change the username
-                                        // TODO: Add a new member variable - mOldUsername
-
-                                        Log.d(TAG, "One Firebase user with the username" +
-                                                "mUsername, so no username is changed.");
-                                    }
-                                    break;
-                                // If 2+ users have the username, mUsername
-                                default:
-                                    createOkAlertDialog("This should not happen.",
-                                            "Two or more users have the same username.");
-                                    Log.e(TAG, "ERROR: 2+ users have the same username." +
-                                            "storeUserNameWithoutUserId");
-                                    break;
-                            }
-                        } else {
-                            createOkAlertDialog("", "Task failed.");
-                        }
-                    }
-                });
-
     }
 
     /**
      * Updates the username property of a user in Firestore and SharedPreferences with a new
      * username, mUsername.
      */
-    private void updateUserNameWithUserId() {
-        mFirestore.collection(USERS_KEY).document(mUserId)
+    private void updateUserName() {
+        mFirestore.collection(USERS_KEY)
+                .document(mUserId)
                 .update(USERNAME_KEY, mUsername)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
@@ -166,7 +103,7 @@ public class FirestoreUserUtils {
                         }
 
                         // Put the string in the SharedPreferences object
-                        putStringInPrefs (USERNAME_KEY, mUsername);
+                        putStringInPrefs(USERNAME_KEY, mUsername);
                         Log.d(TAG, "User document successfully updated with username " +
                                 mUsername);
                     }
@@ -174,93 +111,15 @@ public class FirestoreUserUtils {
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
+                        createOkAlertDialog("Failed to updateUserName");
+                        addFirestoreUser();
                         Log.w(TAG, "User document failed to update with username " +
                                 mUsername);
+                        e.printStackTrace();
                     }
                 });
     }
 
-    /**
-     * Stores the username mUsername in the EditText text box, Firestore, and the
-     * SharedPreferences object while ensuring that every user has a unique username.
-     */
-    private void storeUserNameWithoutUserId() {
-
-        // Get all the documents where the username property of the document is mUsername
-        mFirestore.collection(USERS_KEY)
-                .whereEqualTo(USERNAME_KEY, mUsername)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            // Get a list of the documents with the username, mUsername
-                            List<DocumentSnapshot> userDocuments = task.getResult().getDocuments();
-
-                            // Check the user documents' size
-                            switch (userDocuments.size()) {
-                                // If zero Firebase users have the user name, mUsername
-                                case 0:
-                                    if (mEditUsername != null) {
-                                        mEditUsername.setText(mUsername);
-                                    }
-
-                                    putStringInPrefs (USERNAME_KEY, mUsername);
-                                    addFirestoreUser();
-                                    break;
-                                // If one Firebase user has the username, mUsername
-                                case 1:
-                                    // Check whether the object has just been initialized
-                                    if (objectJustInitialized) {
-                                        // The FirestoreUserUtils object is just initialized so we
-                                        // assume that the Firebase user is the current user since
-                                        // it is impossible for the current user to have changed
-                                        // their username to a duplicate username in Firestore
-                                        // If the user tried to change their username to a
-                                        // duplicate username, then objectJustInitialized would be
-                                        // false since FirestoreUserUtils was already initialized
-
-                                        putStringInPrefs (USERNAME_KEY, mUsername);
-                                        storeUserId();
-
-                                        if (mEditUsername != null) {
-                                            mEditUsername.setText(mUsername);
-                                        }
-
-                                        Log.d(TAG, "One Firebase user with the username " +
-                                                "mUsername, but assumed to be current user.");
-                                    } else {
-                                        // The FirestoreUserUtils object is already initialized so
-                                        // we assume that the Firebase user is NOT the current user
-                                        // since the current user had to have changed their
-                                        // username in order for there to be a duplicate
-
-                                        createOkAlertDialog("Username taken",
-                                                "Please try again.");
-
-                                        // Generate a new username and set it
-                                        mUsername = generateRandomUsername();
-                                        setUsername();
-
-                                        Log.d(TAG, "One Firebase user with the username" +
-                                                "mUsername, so no username is changed.");
-                                    }
-
-                                    break;
-                                // If 2+ users have the username, mUsername
-                                default:
-                                    createOkAlertDialog("This should not happen.",
-                                            "Two or more users have the same username.");
-                                    Log.e(TAG, "ERROR: 2+ users have the same username." +
-                                            "storeUserNameWithoutUserId");
-                                    break;
-                            }
-                        } else {
-                            createOkAlertDialog("", "Task failed.");
-                        }
-                    }
-                });
-    }
 
     /**
      * Adds a new Firestore document to the "users" collection with the username mUsername and
@@ -280,66 +139,23 @@ public class FirestoreUserUtils {
                     public void onSuccess(DocumentReference documentReference) {
                         // A document in Firestore with a randomly created ID has the user's data
                         // so we need to store the randomly created id associated with the user
-                        storeUserId();
+                        mUserId = documentReference.getId();
+                        putStringInPrefs(USER_ID_KEY, mUserId);
+
+                        // Set the text of the EditText so the user sees that the username changed
+                        if (mEditUsername != null) {
+                            mEditUsername.setText(mUsername);
+                        }
                         Log.d(TAG, "Successfully added a user with username: " + mUsername);
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
+                        createOkAlertDialog("Failed to addFirestoreUser.");
                         Log.w(TAG, "Failed to add a user with username: " + mUsername, e);
                     }
                 });
-    }
-
-    /**
-     * Stores the ID of the document associated with the user in the member variable mUserId
-     * and in the SharedPreferences object.
-     */
-    public void storeUserId() {
-
-        // Check whether the user has a username set yet
-        if (mUsername.length() == 0) {
-            // Without a username, no Firestore document can store the user's data at this time
-            // This means the user has no meaningful ID so we store the empty string
-            mUserId = "";
-            putStringInPrefs(USER_ID_KEY, mUserId);
-
-        } else {
-            // Query Firestore and get all documents with the username, mUsername
-            mFirestore.collection(USERS_KEY)
-                    .whereEqualTo(USERNAME_KEY, mUsername)
-                    .get()
-                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                            if (task.isSuccessful()) {
-                                // Store the list of documents with the username, mUsername
-                                List<DocumentSnapshot> userDocuments =
-                                        task.getResult().getDocuments();
-
-                                // Check how many Firestore users have the username, mUsername
-                                if (userDocuments.size() == 1) {
-                                    // There is only one Firestore user so we assume it is
-                                    // the current user and we store the user ID
-                                    mUserId = userDocuments.get(0).getId();
-                                    putStringInPrefs(USER_ID_KEY, mUserId);
-                                    Log.d(TAG, "User Id is set" + mUserId);
-
-                                } else if (userDocuments.size() > 1) {
-                                    // 2+ users have the same username which should never happen
-                                    // so we show an alert dialog and log the error
-                                    createOkAlertDialog("This should not happen.",
-                                            "2+ users have the same username." +
-                                                    "storeUserId");
-                                    Log.e(TAG, "ERROR: 2+ users have the same username.");
-                                }
-                            } else {
-                                createOkAlertDialog("", "Task failed.");
-                            }
-                        }
-                    });
-        }
     }
 
     /**
@@ -383,14 +199,13 @@ public class FirestoreUserUtils {
     /**
      *  Display an alert dialog with a single button saying Ok.
      *
-     *  @param title    the string storing the title of the alert dialog to be created
-     *  @param message  the string storing the message of the alert dialog to be created
+     * @param message  the string storing the message of the alert dialog to be created
      */
-    private void createOkAlertDialog(String title, String message) {
+    private void createOkAlertDialog(String message) {
 
         // Build an alert dialog using the title and message
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
-        builder.setTitle(title)
+        builder.setTitle("")
                 .setMessage(message)
                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {}

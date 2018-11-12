@@ -2,6 +2,9 @@ package com.wztlei.tanktrouble.battle;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,6 +17,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.wztlei.tanktrouble.NetworkChangeReceiver;
 import com.wztlei.tanktrouble.R;
 
 @SuppressLint("ViewConstructor")
@@ -53,29 +59,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         mBattleThread = new BattleThread(getHolder(), this);
         setFocusable(true);
-
-        // Get the height and width of the device in pixels
-        int mScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
-        int mScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
-
-        // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
-        mFireBitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeResource
-                (mActivity.getResources(), R.drawable.crosshairs),
-                FIRE_BUTTON_DIAMETER, FIRE_BUTTON_DIAMETER, false);
-        mFirePressedBitmap = Bitmap.createScaledBitmap(mFireBitmap,
-                FIRE_BUTTON_PRESSED_DIAMETER, FIRE_BUTTON_PRESSED_DIAMETER, false);
-
-        // Set the center of the joystick base, the center of the fire button,
-        // and the starting touch events
-        mJoystickBaseCenterX = CONTROL_X_MARGIN + JOYSTICK_BASE_RADIUS;
-        mJoystickBaseCenterY = mScreenHeight - 200 - JOYSTICK_BASE_RADIUS;
-        mJoystickX = mJoystickBaseCenterX;
-        mJoystickY = mJoystickBaseCenterY;
-        mFireButtonOffsetX = (int)(mScreenWidth - CONTROL_X_MARGIN*1.5 - FIRE_BUTTON_DIAMETER);
-        mFireButtonOffsetY =  mJoystickBaseCenterY - FIRE_BUTTON_DIAMETER/2;
-        mJoystickPointerId = MotionEvent.INVALID_POINTER_ID;
-        mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
-
+        setGraphicsData();
         setOnTouchListener(this);
     }
 
@@ -111,6 +95,30 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         }
     }
 
+    private void setGraphicsData() {
+        // Get the height and width of the device in pixels
+        int mScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+        int mScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+
+        // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
+        mFireBitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeResource
+                        (mActivity.getResources(), R.drawable.crosshairs),
+                FIRE_BUTTON_DIAMETER, FIRE_BUTTON_DIAMETER, false);
+        mFirePressedBitmap = Bitmap.createScaledBitmap(mFireBitmap,
+                FIRE_BUTTON_PRESSED_DIAMETER, FIRE_BUTTON_PRESSED_DIAMETER, false);
+
+        // Set the center of the joystick base, the center of the fire button,
+        // and the starting touch events
+        mJoystickBaseCenterX = CONTROL_X_MARGIN + JOYSTICK_BASE_RADIUS;
+        mJoystickBaseCenterY = mScreenHeight - 200 - JOYSTICK_BASE_RADIUS;
+        mJoystickX = mJoystickBaseCenterX;
+        mJoystickY = mJoystickBaseCenterY;
+        mFireButtonOffsetX = (int)(mScreenWidth - CONTROL_X_MARGIN*1.5 - FIRE_BUTTON_DIAMETER);
+        mFireButtonOffsetY =  mJoystickBaseCenterY - FIRE_BUTTON_DIAMETER/2;
+        mJoystickPointerId = MotionEvent.INVALID_POINTER_ID;
+        mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
+    }
+
     /**
      * Updates the location and angle of the tank based on the most recent touch events
      * by the user.
@@ -122,13 +130,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Only move and rotate the tank if the user has moved the joystick
         if (calcDistance(deltaX, deltaY) <= JOYSTICK_THRESHOLD_RADIUS) {
-
-            // Only change the angle of the tank if the tank has actually moved
+            // Only change the angle and move the tank if the tank has actually moved
             if (deltaX != 0 || deltaY != 0) {
                 mAngle = calcAngle(deltaX, deltaY);
+                mUserTank.moveAndRotate(deltaX, deltaY, mAngle);
             }
-
-            mUserTank.moveAndRotate(deltaX, deltaY, mAngle);
         }
     }
 
@@ -308,9 +314,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         int deltaY = pointerY - (mFireButtonOffsetY + FIRE_BUTTON_DIAMETER/2);
         int displacement = calcDistance(deltaX, deltaY);
 
-        // Determine whether the user has touched close enough to the
+        // Determine whether the user has touched close enough to the center of the fire button
         if (displacement <= FIRE_BUTTON_DIAMETER) {
-            Log.d(TAG, "Projectile fired at " + mAngle + "degrees");
+            if (!mFireButtonPressed) {
+                Log.d(TAG, "Projectile fired at " + mAngle + "degrees");
+            }
             mFireButtonPressed = true;
             mFireButtonPointerId = pointerId;
         } else {
