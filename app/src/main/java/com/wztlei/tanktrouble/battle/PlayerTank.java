@@ -59,7 +59,10 @@ public class PlayerTank {
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
             String mUserId = sharedPref.getString(USER_ID_KEY, "");
             FirebaseFirestore firestore = FirebaseFirestore.getInstance();
-            mUserDocument = firestore.collection(USERS_KEY).document(mUserId);
+
+            if (mUserId.length() > 0) {
+                mUserDocument = firestore.collection(USERS_KEY).document(mUserId);
+            }
         } else {
             mBitmap = BitmapFactory.decodeResource
                     (activity.getResources(), R.drawable.red_tank);

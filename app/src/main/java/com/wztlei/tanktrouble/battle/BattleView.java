@@ -53,6 +53,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     public BattleView(Activity activity) {
         super(activity);
         mActivity = activity;
+        Log.i(TAG, "BattleView");
 
         // Callback allows us to intercept events
         getHolder().addCallback(this);
@@ -60,6 +61,13 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mBattleThread = new BattleThread(getHolder(), this);
         setFocusable(true);
         setGraphicsData();
+        //ZTE A1R Axon - Me
+        //screen-width=1080
+        //screen-height=1920
+
+        // Samsung - Suyog
+        //screen-width=540
+        //screen-height=960
         setOnTouchListener(this);
     }
 
@@ -99,6 +107,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Get the height and width of the device in pixels
         int mScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
         int mScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+
+        Log.d(TAG, "screen-width=" + mScreenWidth);
+        Log.d(TAG, "screen-height=" + mScreenHeight);
 
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
         mFireBitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeResource
