@@ -75,6 +75,13 @@ public class FirestoreUserUtils {
         Log.d(TAG, "mUsername=" + mUsername);
         Log.d(TAG, "mUserId=" + mUserId);
 
+        // Set the text of the EditText so the user sees that the username changed
+        if (mEditUsername != null) {
+            mEditUsername.setText(mUsername);
+        }
+
+        putStringInPrefs(USERNAME_KEY, mUsername);
+
         // Check whether the user has an ID stored and store the username accordingly
         if (mUserId.length() == 0) {
             Log.d(TAG, "addFirestoreUser()");
@@ -96,14 +103,7 @@ public class FirestoreUserUtils {
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-
-                        // Set the text of the EditText so the user sees that the username changed
-                        if (mEditUsername != null) {
-                            mEditUsername.setText(mUsername);
-                        }
-
                         // Put the string in the SharedPreferences object
-                        putStringInPrefs(USERNAME_KEY, mUsername);
                         Log.d(TAG, "User document successfully updated with username " +
                                 mUsername);
                     }
@@ -141,11 +141,6 @@ public class FirestoreUserUtils {
                         // so we need to store the randomly created id associated with the user
                         mUserId = documentReference.getId();
                         putStringInPrefs(USER_ID_KEY, mUserId);
-
-                        // Set the text of the EditText so the user sees that the username changed
-                        if (mEditUsername != null) {
-                            mEditUsername.setText(mUsername);
-                        }
                         Log.d(TAG, "Successfully added a user with username: " + mUsername);
                     }
                 })

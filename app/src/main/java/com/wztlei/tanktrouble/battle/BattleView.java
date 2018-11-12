@@ -11,16 +11,24 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.wztlei.tanktrouble.NetworkChangeReceiver;
 import com.wztlei.tanktrouble.R;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 @SuppressLint("ViewConstructor")
 public class BattleView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
@@ -29,14 +37,17 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private Bitmap mFireBitmap, mFirePressedBitmap;
     private Canvas mCanvas;
     private BattleThread mBattleThread;
+    private DocumentReference mUserDocument;
+    private FirebaseFirestore mFirestore;
     private PlayerTank mUserTank;
     private PlayerTank mOpponentTank;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
-    private int mAngle;
+    private int mX, mY, mAngle;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
     private int mJoystickX, mJoystickY;
     private int mJoystickPointerId, mFireButtonPointerId;
     private boolean mFireButtonPressed;
+
 
     private static final String TAG = "WL: BattleView.java";
     private static final int JOYSTICK_BASE_RADIUS = 165;
@@ -44,6 +55,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private static final int CONTROL_X_MARGIN = 110;
     private static final int FIRE_BUTTON_DIAMETER = 200;
     private static final int FIRE_BUTTON_PRESSED_DIAMETER = 150;
+    private static final String USERS_KEY = "users";
+    private static final String USER_ID_KEY = "userId";
+    private static final String X_FIELD = "x";
+    private static final String Y_FIELD = "y";
+    private static final String ANGLE_FIELD = "angle";
 
     /**
      * Constructor function for the Battle View class.
@@ -61,6 +77,12 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         setFocusable(true);
         setGraphicsData();
         setOnTouchListener(this);
+
+        // Get the user document from Firestore
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
+        String mUserId = sharedPref.getString(USER_ID_KEY, "");
+        mFirestore = FirebaseFirestore.getInstance();
+        mUserDocument = mFirestore.collection(USERS_KEY).document(mUserId);
     }
 
     public void setCanvas(Canvas canvas) {
@@ -95,6 +117,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         }
     }
 
+    /**
+     * Sets the member variables of the Battle View class that are related to graphics.
+     */
     private void setGraphicsData() {
         // Get the height and width of the device in pixels
         int mScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
@@ -130,11 +155,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Only move and rotate the tank if the user has moved the joystick
         if (calcDistance(deltaX, deltaY) <= JOYSTICK_THRESHOLD_RADIUS) {
-            // Only change the angle and move the tank if the tank has actually moved
-            if (deltaX != 0 || deltaY != 0) {
-                mAngle = calcAngle(deltaX, deltaY);
-                mUserTank.moveAndRotate(deltaX, deltaY, mAngle);
-            }
+            mUserTank.moveAndRotate(deltaX, deltaY, calcAngle(deltaX, deltaY));
+
+            mX = (int) mUserTank.getX();
+            mY = (int) mUserTank.getY();
+            mAngle = (int) mUserTank.getAngle();
         }
     }
 
@@ -170,9 +195,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // or the larger unpressed fire button bitmap
         if (mFireButtonPressed) {
             double x = mFireButtonOffsetX + (FIRE_BUTTON_DIAMETER-FIRE_BUTTON_PRESSED_DIAMETER)/2;
-            double y = mJoystickBaseCenterY - 0.5*FIRE_BUTTON_PRESSED_DIAMETER;
-
+            double y = mJoystickBaseCenterY - FIRE_BUTTON_PRESSED_DIAMETER/2;
             canvas.drawBitmap(mFirePressedBitmap, (int) x, (int) y, null);
+
         } else {
             canvas.drawBitmap(mFireBitmap, mFireButtonOffsetX, mFireButtonOffsetY, null);
         }
@@ -317,14 +342,60 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Determine whether the user has touched close enough to the center of the fire button
         if (displacement <= FIRE_BUTTON_DIAMETER) {
             if (!mFireButtonPressed) {
-                Log.d(TAG, "Projectile fired at " + mAngle + "degrees");
+                Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY +
+                        " mAngle=" + mAngle + " degrees");
+                updateFirestoreFireData(X_FIELD, mX);
             }
+
             mFireButtonPressed = true;
             mFireButtonPointerId = pointerId;
         } else {
             mFireButtonPressed = false;
             mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
         }
+    }
+
+
+    private void updateFirestoreFireData(String field, final float data) {
+        Random random = new Random();
+        final int rand = random.nextInt(1000);
+
+        mUserDocument.update(field, data)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.d(TAG, "updateFirestoreFireData data=" + data);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "Error updating document", e);
+                    }
+                });
+
+
+        // Add a new document with a generated id.
+        Map<String, Object> map = new HashMap<>();
+        map.put("testX", mX);
+        map.put("testY", mY);
+
+        Log.d(TAG, "add to testUsers");
+
+        mFirestore.collection("testUsers")
+                .add(map)
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                    @Override
+                    public void onSuccess(DocumentReference documentReference) {
+                        Log.d(TAG, "new doc with x=" + mX + " y=" + mY);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "Error adding document", e);
+                    }
+                });
     }
 
     /**
