@@ -3,7 +3,7 @@
 
     <!-- Main Activity - Welcome Screen -->
     <string name="str_play">Play</string>
-    <string name="str_play_test">Play Test</string>
+    <string name="str_test">Test</string>
     <string name="str_settings">Settings</string>
 
     <!-- Settings Activity -->

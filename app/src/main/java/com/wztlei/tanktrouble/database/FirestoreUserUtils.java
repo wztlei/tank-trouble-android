@@ -1,4 +1,4 @@
-package com.wztlei.tanktrouble;
+package com.wztlei.tanktrouble.database;
 
 import android.app.Activity;
 import android.content.DialogInterface;
@@ -13,6 +13,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.wztlei.tanktrouble.R;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class FirestoreUserUtils {
      *
      * @param activity  the activity in which the FirestoreUserUtils class is instantiated
      */
-    FirestoreUserUtils(Activity activity) {
+    public FirestoreUserUtils(Activity activity) {
         mActivity = activity;
         mAdjectiveList = activity.getResources().getStringArray(R.array.adjective_list);
         mNounList = activity.getResources().getStringArray(R.array.noun_list);

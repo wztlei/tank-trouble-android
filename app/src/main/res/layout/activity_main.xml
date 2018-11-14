@@ -27,8 +27,8 @@
         android:id="@+id/button_play_test"
         android:layout_width="120dp"
         android:layout_height="wrap_content"
-        android:onClick="onClickPlayTestButton"
-        android:text="@string/str_play_test" />
+        android:onClick="onClickTestButton"
+        android:text="@string/str_test" />
 
     <Button
         android:id="@+id/button_settings"
