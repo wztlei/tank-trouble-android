@@ -5,23 +5,20 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.EditText;
 
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.wztlei.tanktrouble.Globals;
 import com.wztlei.tanktrouble.R;
 
 import java.util.Random;
 
-public class DatabaseUtils {
+public class UserUtils {
     private DatabaseReference mDatabase;
     private Activity mActivity;
     private SharedPreferences mSharedPref;
@@ -29,14 +26,14 @@ public class DatabaseUtils {
     private String[] mAdjectiveList;
     private String[] mNounList;
     private String mUsername;
-    private String mNewUsername;
+    private String mUserId;
 
-
-    private static final String USERS_KEY = "users";
+    private static final String USERS_KEY = Globals.USERS_KEY;
+    private static final String USER_ID_KEY = Globals.USER_ID_KEY;
     private static final String USERNAME_KEY = Globals.USERNAME_KEY;
     private static final String TAG = "WL: DatabaseUtils";
 
-    DatabaseUtils(Activity activity){
+    public UserUtils(Activity activity){
 
         mActivity = activity;
         mAdjectiveList = activity.getResources().getStringArray(R.array.adjective_list);
@@ -44,42 +41,80 @@ public class DatabaseUtils {
         mEditUsername = activity.findViewById(R.id.edit_username);
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
 
+        mUserId = mSharedPref.getString(USER_ID_KEY, "");
         mUsername = mSharedPref.getString(USERNAME_KEY, "");
-        Log.d(TAG, "mUsername=" + mUsername);
-
         mDatabase = FirebaseDatabase.getInstance().getReference();
-
-    }
-
-    private void updateUsername(final String newUsername){
-        // Generates a new random username if the current username is empty
-        if (!newUsername.equals(mUsername)) {
-            mDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.hasChild(newUsername)) {
-                        createOkAlertDialog("Username taken. Please choose another username.");
-                    } else {
-
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    Log.d(TAG, databaseError.getMessage());
-                }
-            });
-        }
-
+        setNewUsername(mUsername);
+        Log.d(TAG, "mUserId=" + mUserId);
         Log.d(TAG, "mUsername=" + mUsername);
 
-
     }
 
-    private void addFirebaseUser() {
+    public void setRandomUsername(){
+        String randomUsername = generateRandomUsername();
+        setNewUsername(randomUsername);
     }
 
-    private void updateUserName() {
+    private void setNewUsername(final String newUsername){
+        if (mUserId.length() == 0 || mUsername.length() == 0) {
+            setFirstUsername(newUsername);
+        } else {
+            updateUsername(newUsername);
+        }
+    }
+
+    private void setFirstUsername(final String firstUsername) {
+        final DatabaseReference mUserDataRef = mDatabase.child(USERS_KEY).push();
+
+        mUserDataRef.child(USERNAME_KEY)
+                .setValue(firstUsername)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        mUserId = mUserDataRef.getKey();
+                        mUsername = firstUsername;
+                        putStringInPrefs(USER_ID_KEY, mUserId);
+                        putStringInPrefs(USERNAME_KEY, firstUsername);
+                        setEditUsername();
+                        Log.d(TAG, "added new user with mUserId=" + mUserId
+                                + " and mUsername=" + mUsername);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "Failed to add user in updateUsername");
+                    }
+                });
+    }
+
+    private void updateUsername(final String newUsername) {
+        mDatabase.child(USERS_KEY)
+                .child(mUserId)
+                .child(USERNAME_KEY)
+                .setValue(newUsername)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        mUsername = newUsername;
+                        putStringInPrefs(USERNAME_KEY, newUsername);
+                        setEditUsername();
+                        Log.d(TAG, "updated new username for mUserId=" + mUserId
+                                + " with mUsername=" + mUsername);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "Failed to update username in updateUsername");
+                    }
+                });
+    }
+
+    private void setEditUsername() {
+        if (mEditUsername != null) {
+            mEditUsername.setText(mUsername);
+        }
     }
 
     /**
@@ -88,7 +123,7 @@ public class DatabaseUtils {
      *
      * @return  a string storing the randomly generated username
      */
-    private String generateRandomUsername() {
+    public String generateRandomUsername() {
 
         Random random = new Random();
 

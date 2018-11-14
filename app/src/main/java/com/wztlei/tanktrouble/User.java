@@ -10,6 +10,8 @@ public class User {
 
     User(String username) {
         mUsername = username;
+        mX = 0;
+        mY = 0;
     }
 
     public void setX(int x) {

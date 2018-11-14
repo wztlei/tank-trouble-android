@@ -21,9 +21,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.wztlei.tanktrouble.Globals;
 import com.wztlei.tanktrouble.R;
 
 import java.util.Random;
@@ -31,17 +34,18 @@ import java.util.Random;
 public class PlayerTank {
 
     private Bitmap mBitmap;
-    private DocumentReference mUserDocument;
+    private DatabaseReference mDataRef;
     private float mOldX, mOldY, mOldAngle;
     private float mX, mY, mAngle;
     private int mMapHeight, mMapWidth;
+    private long prevTime;
 
     private static final String TAG = "PlayerTank.java";
     private static final String USERS_KEY = "users";
     private static final String USER_ID_KEY = "userId";
-    private static final String X_FIELD = "x";
-    private static final String Y_FIELD = "y";
-    private static final String ANGLE_FIELD = "angle";
+    private static final String X_KEY = Globals.X_KEY;
+    private static final String Y_KEY = Globals.Y_KEY;
+    private static final String ANGLE_KEY = Globals.ANGLE_KEY;
     private static final double SPEED = 0.04;
 
 
@@ -64,10 +68,12 @@ public class PlayerTank {
             // Get the user document from Firestore
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
             String mUserId = sharedPref.getString(USER_ID_KEY, "");
-            FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+            DatabaseReference database = FirebaseDatabase.getInstance().getReference();
 
             if (mUserId.length() > 0) {
-                mUserDocument = firestore.collection(USERS_KEY).document(mUserId);
+                mDataRef = database.child(USERS_KEY).child(mUserId);
+            } else {
+                Log.e(TAG, "Warning: no user Id");
             }
         } else {
             mBitmap = BitmapFactory.decodeResource
@@ -139,42 +145,51 @@ public class PlayerTank {
      * Sets the new x and y coordinates and the new angle for the tank while ensuring that
      * the tank remains within the map boundaries.
      *
-     * @param deltaX    the displacement that the tank intends to move in the x direction
-     * @param deltaY    the displacement that the tank intends to move in the y direction
+     * @param velocityX the velocity that the tank intends to move in the x direction
+     * @param velocityY the velocity that the tank intends to move in the y direction
      * @param angle     the new angle of the tank
      */
-    public void moveAndRotate(int deltaX, int deltaY, int angle) {
+    public void moveAndRotate(float velocityX, float velocityY, int angle) {
+
+        long newTime = System.currentTimeMillis();
+        long timeDiff = newTime - prevTime;
+        //Log.d(TAG, "timeDiff=" + timeDiff);
 
         float oldX = mX;
         float oldY = mY;
         float oldAngle = mAngle;
 
-        // Set the new x and y coordinates assuming the tank can move there
-        mX += SPEED * deltaX;
-        mY += SPEED * deltaY;
+        if (timeDiff > 20) {
+            prevTime = newTime;
 
-        // Force the tank to remain within the map horizontally
-        if (mX < 0) {
-            mX = 0;
-        } else if (mX > mMapWidth) {
-            mX = mMapWidth;
+            // Set the new x and y coordinates assuming the tank can move there
+            mX += velocityX;
+            mY += velocityY;
+
+            // Force the tank to remain within the map horizontally
+            if (mX < 0) {
+                mX = 0;
+            } else if (mX > mMapWidth) {
+                mX = mMapWidth;
+            }
+
+            // Force the tank to remain within the map vertically
+            if (mY < 0) {
+                mY = 0;
+            } else if (mY > mMapHeight) {
+                mY = mMapHeight;
+            }
+
+            // Only change the angle if the tank has moved
+            if (velocityX != 0 || velocityY != 0) {
+                mAngle = angle;
+                updateDataRef(X_KEY, mX);
+                updateDataRef(Y_KEY, mY);
+                updateDataRef(ANGLE_KEY, mAngle);
+            }
         }
 
-        // Force the tank to remain within the map vertically
-        if (mY < 0) {
-            mY = 0;
-        } else if (mY > mMapHeight) {
-            mY = mMapHeight;
-        }
 
-        // Only change the angle if the tank has moved
-        if (deltaX != 0 || deltaY != 0) {
-            mAngle = angle;
-        }
-
-        updateUserDocumentFloat(X_FIELD, mX);
-        updateUserDocumentFloat(Y_FIELD, mY);
-        updateUserDocumentFloat(ANGLE_FIELD, mAngle);
         //mX = oldX;
         //Random random = new Random();
         //int rand = random.nextInt(1000);
@@ -183,25 +198,22 @@ public class PlayerTank {
 //        mAngle = oldAngle;
     }
 
-    private void updateUserDocumentFloat(final String field, final float value) {
-
-
-        mUserDocument.update(field, value)
+    private void updateDataRef(final String key, final float value) {
+        mDataRef.child(key)
+                .setValue(value)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-
-
-                        switch (field) {
-                            case X_FIELD:
+                        switch (key) {
+                            case X_KEY:
                                 mOldX = mX;
-                                Log.d(TAG, "updateUserDocumentFloat x");
+                                Log.d(TAG, "updateUserDataFloat x");
                                 break;
-                            case Y_FIELD:
+                            case Y_KEY:
                                 mOldY = mY;
                                 Log.d(TAG, "updateUserDocumentFloat y");
                                 break;
-                            case ANGLE_FIELD:
+                            case ANGLE_KEY:
                                 mOldAngle = mAngle;
                                 Log.d(TAG, "updateUserDocumentFloat angle");
                                 break;

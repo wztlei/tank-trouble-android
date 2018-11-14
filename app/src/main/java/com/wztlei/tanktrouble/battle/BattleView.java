@@ -166,7 +166,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Only move and rotate the tank if the user has moved the joystick
         if (calcDistance(deltaX, deltaY) <= JOYSTICK_THRESHOLD_RADIUS) {
-            mUserTank.moveAndRotate(deltaX, deltaY, calcAngle(deltaX, deltaY));
+            float velocityX = deltaX/JOYSTICK_THRESHOLD_RADIUS;
+            float velocityY = deltaY/JOYSTICK_THRESHOLD_RADIUS;
+
+            mUserTank.moveAndRotate(velocityX, velocityY, calcAngle(deltaX, deltaY));
 
             mX = (int) mUserTank.getX();
             mY = (int) mUserTank.getY();

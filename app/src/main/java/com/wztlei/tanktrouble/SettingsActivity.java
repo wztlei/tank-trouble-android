@@ -6,18 +6,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.wztlei.tanktrouble.database.FirestoreUserUtils;
+import com.wztlei.tanktrouble.database.UserUtils;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private FirestoreUserUtils mFirestoreUserUtils;
+    private UserUtils mUserUtils;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        mFirestoreUserUtils = new FirestoreUserUtils(this);
-        mFirestoreUserUtils.setUsername();
+        mUserUtils = new UserUtils(this);
     }
 
     /**
@@ -33,7 +33,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public void onClickRandomizeButton(View view) {
-        mFirestoreUserUtils.setRandomUsername();
+        mUserUtils.setRandomUsername();
     }
 
 }
