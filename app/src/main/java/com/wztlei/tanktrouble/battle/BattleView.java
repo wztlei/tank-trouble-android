@@ -2,33 +2,19 @@ package com.wztlei.tanktrouble.battle;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.wztlei.tanktrouble.NetworkChangeReceiver;
 import com.wztlei.tanktrouble.R;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
 
 @SuppressLint("ViewConstructor")
 public class BattleView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
@@ -37,10 +23,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private Bitmap mFireBitmap, mFirePressedBitmap;
     private Canvas mCanvas;
     private BattleThread mBattleThread;
-    private DocumentReference mUserDocument;
-    private FirebaseFirestore mFirestore;
-    private PlayerTank mUserTank;
-    private PlayerTank mOpponentTank;
+
+    private UserTank mUserTank;
+    private OpponentTank mOpponentTank;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
     private int mX, mY, mAngle;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
@@ -51,15 +36,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
     private static final String TAG = "WL: BattleView.java";
     private static final int JOYSTICK_BASE_RADIUS = 165;
-    private static final int JOYSTICK_THRESHOLD_RADIUS = (int) (JOYSTICK_BASE_RADIUS * 1.4);
+    private static final int JOYSTICK_THRESHOLD_RADIUS = (int) (JOYSTICK_BASE_RADIUS * 1.2);
     private static final int CONTROL_X_MARGIN = 110;
     private static final int FIRE_BUTTON_DIAMETER = 200;
     private static final int FIRE_BUTTON_PRESSED_DIAMETER = 150;
-    private static final String USERS_KEY = "users";
-    private static final String USER_ID_KEY = "userId";
-    private static final String X_FIELD = "x";
-    private static final String Y_FIELD = "y";
-    private static final String ANGLE_FIELD = "angle";
 
     /**
      * Constructor function for the Battle View class.
@@ -85,12 +65,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         //screen-width=540
         //screen-height=960
         setOnTouchListener(this);
-
-        // Get the user document from Firestore
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
-        String mUserId = sharedPref.getString(USER_ID_KEY, "");
-        mFirestore = FirebaseFirestore.getInstance();
-        mUserDocument = mFirestore.collection(USERS_KEY).document(mUserId);
     }
 
     public void setCanvas(Canvas canvas) {
@@ -102,8 +76,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        mUserTank = new PlayerTank(mActivity, true);
-        mOpponentTank = new PlayerTank(mActivity, false);
+        mUserTank = new UserTank(mActivity);
+
+        // TODO: Avoid hard-coding opponent's ID
+        mOpponentTank = new OpponentTank(mActivity, "-LRKL4qzZp6o276BM2r2");
 
         mBattleThread.setRunning(true);
         mBattleThread.start();
@@ -166,8 +142,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Only move and rotate the tank if the user has moved the joystick
         if (calcDistance(deltaX, deltaY) <= JOYSTICK_THRESHOLD_RADIUS) {
-            float velocityX = deltaX/JOYSTICK_THRESHOLD_RADIUS;
-            float velocityY = deltaY/JOYSTICK_THRESHOLD_RADIUS;
+            Log.d(TAG, "x="+deltaX);
+
+            float velocityX = (float) (deltaX)/JOYSTICK_THRESHOLD_RADIUS;
+            float velocityY = (float) (deltaY)/JOYSTICK_THRESHOLD_RADIUS;
 
             mUserTank.moveAndRotate(velocityX, velocityY, calcAngle(deltaX, deltaY));
 
@@ -261,7 +239,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                 // Only update the joystick data if there is no pointer id
                 // associated with the joystick touch events yet
                 if (mJoystickPointerId == MotionEvent.INVALID_POINTER_ID) {
-                    updateJoystickData(pointerX, pointerY, pointerId);
+                    updateJoystickData(pointerX, pointerY, pointerId, action);
                 }
 
                 // Only update the fire button data if there is no pointer id
@@ -282,8 +260,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
                     // Determine if the moving pointer is a joystick or fire button pointer
                     // If so, update the joystick or fire button data accordingly
-                    if (id == mJoystickPointerId) {
-                        updateJoystickData(x, y, id);
+                    if (id == mJoystickPointerId ||
+                            mJoystickPointerId == MotionEvent.INVALID_POINTER_ID) {
+                        updateJoystickData(x, y, id, action);
                     } else if (id == mFireButtonPointerId){
                         updateFireButtonData(x, y, id);
                     }
@@ -321,18 +300,28 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * @param pointerX  the x coordinate of the touch event
      * @param pointerY  the y coordinate of the touch event
      * @param pointerId the pointer ID of the touch event
+     * @param action    the type of action of the touch event which must be
+     *                  ACTION_DOWN, ACTION_POINTER_DOWN, or ACTION_MOVE
      */
-    private void updateJoystickData(int pointerX, int pointerY, int pointerId) {
+    private void updateJoystickData(int pointerX, int pointerY, int pointerId, int action) {
         // Calculate the displacement from the center of the joystick
-        int deltaX = pointerX - mJoystickBaseCenterX;
-        int deltaY = pointerY - mJoystickBaseCenterY;
-        int displacement = calcDistance(deltaX, deltaY);
+        float deltaX = pointerX - mJoystickBaseCenterX;
+        float deltaY = pointerY - mJoystickBaseCenterY;
+        float displacement = calcDistance((int) deltaX, (int) deltaY);
 
         // Determine whether the user has touched sufficiently close to the joystick center
         if (displacement <= JOYSTICK_THRESHOLD_RADIUS) {
             mJoystickX = pointerX;
             mJoystickY = pointerY;
+
+            // Only set the pointer ID in this case since it could be a new pointer
             mJoystickPointerId = pointerId;
+        } else if (action == MotionEvent.ACTION_MOVE && pointerId == mJoystickPointerId) {
+            //mJoystickX = mJoystickBaseCenterX;
+            //mJoystickY = mJoystickBaseCenterY;
+            float joystickScaleRatio = (float) (JOYSTICK_THRESHOLD_RADIUS) / displacement;
+            mJoystickX = (int) ((float) (mJoystickBaseCenterX) + (deltaX*joystickScaleRatio));
+            mJoystickY = (int) ((float) (mJoystickBaseCenterY) + (deltaY*joystickScaleRatio));
         } else {
             mJoystickX = mJoystickBaseCenterX;
             mJoystickY = mJoystickBaseCenterY;
@@ -358,7 +347,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             if (!mFireButtonPressed) {
                 Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY +
                         " mAngle=" + mAngle + " degrees");
-                updateFirestoreFireData(X_FIELD, mX);
             }
 
             mFireButtonPressed = true;
@@ -367,49 +355,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             mFireButtonPressed = false;
             mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
         }
-    }
-
-
-    private void updateFirestoreFireData(String field, final float data) {
-        Random random = new Random();
-        final int rand = random.nextInt(1000);
-
-        mUserDocument.update(field, data)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d(TAG, "updateFirestoreFireData data=" + data);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w(TAG, "Error updating document", e);
-                    }
-                });
-
-
-        // Add a new document with a generated id.
-        Map<String, Object> map = new HashMap<>();
-        map.put("testX", mX);
-        map.put("testY", mY);
-
-        Log.d(TAG, "add to testUsers");
-
-        mFirestore.collection("testUsers")
-                .add(map)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d(TAG, "new doc with x=" + mX + " y=" + mY);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w(TAG, "Error adding document", e);
-                    }
-                });
     }
 
     /**
