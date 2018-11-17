@@ -260,8 +260,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
                     // Determine if the moving pointer is a joystick or fire button pointer
                     // If so, update the joystick or fire button data accordingly
-                    if (id == mJoystickPointerId ||
-                            mJoystickPointerId == MotionEvent.INVALID_POINTER_ID) {
+                    if (id == mJoystickPointerId) {
+                        updateJoystickData(x, y, id, action);
+                    } else if (mJoystickPointerId == MotionEvent.INVALID_POINTER_ID) {
+                        // TODO: Create survey about whether to enable this option
                         updateJoystickData(x, y, id, action);
                     } else if (id == mFireButtonPointerId){
                         updateFireButtonData(x, y, id);
