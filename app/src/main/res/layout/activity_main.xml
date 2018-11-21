@@ -17,14 +17,21 @@
         android:textSize="30sp" />
 
     <Button
-        android:id="@+id/button_play"
+        android:id="@+id/button_host"
         android:layout_width="120dp"
         android:layout_height="wrap_content"
-        android:onClick="onClickPlayButton"
-        android:text="@string/str_play" />
+        android:onClick="onClickHostButton"
+        android:text="@string/str_host" />
 
     <Button
-        android:id="@+id/button_play_test"
+        android:id="@+id/button_join"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:onClick="onClickJoinButton"
+        android:text="@string/str_join" />
+
+    <Button
+        android:id="@+id/button_test"
         android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:onClick="onClickTestButton"

@@ -3,6 +3,8 @@
 
     <!-- Main Activity - Welcome Screen -->
     <string name="str_play">Play</string>
+    <string name="str_host">Host</string>
+    <string name="str_join">Join</string>
     <string name="str_test">Test</string>
     <string name="str_settings">Settings</string>
 
@@ -14,4 +16,12 @@
     <string name="str_cancel">Cancel</string>
     <string name="str_username_exists_error">Username has already been taken.</string>
 
+    <!-- Host Activity -->
+    <string name="str_start_game">Start Game</string>
+    <string name="str_no_id_set">No ID set</string>
+    <string name="str_one_player_ready">1 Player Ready</string>
+
+    <!-- Join Activity -->
+    <string name="str_game_pin">Game PIN</string>
+    <string name="str_enter">Enter</string>
 </resources>

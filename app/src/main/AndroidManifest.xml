@@ -20,10 +20,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".PlayActivity" />
         <activity android:name=".SettingsActivity" />
         <activity android:name=".battle.BattleActivity" />
+        <activity android:name=".match.JoinActivity" />
+        <activity android:name=".match.HostActivity" />
     </application>
 
 </manifest>

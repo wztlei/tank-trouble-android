@@ -8,6 +8,8 @@ import android.view.View;
 import android.view.WindowManager;
 
 import com.wztlei.tanktrouble.battle.BattleActivity;
+import com.wztlei.tanktrouble.match.HostActivity;
+import com.wztlei.tanktrouble.match.JoinActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,13 +26,18 @@ public class MainActivity extends AppCompatActivity {
         UserUtils.initialize(this);
     }
 
-    public void onClickPlayButton(View view) {
-        //Intent intent = new Intent(this, PlayActivity.class);
-        //startActivity(intent);
-        Intent intent = new Intent(this, BattleActivity.class);
-        startActivity(intent);
-        Log.d(TAG, "onClickPlayButton");
 
+
+    public void onClickHostButton(View view) {
+        Intent intent = new Intent(this, HostActivity.class);
+        startActivity(intent);
+        Log.d(TAG, "onClickHostButton");
+    }
+
+    public void onClickJoinButton(View view) {
+        Intent intent = new Intent(this, JoinActivity.class);
+        startActivity(intent);
+        Log.d(TAG, "onClickJoinButton");
     }
 
     public void onClickTestButton(View view) {
@@ -42,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     public void onClickSettingsButton (View view) {
         Intent intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);
-    }
+        Log.d(TAG, "onClickSettingsButton");
 
+    }
 }

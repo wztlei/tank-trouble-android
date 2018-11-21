@@ -29,7 +29,7 @@
         android:textAllCaps="false"
         android:textSize="14sp"
         tools:ignore="LabelFor" />
-
+    <!--
     <TextView
         android:id="@+id/text_email"
         android:layout_width="match_parent"
@@ -49,7 +49,7 @@
         android:textAllCaps="false"
         android:textSize="14sp"
         tools:ignore="LabelFor" />
-
+        -->
     <Button
         android:id="@+id/button_randomize"
         android:layout_width="match_parent"
