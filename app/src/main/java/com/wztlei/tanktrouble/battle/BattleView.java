@@ -27,7 +27,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private UserTank mUserTank;
     private OpponentTank mOpponentTank;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
-    private int mX, mY, mAngle;
+    private int mX, mY, mDegrees;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
     private int mJoystickX, mJoystickY;
     private int mJoystickPointerId, mFireButtonPointerId;
@@ -147,11 +147,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             float velocityX = (float) (deltaX)/JOYSTICK_THRESHOLD_RADIUS;
             float velocityY = (float) (deltaY)/JOYSTICK_THRESHOLD_RADIUS;
 
-            mUserTank.moveAndRotate(velocityX, velocityY, calcAngle(deltaX, deltaY));
+            mUserTank.moveAndRotate(velocityX, velocityY, calcDegrees(deltaX, deltaY));
 
             mX = (int) mUserTank.getX();
             mY = (int) mUserTank.getY();
-            mAngle = (int) mUserTank.getAngle();
+            mDegrees = (int) mUserTank.getAngle();
         }
     }
 
@@ -347,8 +347,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Determine whether the user has touched close enough to the center of the fire button
         if (displacement <= FIRE_BUTTON_DIAMETER) {
             if (!mFireButtonPressed) {
+                mUserTank.setFirePosition();
                 Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY +
-                        " mAngle=" + mAngle + " degrees");
+                        " mDegrees=" + mDegrees + " degrees");
             }
 
             mFireButtonPressed = true;
@@ -367,7 +368,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * @param   y   the displacement in the y-axis
      * @return      the angle in degrees about the origin
      */
-    public int calcAngle(int x, int y) {
+    private int calcDegrees(int x, int y) {
         // Calculates an angle between 0 and 180 degrees
         double displacement = calcDistance(x, y);
         double angle = Math.acos(x/displacement);

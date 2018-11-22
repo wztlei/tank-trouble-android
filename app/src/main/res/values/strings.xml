@@ -19,7 +19,7 @@
     <!-- Host Activity -->
     <string name="str_start_game">Start Game</string>
     <string name="str_no_id_set">No ID set</string>
-    <string name="str_one_player_ready">1 Player Ready</string>
+    <string name="str_no_player_ready">No Players Ready</string>
 
     <!-- Join Activity -->
     <string name="str_game_pin">Game PIN</string>

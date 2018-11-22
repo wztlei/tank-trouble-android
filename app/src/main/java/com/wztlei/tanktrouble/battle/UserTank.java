@@ -21,17 +21,20 @@ import com.wztlei.tanktrouble.R;
 public class UserTank {
 
     private Bitmap mBitmap;
-    private DatabaseReference mDataRef;
-    private float mX, mY, mAngle;
+    private DatabaseReference mUserDataRef;
+    private Position firePosition;
+    private float mX, mY, mDegrees;
     private int mMapHeight, mMapWidth;
     private long prevTime;
 
-    private static final String TAG = "UserUserTank.java";
+    private static final String TAG = "WL UserTank";
     private static final String USERS_KEY = "users";
     private static final String USER_ID_KEY = "userId";
+    private static final String POS_KEY = Globals.POS_KEY;
+    private static final String FIRE_KEY = Globals.FIRE_KEY;
     private static final String X_KEY = Globals.X_KEY;
     private static final String Y_KEY = Globals.Y_KEY;
-    private static final String ANGLE_KEY = Globals.ANGLE_KEY;
+    private static final String DEGREES_KEY = Globals.DEGREES_KEY;
     private static final double SPEED_SCALE_FACTOR = 0.4;
 
     /**
@@ -46,11 +49,11 @@ public class UserTank {
 
         // Get the user document from Firestore
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
-        String mUserId = sharedPref.getString(USER_ID_KEY, "");
+        String userId = sharedPref.getString(USER_ID_KEY, "");
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
 
-        if (mUserId.length() > 0) {
-            mDataRef = database.child(USERS_KEY).child(mUserId);
+        if (userId.length() > 0) {
+            mUserDataRef = database.child(USERS_KEY).child(userId);
         } else {
             Log.e(TAG, "Warning: no user Id");
         }
@@ -102,7 +105,7 @@ public class UserTank {
     public void draw(Canvas canvas) {
 
         Matrix matrix = new Matrix();
-        matrix.setRotate(mAngle);
+        matrix.setRotate(mDegrees);
         Bitmap rotatedBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
                 mBitmap.getWidth(), mBitmap.getHeight(), matrix, false);
         canvas.drawBitmap(rotatedBitmap, mX, mY, null);
@@ -141,11 +144,13 @@ public class UserTank {
 
         // Only change the angle if the tank has moved
         if (velocityX != 0 || velocityY != 0) {
-            mAngle = angle;
-            updateDataRef(X_KEY, Math.round(mX));
-            updateDataRef(Y_KEY, Math.round(mY));
-            updateDataRef(ANGLE_KEY, Math.round(mAngle));
+            mDegrees = angle;
+            updateDataRef(POS_KEY, new Position(mX, mY,mDegrees));
         }
+    }
+
+    public void setFirePosition() {
+        updateDataRef(FIRE_KEY, new Position(mX, mY, mDegrees));
     }
 
 
@@ -156,23 +161,13 @@ public class UserTank {
      * @param key   the key of the data to be updated
      * @param value the value of the new data
      */
-    private void updateDataRef(final String key, final int value) {
-        mDataRef.child(key)
+    private void updateDataRef(final String key, final Object value) {
+        mUserDataRef.child(key)
                 .setValue(value)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        switch (key) {
-                            case X_KEY:
-                                //Log.d(TAG, "updateUserDataFloat x");
-                                break;
-                            case Y_KEY:
-                                //Log.d(TAG, "updateUserDocumentFloat y");
-                                break;
-                            case ANGLE_KEY:
-                                //Log.d(TAG, "updateUserDocumentFloat angle");
-                                break;
-                        }
+
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -192,6 +187,6 @@ public class UserTank {
     }
 
     public float getAngle() {
-        return mAngle;
+        return mDegrees;
     }
 }

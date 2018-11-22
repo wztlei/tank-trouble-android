@@ -25,11 +25,12 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:paddingBottom="20dp"
-        android:text="@string/str_one_player_ready" />
+        android:text="@string/str_no_player_ready" />
 
     <Button
         android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/str_start_game" />
+        android:text="@string/str_start_game"
+        android:onClick="onClickStartGame"/>
 </LinearLayout>

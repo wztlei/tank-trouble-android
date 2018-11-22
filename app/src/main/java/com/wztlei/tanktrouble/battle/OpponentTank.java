@@ -19,7 +19,7 @@ import com.wztlei.tanktrouble.R;
 public class OpponentTank {
     private Bitmap mBitmap;
     private DatabaseReference mDataRef;
-    private float mX, mY, mAngle;
+    private float mX, mY, mDegrees;
 
     private static final String TAG = "WL: UserTank";
     private static final String USERS_KEY = Globals.USERS_KEY;
@@ -42,12 +42,12 @@ public class OpponentTank {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 // Get Post object and use the values to update the UI
-                OpponentData opponentData = dataSnapshot.getValue(OpponentData.class);
+                Position position = dataSnapshot.getValue(Position.class);
 
-                if (opponentData != null) {
-                    mX = opponentData.x;
-                    mY = opponentData.y;
-                    mAngle = opponentData.angle;
+                if (position != null) {
+                    mX = position.x;
+                    mY = position.y;
+                    mDegrees = position.deg;
                 }
             }
 
@@ -59,8 +59,6 @@ public class OpponentTank {
 
     }
 
-
-
     /**
      * Draws the tank bitmap onto a canvas with the proper rotation.
      *
@@ -69,7 +67,7 @@ public class OpponentTank {
     public void draw(Canvas canvas) {
 
         Matrix matrix = new Matrix();
-        matrix.setRotate(mAngle);
+        matrix.setRotate(mDegrees);
         Bitmap rotatedBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
                 mBitmap.getWidth(), mBitmap.getHeight(), matrix, false);
         canvas.drawBitmap(rotatedBitmap, mX, mY, null);
