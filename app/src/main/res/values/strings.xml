@@ -24,4 +24,9 @@
     <!-- Join Activity -->
     <string name="str_game_pin">Game PIN</string>
     <string name="str_enter">Enter</string>
+
+    <!-- Wait Activity -->
+    <string name="str_you_re_in">You\'re In!</string>
+    <string name="str_waiting">Waiting for the game to start …</string>
+
 </resources>

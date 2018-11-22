@@ -4,19 +4,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:layout_marginLeft="50dp"
-    android:layout_marginRight="50dp"
+    android:layout_marginLeft="100dp"
+    android:layout_marginRight="100dp"
     android:gravity="center_vertical|center"
     tools:context=".match.JoinActivity">
 
     <EditText
-        android:id="@+id/edit_game_id"
+        android:id="@+id/edit_game_pin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:gravity="center"
         android:hint="@string/str_game_pin"
-        android:inputType="number" />
+        android:inputType="number"
+        tools:ignore="TextFields" />
 
     <Button
         android:id="@+id/button_enter"

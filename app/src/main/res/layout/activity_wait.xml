@@ -3,34 +3,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="100dp"
-    android:layout_marginRight="100dp"
-    android:gravity="center_vertical|center"
     android:orientation="vertical"
-    tools:context=".match.HostActivity">
-
+    android:layout_marginLeft="50dp"
+    android:layout_marginRight="50dp"
+    android:gravity="center_vertical|center"
+    tools:context=".match.WaitActivity">
 
     <TextView
-        android:id="@+id/text_game_pin"
+        android:id="@+id/text_you_re_in"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:paddingBottom="20dp"
-        android:text="@string/str_no_id_set"
+        android:text="@string/str_you_re_in"
         android:textSize="30sp" />
 
     <TextView
-        android:id="@+id/text_players_ready"
+        android:id="@+id/text_waiting"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:paddingBottom="20dp"
-        android:text="@string/str_no_player_ready" />
+        android:text="@string/str_waiting"
+        android:textSize="18sp" />
 
-    <Button
-        android:id="@+id/button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/str_start_game"
-        android:onClick="onClickStartGame"/>
 </LinearLayout>

@@ -24,6 +24,7 @@
         <activity android:name=".battle.BattleActivity" />
         <activity android:name=".match.JoinActivity" />
         <activity android:name=".match.HostActivity" />
+        <activity android:name=".match.WaitActivity"></activity>
     </application>
 
 </manifest>

@@ -24,15 +24,13 @@ import java.util.Random;
 
 public class HostActivity extends AppCompatActivity {
 
-    private TextView mTextGamePin;
     private TextView mTextPlayersReady;
-    private DatabaseReference mGamesDataRef;
-    private int mGamePin;
-    private ArrayList<String> testPlayers = new ArrayList<>();
-
+    private DatabaseReference mGameDataRef;
+    private String mGamePinStr;
 
     private static final String TAG = "WL: HostActivity";
     private static final String GAMES_KEY = Globals.GAMES_KEY;
+    private static final String USER_ID_KEY = Globals.USER_ID_KEY;
     private static final int MIN_GAME_PIN = 1000;
     private static final int MAX_GAME_PIN = 9999;
 
@@ -42,35 +40,52 @@ public class HostActivity extends AppCompatActivity {
         setContentView(R.layout.activity_host);
 
         // Display and set the game PIN
-        mTextGamePin = findViewById(R.id.text_game_pin);
+        TextView mTextGamePin = findViewById(R.id.text_game_pin);
         mTextPlayersReady = findViewById(R.id.text_players_ready);
-        mGamePin = randomInt(MIN_GAME_PIN, MAX_GAME_PIN);
-        String gamePinStr = Integer.toString(mGamePin);
-        mTextGamePin.setText(gamePinStr);
+        mTextGamePin.setText(mGamePinStr);
+
+        //
+        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+
+        database.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.hasChild(mGamePinStr)) {
+                    mGamePinStr = Integer.toString(randomInt(MIN_GAME_PIN, MAX_GAME_PIN));
+                } else {
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
 
         // Get the user id
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String userId = sharedPref.getString(GAMES_KEY, "");
+        String userId = sharedPref.getString(USER_ID_KEY, "");
 
         if (userId.length() > 0) {
             ArrayList<String> players = new ArrayList<>();
             players.add(userId);
 
-            DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-            mGamesDataRef = database.child(GAMES_KEY);
-            mGamesDataRef.child(Integer.toString(mGamePin))
-                    .setValue(players);
 
-            mGamesDataRef.addValueEventListener(new ValueEventListener() {
+            mGameDataRef = database.child(GAMES_KEY).child(Integer.toString(mGamePin));
+            mGameDataRef.setValue(players);
+
+            mGameDataRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    ArrayList players = dataSnapshot.getValue(ArrayList.class);
+                    int numPlayers = (int) dataSnapshot.getChildrenCount();
 
-                    if (players == null) {
-                        Log.d(TAG, "Null players");
+                    if (numPlayers == 1) {
+                        String newPlayersReadyText = "1 Player Ready";
+                        mTextPlayersReady.setText(newPlayersReadyText);
+
                     } else {
-                        int numPlayers = players.size();
-                        String newPlayersReadyText = numPlayers + "Players Ready";
+                        String newPlayersReadyText = numPlayers + " Players Ready";
                         mTextPlayersReady.setText(newPlayersReadyText);
                     }
                 }
@@ -80,12 +95,13 @@ public class HostActivity extends AppCompatActivity {
 
                 }
             });
-            // TODO: Listen for people joining the game
 
         } else {
             Log.e(TAG, "Warning: no user Id");
         }
+    }
 
+    private void setRandomGamePin() {
 
     }
 
@@ -96,11 +112,24 @@ public class HostActivity extends AppCompatActivity {
     }
 
     public void onClickStartGame(View view) {
-        testPlayers.add("asd");
+        mGamePinStr = Integer.toString(randomInt(MIN_GAME_PIN, MAX_GAME_PIN));
 
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-        mGamesDataRef = database.child(GAMES_KEY);
-        mGamesDataRef.child(Integer.toString(mGamePin))
-                .setValue(testPlayers);
+
+        database.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.hasChild(mGamePinStr)) {
+                    mGamePinStr = Integer.toString(randomInt(MIN_GAME_PIN, MAX_GAME_PIN));
+                } else {
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 }
