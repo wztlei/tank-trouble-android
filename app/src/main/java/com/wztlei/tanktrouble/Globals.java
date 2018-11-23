@@ -10,4 +10,7 @@ public class Globals {
     public static final String Y_KEY = "y";
     public static final String DEGREES_KEY = "deg";
     public static final String GAMES_KEY = "games";
+    public static final String GAME_PIN_KEY = "pin";
+    public static final String STARTED_KEY = "started";
+    public static final String OPPONENT_IDS_KEY = "opponents";
 }
