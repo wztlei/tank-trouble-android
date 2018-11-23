@@ -2,6 +2,10 @@ package com.wztlei.tanktrouble.battle;
 
 public class Position {
 
+    Position(){
+
+    }
+
     Position(int x, int y, int deg) {
         this.x = x;
         this.y = y;

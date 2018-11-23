@@ -16,7 +16,6 @@ public class BattleActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(new BattleView(this));
 
 
         Bundle intentBundle = getIntent().getExtras();
@@ -27,7 +26,13 @@ public class BattleActivity extends AppCompatActivity {
             } else {
                 Log.d(TAG, "opponentIds=null");
             }
+            setContentView(new BattleView(this, opponentIds));
+
+        } else {
+            setContentView(new BattleView(this, new ArrayList<String>()));
         }
+
+
 
     }
 }

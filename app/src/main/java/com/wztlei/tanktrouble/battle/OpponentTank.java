@@ -18,11 +18,12 @@ import com.wztlei.tanktrouble.R;
 
 public class OpponentTank {
     private Bitmap mBitmap;
-    private DatabaseReference mDataRef;
+    private DatabaseReference mPosDataRef;
     private float mX, mY, mDegrees;
 
     private static final String TAG = "WL: UserTank";
     private static final String USERS_KEY = Globals.USERS_KEY;
+    private static final String POS_KEY = Globals.POS_KEY;
 
 
     OpponentTank(Activity activity, String opponentId) {
@@ -33,15 +34,15 @@ public class OpponentTank {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
 
         if (opponentId.length() > 0) {
-            mDataRef = database.child(USERS_KEY).child(opponentId);
+            mPosDataRef = database.child(USERS_KEY).child(opponentId).child(POS_KEY);
         } else {
             Log.e(TAG, "Warning: no user Id");
         }
 
-        mDataRef.addValueEventListener(new ValueEventListener() {
+        mPosDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // Get Post object and use the values to update the UI
+                // Get position object and use the values to update the UI
                 Position position = dataSnapshot.getValue(Position.class);
 
                 if (position != null) {

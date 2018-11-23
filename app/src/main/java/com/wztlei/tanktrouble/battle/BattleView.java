@@ -16,6 +16,8 @@ import android.view.View;
 
 import com.wztlei.tanktrouble.R;
 
+import java.util.ArrayList;
+
 @SuppressLint("ViewConstructor")
 public class BattleView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
 
@@ -23,9 +25,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private Bitmap mFireBitmap, mFirePressedBitmap;
     private Canvas mCanvas;
     private BattleThread mBattleThread;
-
     private UserTank mUserTank;
     private OpponentTank mOpponentTank;
+    private ArrayList<String> mOpponentIds;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
     private int mX, mY, mDegrees;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
@@ -46,7 +48,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      *
      * @param activity the activity in which the battle view is instantiated
      */
-    public BattleView(Activity activity) {
+    public BattleView(Activity activity, ArrayList<String> opponentIds) {
         super(activity);
         mActivity = activity;
         Log.i(TAG, "BattleView");
@@ -57,6 +59,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mBattleThread = new BattleThread(getHolder(), this);
         setFocusable(true);
         setGraphicsData();
+        mOpponentIds = opponentIds;
+
+        setOnTouchListener(this);
+
         //ZTE A1R Axon - Me
         //screen-width=1080
         //screen-height=1920
@@ -64,7 +70,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Samsung - Suyog
         //screen-width=540
         //screen-height=960
-        setOnTouchListener(this);
     }
 
     public void setCanvas(Canvas canvas) {
@@ -78,8 +83,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     public void surfaceCreated(SurfaceHolder holder) {
         mUserTank = new UserTank(mActivity);
 
-        // TODO: Avoid hard-coding opponent's ID
-        mOpponentTank = new OpponentTank(mActivity, "-LRKL4qzZp6o276BM2r2");
+        for (String opponentId : mOpponentIds) {
+            mOpponentTank = new OpponentTank(mActivity, opponentId);
+
+        }
 
         mBattleThread.setRunning(true);
         mBattleThread.start();
@@ -142,8 +149,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Only move and rotate the tank if the user has moved the joystick
         if (calcDistance(deltaX, deltaY) <= JOYSTICK_THRESHOLD_RADIUS) {
-            Log.d(TAG, "x="+deltaX);
-
             float velocityX = (float) (deltaX)/JOYSTICK_THRESHOLD_RADIUS;
             float velocityY = (float) (deltaY)/JOYSTICK_THRESHOLD_RADIUS;
 
