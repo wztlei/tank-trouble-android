@@ -45,9 +45,8 @@ public class BattleThread extends Thread {
                 // Draws the new canvas
                 synchronized (mSurfaceHolder) {
                     this.mBattleView.update();
-                    this.mBattleView.setCanvas(canvas);
 
-                    if (canvas != null) {
+                    if (canvas != null && mBattleView != null) {
                         this.mBattleView.draw(canvas);
                     }
                 }

@@ -15,6 +15,7 @@ import android.view.SurfaceView;
 import android.view.View;
 
 import com.wztlei.tanktrouble.R;
+import com.wztlei.tanktrouble.UserUtils;
 
 import java.util.ArrayList;
 
@@ -23,10 +24,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
     private Activity mActivity;
     private Bitmap mFireBitmap, mFirePressedBitmap;
-    private Canvas mCanvas;
     private BattleThread mBattleThread;
     private UserTank mUserTank;
-    private OpponentTank mOpponentTank;
+    private ArrayList<OpponentTank> mOpponentTanks;
     private ArrayList<String> mOpponentIds;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
     private int mX, mY, mDegrees;
@@ -34,7 +34,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private int mJoystickX, mJoystickY;
     private int mJoystickPointerId, mFireButtonPointerId;
     private boolean mFireButtonPressed;
-
 
     private static final String TAG = "WL: BattleView.java";
     private static final int JOYSTICK_BASE_RADIUS = 165;
@@ -60,6 +59,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         setFocusable(true);
         setGraphicsData();
         mOpponentIds = opponentIds;
+        mOpponentTanks = new ArrayList<>();
 
         setOnTouchListener(this);
 
@@ -70,10 +70,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Samsung - Suyog
         //screen-width=540
         //screen-height=960
-    }
 
-    public void setCanvas(Canvas canvas) {
-        this.mCanvas = canvas;
+        // Acer - Mom
+        // sScreenWidth=720
+        // sScreenHeight=1280
     }
 
     @Override
@@ -84,8 +84,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mUserTank = new UserTank(mActivity);
 
         for (String opponentId : mOpponentIds) {
-            mOpponentTank = new OpponentTank(mActivity, opponentId);
-
+            mOpponentTanks.add(new OpponentTank(mActivity, opponentId));
         }
 
         mBattleThread.setRunning(true);
@@ -113,11 +112,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      */
     private void setGraphicsData() {
         // Get the height and width of the device in pixels
-        int mScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
-        int mScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+        int screenHeight = UserUtils.getScreenHeight();
+        int screenWidth = UserUtils.getScreenWidth();
 
-        Log.d(TAG, "screen-width=" + mScreenWidth);
-        Log.d(TAG, "screen-height=" + mScreenHeight);
+        Log.d(TAG, "screen-width=" + screenWidth);
+        Log.d(TAG, "screen-height=" + screenHeight);
 
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
         mFireBitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeResource
@@ -129,10 +128,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Set the center of the joystick base, the center of the fire button,
         // and the starting touch events
         mJoystickBaseCenterX = CONTROL_X_MARGIN + JOYSTICK_BASE_RADIUS;
-        mJoystickBaseCenterY = mScreenHeight - 200 - JOYSTICK_BASE_RADIUS;
+        mJoystickBaseCenterY = screenHeight - 200 - JOYSTICK_BASE_RADIUS;
         mJoystickX = mJoystickBaseCenterX;
         mJoystickY = mJoystickBaseCenterY;
-        mFireButtonOffsetX = (int)(mScreenWidth - CONTROL_X_MARGIN*1.5 - FIRE_BUTTON_DIAMETER);
+        mFireButtonOffsetX = (int)(screenWidth - CONTROL_X_MARGIN*1.5 - FIRE_BUTTON_DIAMETER);
         mFireButtonOffsetY =  mJoystickBaseCenterY - FIRE_BUTTON_DIAMETER/2;
         mJoystickPointerId = MotionEvent.INVALID_POINTER_ID;
         mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
@@ -179,6 +178,20 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Draw the actual joystick controller of the joystick
         colors.setARGB(255, 79, 121, 255);
         canvas.drawCircle(mJoystickX, mJoystickY, controlRadius, colors);
+
+        for (int i = 1200; i < 2000; i+=20) {
+            canvas.drawCircle(100, i, 5, colors);
+        }
+
+        canvas.drawCircle(200, 1800,5, colors);
+        canvas.drawCircle(200, 1820,5, colors);
+        canvas.drawCircle(200, 1840,5, colors);
+        canvas.drawCircle(200, 1860,5, colors);
+        canvas.drawCircle(200, 1880,5, colors);
+        canvas.drawCircle(200, 1900,5, colors);
+        canvas.drawCircle(200, 1920,5, colors);
+
+
     }
 
     /**
@@ -209,10 +222,14 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     public void draw(Canvas canvas) {
         super.draw(canvas);
         canvas.drawColor(Color.WHITE);
-        mUserTank.draw(canvas);
-        mOpponentTank.draw(canvas);
+
         drawFireButton(canvas);
-        drawJoystick(mCanvas);
+        drawJoystick(canvas);
+        mUserTank.draw(canvas);
+
+        for (OpponentTank opponentTank : mOpponentTanks) {
+            opponentTank.draw(canvas);
+        }
     }
 
     /**

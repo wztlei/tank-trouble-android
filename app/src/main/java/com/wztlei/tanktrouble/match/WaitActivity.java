@@ -16,6 +16,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.Globals;
 import com.wztlei.tanktrouble.R;
+import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.BattleActivity;
 
 import java.util.ArrayList;
@@ -26,7 +27,6 @@ public class WaitActivity extends AppCompatActivity {
     private String mUserId;
 
     private static final String TAG = "WL: WaitActivity";
-    private static final String USER_ID_KEY = Globals.USER_ID_KEY;
     private static final String GAMES_KEY = Globals.GAMES_KEY;
     private static final String GAME_PIN_KEY = Globals.GAME_PIN_KEY;
     private static final String STARTED_KEY = Globals.STARTED_KEY;
@@ -38,19 +38,13 @@ public class WaitActivity extends AppCompatActivity {
         setContentView(R.layout.activity_wait);
 
         Bundle intentBundle = getIntent().getExtras();
-
-        // Get the user ID
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mUserId = sharedPref.getString(USER_ID_KEY, "");
+        mUserId = UserUtils.getUserId();
 
         if (intentBundle != null) {
             mGamePinStr = intentBundle.getString(GAME_PIN_KEY);
-
             if (mGamePinStr != null) {
                 waitForGameToStart(mGamePinStr);
             }
-
-            Log.d(TAG, "mGamePinStr=" + mGamePinStr);
         }
     }
 

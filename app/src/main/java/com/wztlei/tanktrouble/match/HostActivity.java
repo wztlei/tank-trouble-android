@@ -20,6 +20,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.Globals;
 import com.wztlei.tanktrouble.R;
+import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.BattleActivity;
 import com.wztlei.tanktrouble.battle.Position;
 
@@ -36,7 +37,6 @@ public class HostActivity extends AppCompatActivity {
 
     private static final String TAG = "WL: HostActivity";
     private static final String GAMES_KEY = Globals.GAMES_KEY;
-    private static final String USER_ID_KEY = Globals.USER_ID_KEY;
     private static final String STARTED_KEY = Globals.STARTED_KEY;
     private static final String OPPONENT_IDS_KEY = Globals.OPPONENT_IDS_KEY;
     private static final int MIN_GAME_PIN = 1000;
@@ -52,8 +52,7 @@ public class HostActivity extends AppCompatActivity {
         mGamesDataRef = database.child(GAMES_KEY);
 
         // Get the user id
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mUserId = sharedPref.getString(USER_ID_KEY, "");
+        mUserId = UserUtils.getUserId();
 
         // Set the random game PIN
         hostGameWithRandomPin();

@@ -20,6 +20,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.Globals;
 import com.wztlei.tanktrouble.R;
+import com.wztlei.tanktrouble.UserUtils;
 
 public class JoinActivity extends AppCompatActivity {
 
@@ -30,7 +31,6 @@ public class JoinActivity extends AppCompatActivity {
 
     private static final String GAMES_KEY = Globals.GAMES_KEY;
     private static final String GAME_PIN_KEY = Globals.GAME_PIN_KEY;
-    private static final String USER_ID_KEY = Globals.USER_ID_KEY;
     private static final String TAG = "WL: JoinActivity";
 
     @Override
@@ -42,15 +42,13 @@ public class JoinActivity extends AppCompatActivity {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         mGamesDataRef = database.child(GAMES_KEY);
 
-        // Get the user ID
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mUserId = sharedPref.getString(USER_ID_KEY, "");
 
         // Log an error if there is no user ID
         if (mUserId.length() == 0) {
             Log.e(TAG, "No user ID set");
         }
 
+        mUserId = UserUtils.getUserId();
         mWaitActivityStarting = false;
     }
 

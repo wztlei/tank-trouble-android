@@ -2,15 +2,23 @@ package com.wztlei.tanktrouble;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.res.Resources;
+import android.graphics.Point;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.lang.reflect.Method;
 import java.util.Random;
 
 public class UserUtils {
@@ -20,11 +28,12 @@ public class UserUtils {
     private static String[] sNounList;
     private static String sUsername;
     private static String sUserId;
+    private static int sScreenWidth, sScreenHeight;
 
     private static final String USERS_KEY = Globals.USERS_KEY;
     private static final String USER_ID_KEY = Globals.USER_ID_KEY;
     private static final String USERNAME_KEY = Globals.USERNAME_KEY;
-    private static final String TAG = "WL: DatabaseUtils";
+    private static final String TAG = "WL: UserUtils";
 
     public static void initialize(Activity activity) {
         // Get the lists of words to create random usernames
@@ -41,10 +50,28 @@ public class UserUtils {
 
         // Set the username data in various locations
         setUsername(sUsername);
+
+        sScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+        sScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+
+        setScreenSize(activity);
+
         Log.d(TAG, "sUserId=" + sUserId);
         Log.d(TAG, "sUsername=" + sUsername);
+        Log.d(TAG, "sScreenWidth=" + sScreenWidth);
+        Log.d(TAG, "sScreenHeight=" + sScreenHeight);
     }
 
+
+    private static void setScreenSize(Activity activity) {
+        Display display = activity.getWindowManager().getDefaultDisplay();
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        DisplayMetrics metrics = new DisplayMetrics();
+        display.getMetrics(metrics)
+        sScreenHeight = metrics.;
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        sScreenWidth = metrics.getWidth();
+    }
 
     /**
      * Sets a new username and calls the appropriate function depending on whether this is the
@@ -161,6 +188,12 @@ public class UserUtils {
     public static String getUsername() {
         return sUsername;
     }
+    public static String getUserId() {
+        return sUserId;
+    }
+    public static int getScreenWidth() { return sScreenWidth; }
+    public static int getScreenHeight() { return sScreenHeight; }
 
-    
+
+
 }

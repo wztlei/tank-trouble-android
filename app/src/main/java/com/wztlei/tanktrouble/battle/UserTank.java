@@ -17,6 +17,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.wztlei.tanktrouble.Globals;
 import com.wztlei.tanktrouble.R;
+import com.wztlei.tanktrouble.UserUtils;
 
 public class UserTank {
 
@@ -29,12 +30,8 @@ public class UserTank {
 
     private static final String TAG = "WL UserTank";
     private static final String USERS_KEY = "users";
-    private static final String USER_ID_KEY = "userId";
     private static final String POS_KEY = Globals.POS_KEY;
     private static final String FIRE_KEY = Globals.FIRE_KEY;
-    private static final String X_KEY = Globals.X_KEY;
-    private static final String Y_KEY = Globals.Y_KEY;
-    private static final String DEGREES_KEY = Globals.DEGREES_KEY;
     private static final double SPEED_SCALE_FACTOR = 0.4;
 
     /**
@@ -48,8 +45,7 @@ public class UserTank {
         mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.blue_tank);
 
         // Get the user document from Firestore
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(activity);
-        String userId = sharedPref.getString(USER_ID_KEY, "");
+        String userId = UserUtils.getUserId();
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
 
         if (userId.length() > 0) {
@@ -124,23 +120,29 @@ public class UserTank {
         long deltaTime = newTime - prevTime;
         prevTime = newTime;
 
+        float oldX = mX;
+        float oldY = mY;
+
         // Set the new x and y coordinates assuming the tank can move there
         mX += velocityX * deltaTime * SPEED_SCALE_FACTOR;
         mY += velocityY * deltaTime * SPEED_SCALE_FACTOR;
 
+
         // Force the tank to remain within the map horizontally
-        if (mX < 0) {
-            mX = 0;
-        } else if (mX > mMapWidth) {
-            mX = mMapWidth;
+        if (mX < 0 || mX > mMapWidth) {
+            mX = oldX;
         }
 
         // Force the tank to remain within the map vertically
-        if (mY < 0) {
-            mY = 0;
-        } else if (mY > mMapHeight) {
-            mY = mMapHeight;
+        if (mY < 0 || mY > mMapHeight) {
+            mY = oldY;
         }
+
+        /* TODO: Move tank if hitting a wall?
+        if (mX < 0 || mX > mMapWidth || mY < 0 || mY > mMapHeight) {
+            mX = oldX;
+            mY = oldY;
+        }*/
 
         // Only change the angle if the tank has moved
         if (velocityX != 0 || velocityY != 0) {
