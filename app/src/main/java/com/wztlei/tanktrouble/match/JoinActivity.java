@@ -3,11 +3,9 @@ package com.wztlei.tanktrouble.match;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -42,14 +40,14 @@ public class JoinActivity extends AppCompatActivity {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         mGamesDataRef = database.child(GAMES_KEY);
 
-
-        // Log an error if there is no user ID
-        if (mUserId.length() == 0) {
-            Log.e(TAG, "No user ID set");
-        }
-
         mUserId = UserUtils.getUserId();
         mWaitActivityStarting = false;
+
+
+        // Log an error if there is no user ID
+        if (mUserId != null && mUserId.length() == 0) {
+            Log.e(TAG, "No user ID set");
+        }
     }
 
     @Override

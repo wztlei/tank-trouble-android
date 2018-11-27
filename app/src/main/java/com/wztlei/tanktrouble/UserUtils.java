@@ -2,15 +2,10 @@ package com.wztlei.tanktrouble;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
-import android.content.res.Resources;
-import android.graphics.Point;
-import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.WindowManager;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -18,7 +13,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import java.lang.reflect.Method;
 import java.util.Random;
 
 public class UserUtils {
@@ -36,6 +30,8 @@ public class UserUtils {
     private static final String TAG = "WL: UserUtils";
 
     public static void initialize(Activity activity) {
+        Log.d(TAG, "initialize UserUtils");
+
         // Get the lists of words to create random usernames
         sAdjectiveList = activity.getResources().getStringArray(R.array.adjective_list);
         sNounList = activity.getResources().getStringArray(R.array.noun_list);
@@ -51,8 +47,8 @@ public class UserUtils {
         // Set the username data in various locations
         setUsername(sUsername);
 
-        sScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
-        sScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+        //sScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+        //sScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
 
         setScreenSize(activity);
 
@@ -63,14 +59,28 @@ public class UserUtils {
     }
 
 
+    /**
+     * Sets the screen height and width in pixels, accounting for the status bar height.
+     *
+     * @param activity the activity from which the method is called
+     */
     private static void setScreenSize(Activity activity) {
-        Display display = activity.getWindowManager().getDefaultDisplay();
-        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        DisplayMetrics metrics = new DisplayMetrics();
-        display.getMetrics(metrics)
-        sScreenHeight = metrics.;
-        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        sScreenWidth = metrics.getWidth();
+        WindowManager wm = (WindowManager) activity.getSystemService(Activity.WINDOW_SERVICE);
+
+        if (wm != null) {
+            DisplayMetrics metrics = new DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+            int statusBarHeight = 0;
+            int resourceId = activity.getResources().getIdentifier
+                    ("status_bar_height", "dimen", "android");
+            if (resourceId > 0) {
+                statusBarHeight = activity.getResources().getDimensionPixelSize(resourceId);
+            }
+
+            sScreenWidth = metrics.widthPixels;
+            sScreenHeight = metrics.heightPixels - statusBarHeight;
+        }
     }
 
     /**

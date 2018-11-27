@@ -26,8 +26,6 @@ public class MainActivity extends AppCompatActivity {
         UserUtils.initialize(this);
     }
 
-
-
     public void onClickHostButton(View view) {
         Intent intent = new Intent(this, HostActivity.class);
         startActivity(intent);
