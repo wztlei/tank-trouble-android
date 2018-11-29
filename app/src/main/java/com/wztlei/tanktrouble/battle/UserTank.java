@@ -147,7 +147,7 @@ public class UserTank {
         // Only change the angle if the tank has moved
         if (velocityX != 0 || velocityY != 0) {
             mDegrees = angle;
-            updateDataRef(POS_KEY, new Position(mX, mY,mDegrees));
+            updateDataRef(POS_KEY, new Position(mX, mY, mDegrees));
         }
     }
 

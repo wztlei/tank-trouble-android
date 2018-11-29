@@ -204,7 +204,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             double x = mFireButtonOffsetX + (mFireButtonDiameter-mFireButtonPressedDiameter)/2;
             double y = mJoystickBaseCenterY - mFireButtonPressedDiameter/2;
             canvas.drawBitmap(mFirePressedBitmap, (int) x, (int) y, null);
-
         } else {
             canvas.drawBitmap(mFireBitmap, mFireButtonOffsetX, mFireButtonOffsetY, null);
         }

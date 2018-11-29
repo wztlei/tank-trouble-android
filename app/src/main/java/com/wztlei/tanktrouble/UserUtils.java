@@ -47,9 +47,6 @@ public class UserUtils {
         // Set the username data in various locations
         setUsername(sUsername);
 
-        //sScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
-        //sScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
-
         setScreenSize(activity);
 
         Log.d(TAG, "sUserId=" + sUserId);
