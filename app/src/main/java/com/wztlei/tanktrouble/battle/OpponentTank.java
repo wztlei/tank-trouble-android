@@ -15,20 +15,26 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.Globals;
 import com.wztlei.tanktrouble.R;
+import com.wztlei.tanktrouble.UserUtils;
 
 public class OpponentTank {
     private Bitmap mBitmap;
     private DatabaseReference mPosDataRef;
     private float mX, mY, mDegrees;
 
-    private static final String TAG = "WL: UserTank";
+    private static final String TAG = "WL/UserTank";
     private static final String USERS_KEY = Globals.USERS_KEY;
     private static final String POS_KEY = Globals.POS_KEY;
-
+    private static final float TANK_WIDTH_SCALE = Globals.TANK_WIDTH_SCALE;
+    private static final float TANK_HEIGHT_SCALE = Globals.TANK_HEIGHT_SCALE;
 
     OpponentTank(Activity activity, String opponentId) {
+        int tankWidth = Math.round(UserUtils.getScreenWidth() * TANK_WIDTH_SCALE);
+        int tankHeight = Math.round(UserUtils.getScreenWidth() * TANK_HEIGHT_SCALE);
+
         // Get the red tank bitmap since it is an opponent's tank
         mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.red_tank);
+        mBitmap = Bitmap.createScaledBitmap(mBitmap, tankWidth, tankHeight, false);
 
         // Get the user document from Firestore
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
@@ -46,6 +52,8 @@ public class OpponentTank {
                 Position position = dataSnapshot.getValue(Position.class);
 
                 if (position != null) {
+                    position.setIsStandardized(true);
+                    position.scalePosition();
                     mX = position.x;
                     mY = position.y;
                     mDegrees = position.deg;

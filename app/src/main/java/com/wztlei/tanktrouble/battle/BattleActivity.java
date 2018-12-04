@@ -11,7 +11,7 @@ import java.util.ArrayList;
 public class BattleActivity extends AppCompatActivity {
 
     private static final String OPPONENT_IDS_KEY = Globals.OPPONENT_IDS_KEY;
-    private static final String TAG = "WL: BattleActivity";
+    private static final String TAG = "WL/BattleActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

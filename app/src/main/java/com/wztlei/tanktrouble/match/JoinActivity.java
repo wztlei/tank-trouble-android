@@ -29,7 +29,7 @@ public class JoinActivity extends AppCompatActivity {
 
     private static final String GAMES_KEY = Globals.GAMES_KEY;
     private static final String GAME_PIN_KEY = Globals.GAME_PIN_KEY;
-    private static final String TAG = "WL: JoinActivity";
+    private static final String TAG = "WL/JoinActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

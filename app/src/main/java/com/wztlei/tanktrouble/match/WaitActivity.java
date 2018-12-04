@@ -26,7 +26,7 @@ public class WaitActivity extends AppCompatActivity {
     private String mGamePinStr;
     private String mUserId;
 
-    private static final String TAG = "WL: WaitActivity";
+    private static final String TAG = "WL/WaitActivity";
     private static final String GAMES_KEY = Globals.GAMES_KEY;
     private static final String GAME_PIN_KEY = Globals.GAME_PIN_KEY;
     private static final String STARTED_KEY = Globals.STARTED_KEY;

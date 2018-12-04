@@ -1,5 +1,10 @@
 package com.wztlei.tanktrouble.battle;
 
+import android.util.Log;
+
+import com.google.firebase.database.Exclude;
+import com.wztlei.tanktrouble.UserUtils;
+
 public class Position {
 
 
@@ -21,13 +26,39 @@ public class Position {
 
     Position() {}
 
-    Position(float x, float y, float deg) {
+    public float x, y, deg;
+
+    @Exclude
+    private boolean isStandardized;
+
+    Position(float x, float y, float deg, boolean isStandardized) {
         this.x = x;
         this.y = y;
         this.deg = deg;
+        this.isStandardized = isStandardized;
     }
 
-    public float x;
-    public float y;
-    public float deg;
+    public void setIsStandardized(boolean isStandardized) {
+        this.isStandardized = isStandardized;
+    }
+
+    public void standardizePosition() {
+        if (!isStandardized) {
+            float screenScale = UserUtils.getScreenScale();
+            x /= screenScale;
+            y /= screenScale;
+            isStandardized = true;
+        }
+    }
+
+    public void scalePosition() {
+        if (isStandardized) {
+            float screenScale = UserUtils.getScreenScale();
+            x *= screenScale;
+            y *= screenScale;
+            isStandardized = false;
+        }
+    }
+
+
 }

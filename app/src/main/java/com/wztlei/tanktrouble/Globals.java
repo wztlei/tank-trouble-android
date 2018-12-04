@@ -10,4 +10,9 @@ public class Globals {
     public static final String GAME_PIN_KEY = "pin";
     public static final String STARTED_KEY = "started";
     public static final String OPPONENT_IDS_KEY = "opponents";
+
+    public static final float TANK_WIDTH_SCALE = 110/1080f;
+    public static final float TANK_HEIGHT_SCALE = 66/1080f;
+    public static final float TANK_MIN_Y_SCALE = 180/1080f;
+    public static final float TANK_MAX_Y_SCALE = TANK_MIN_Y_SCALE + 1;
 }

@@ -32,13 +32,13 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private int mFireButtonOffsetX, mFireButtonOffsetY;
     private int mJoystickX, mJoystickY;
     private int mJoystickPointerId, mFireButtonPointerId;
-    private int mJoystickBaseRadius, mJoystickThresholdRadius;
+    private int mJoystickBaseRadius, mJoystickThresholdRadius, mJoystickMaxDisplacement;
     private int mFireButtonDiameter, mFireButtonPressedDiameter;
     private boolean mFireButtonPressed;
 
-    private static final String TAG = "WL: BattleView.java";
+    private static final String TAG = "WL/BattleView";
     private static final float JOYSTICK_BASE_RADIUS_SCALE = (float) 165/1080;
-    private static final float JOYSTICK_THRESHOLD_RADIUS_SCALE = (float) 200/1080;
+    private static final float JOYSTICK_THRESHOLD_RADIUS_SCALE = (float) 220/1080;
     private static final float CONTROL_X_MARGIN_SCALE = (float) 110/1080;
     private static final float FIRE_BUTTON_DIAMETER_SCALE = (float) 200/1080;
     private static final float FIRE_BUTTON_PRESSED_DIAMETER_SCALE = (float) 150/1080;
@@ -116,7 +116,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         float screenHeight = UserUtils.getScreenHeight();
         float screenWidth = UserUtils.getScreenWidth();
         int controlXMargin = (int) (screenWidth * CONTROL_X_MARGIN_SCALE);
-        int controlYMargin = (int) Math.round(1.6 * controlXMargin);
+        int controlYMargin = (int) Math.round(1.5 * controlXMargin);
 
 
         // Set the joystick, fire button, and control data
@@ -124,14 +124,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mFireButtonPressedDiameter = Math.round(screenWidth * FIRE_BUTTON_PRESSED_DIAMETER_SCALE);
         mJoystickBaseRadius = Math.round(screenWidth * JOYSTICK_BASE_RADIUS_SCALE);
         mJoystickThresholdRadius = Math.round(screenWidth * JOYSTICK_THRESHOLD_RADIUS_SCALE);
-
-        Log.d(TAG, "mFireButtonDiameter=" + mFireButtonDiameter);
-        Log.d(TAG, "FIRE_BUTTON_DIAMETER_SCALE" + FIRE_BUTTON_DIAMETER_SCALE);
-        Log.d(TAG, "screen-height=" + screenHeight);
+        mJoystickMaxDisplacement = Math.round(mJoystickBaseRadius * 0.9f);
 
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
-        mFireBitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeResource
-                        (mActivity.getResources(), R.drawable.crosshairs),
+        mFireBitmap = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource (mActivity.getResources(), R.drawable.crosshairs),
                 mFireButtonDiameter, mFireButtonDiameter, false);
         mFirePressedBitmap = Bitmap.createScaledBitmap(mFireBitmap,
                 mFireButtonPressedDiameter, mFireButtonPressedDiameter, false);
@@ -157,17 +154,14 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         int deltaX = mJoystickX-mJoystickBaseCenterX;
         int deltaY = mJoystickY-mJoystickBaseCenterY;
 
-        // Only move and rotate the tank if the user has moved the joystick
-        if (calcDistance(deltaX, deltaY) <= mJoystickThresholdRadius) {
-            float velocityX = (float) (deltaX)/mJoystickThresholdRadius;
-            float velocityY = (float) (deltaY)/mJoystickThresholdRadius;
+        float velocityX = (float) (deltaX)/mJoystickThresholdRadius;
+        float velocityY = (float) (deltaY)/mJoystickThresholdRadius;
 
-            mUserTank.moveAndRotate(velocityX, velocityY, calcDegrees(deltaX, deltaY));
+        mUserTank.moveAndRotate(velocityX, velocityY, calcDegrees(deltaX, deltaY));
 
-            mX = (int) mUserTank.getX();
-            mY = (int) mUserTank.getY();
-            mDegrees = (int) mUserTank.getAngle();
-        }
+        mX = (int) mUserTank.getX();
+        mY = (int) mUserTank.getY();
+        mDegrees = (int) mUserTank.getAngle();
     }
 
     /**
@@ -201,8 +195,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Determine whether to draw the smaller pressed fire button bitmap
         // or the larger unpressed fire button bitmap
         if (mFireButtonPressed) {
-            double x = mFireButtonOffsetX + (mFireButtonDiameter-mFireButtonPressedDiameter)/2;
-            double y = mJoystickBaseCenterY - mFireButtonPressedDiameter/2;
+            float x = mFireButtonOffsetX + (mFireButtonDiameter-mFireButtonPressedDiameter)/2;
+            float y = mJoystickBaseCenterY - mFireButtonPressedDiameter/2;
             canvas.drawBitmap(mFirePressedBitmap, (int) x, (int) y, null);
         } else {
             canvas.drawBitmap(mFireBitmap, mFireButtonOffsetX, mFireButtonOffsetY, null);
@@ -281,7 +275,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                     if (id == mJoystickPointerId) {
                         updateJoystickData(x, y, id, action);
                     } else if (mJoystickPointerId == MotionEvent.INVALID_POINTER_ID) {
-                        // TODO: Create survey about whether to enable this option
+                        // TODO: Create survey about whether to keep this option enabled
                         updateJoystickData(x, y, id, action);
                     } else if (id == mFireButtonPointerId){
                         updateFireButtonData(x, y, id);
@@ -330,18 +324,20 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         float displacement = calcDistance((int) deltaX, (int) deltaY);
 
         // Determine whether the user has touched sufficiently close to the joystick center
-        if (displacement <= mJoystickThresholdRadius) {
+        if (displacement <= mJoystickMaxDisplacement) {
             mJoystickX = pointerX;
             mJoystickY = pointerY;
 
-            // Only set the pointer ID in this case since it could be a new pointer
+            // Set the pointer ID in this condition since it could be a new pointer
             mJoystickPointerId = pointerId;
-        } else if (action == MotionEvent.ACTION_MOVE && pointerId == mJoystickPointerId) {
+        } else if ((action == MotionEvent.ACTION_MOVE && pointerId == mJoystickPointerId)
+                || (displacement <= mJoystickThresholdRadius)){
             //mJoystickX = mJoystickBaseCenterX;
             //mJoystickY = mJoystickBaseCenterY;
-            float joystickScaleRatio = (float) (mJoystickThresholdRadius) / displacement;
+            float joystickScaleRatio = (float) (mJoystickMaxDisplacement) / displacement;
             mJoystickX = (int) ((float) (mJoystickBaseCenterX) + (deltaX*joystickScaleRatio));
             mJoystickY = (int) ((float) (mJoystickBaseCenterY) + (deltaY*joystickScaleRatio));
+            mJoystickPointerId = pointerId;
         } else {
             mJoystickX = mJoystickBaseCenterX;
             mJoystickY = mJoystickBaseCenterY;
@@ -388,8 +384,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      */
     private int calcDegrees(int x, int y) {
         // Calculates an angle between 0 and 180 degrees
-        double displacement = calcDistance(x, y);
-        double angle = Math.acos(x/displacement);
+        float displacement = calcDistance(x, y);
+        float angle = (float) Math.acos(x/displacement);
 
         // Check whether the point (x, y) is above or below the x-axis
         // to convert the angle to between 0 and 360 degrees

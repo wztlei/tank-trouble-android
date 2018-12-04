@@ -10,7 +10,7 @@ import android.util.Log;
 
 public class NetworkChangeReceiver extends BroadcastReceiver {
 
-    private static final String TAG = "WL: NetworkChange...";
+    private static final String TAG = "WL/NetworkChange...";
 
     @Override
     public void onReceive(Context context, Intent intent) {

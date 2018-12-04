@@ -23,16 +23,18 @@ public class UserTank {
 
     private Bitmap mBitmap;
     private DatabaseReference mUserDataRef;
-    private Position firePosition;
     private float mX, mY, mDegrees;
-    private int mMapHeight, mMapWidth;
+    private int mMinX, mMaxX;
+    private int mMinY, mMaxY;
     private long prevTime;
 
-    private static final String TAG = "WL UserTank";
+    private static final String TAG = "WL/UserTank";
     private static final String USERS_KEY = "users";
     private static final String POS_KEY = Globals.POS_KEY;
     private static final String FIRE_KEY = Globals.FIRE_KEY;
-    private static final double SPEED_SCALE_FACTOR = 0.4;
+    private static final float SPEED_SCALE = 0.4f;
+    private static final float TANK_WIDTH_SCALE = Globals.TANK_WIDTH_SCALE;
+    private static final float TANK_HEIGHT_SCALE = Globals.TANK_HEIGHT_SCALE;
 
     /**
      * Constructor function for the User Tank class.
@@ -40,9 +42,12 @@ public class UserTank {
      * @param activity      the activity in which the player tank is instantiated
      */
     UserTank(Activity activity) {
+        int tankWidth = Math.round(UserUtils.getScreenWidth() * TANK_WIDTH_SCALE);
+        int tankHeight = Math.round(UserUtils.getScreenWidth() * TANK_HEIGHT_SCALE);
 
         // Get the blue tank bitmap since it is the user's tank
         mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.blue_tank);
+        mBitmap = Bitmap.createScaledBitmap(mBitmap, tankWidth, tankHeight, false);
 
         // Get the user document from Firestore
         String userId = UserUtils.getUserId();
@@ -57,12 +62,15 @@ public class UserTank {
 
         // Set the initial x and y coordinate for the tank
         mX = 100;
-        mY = 100;
+        mY = 300;
 
+        // Get the boundaries of the map
+        int screenWidth = UserUtils.getScreenWidth();
 
-        // Get the width and height of the map
-        mMapWidth = Resources.getSystem().getDisplayMetrics().widthPixels - 120;
-        mMapHeight = Resources.getSystem().getDisplayMetrics().heightPixels - 620;
+        mMinX = 0;
+        mMaxX = screenWidth;
+        mMinY = Math.round(screenWidth * Globals.TANK_MIN_Y_SCALE);
+        mMaxY = Math.round(screenWidth * Globals.TANK_MAX_Y_SCALE);
     }
 
     /*private BroadcastReceiver createBroadcastReceiver() {
@@ -124,21 +132,20 @@ public class UserTank {
         float oldY = mY;
 
         // Set the new x and y coordinates assuming the tank can move there
-        mX += velocityX * deltaTime * SPEED_SCALE_FACTOR;
-        mY += velocityY * deltaTime * SPEED_SCALE_FACTOR;
-
+        mX += velocityX * deltaTime * SPEED_SCALE;
+        mY += velocityY * deltaTime * SPEED_SCALE;
 
         // Force the tank to remain within the map horizontally
-        if (mX < 0 || mX > mMapWidth) {
+        if (mX < mMinX || mX > mMaxX) {
             mX = oldX;
         }
 
         // Force the tank to remain within the map vertically
-        if (mY < 0 || mY > mMapHeight) {
+        if (mY < mMinY || mY > mMaxY) {
             mY = oldY;
         }
 
-        /* TODO: Move tank if hitting a wall?
+        /* TODO: Stop move tank if hitting a wall?
         if (mX < 0 || mX > mMapWidth || mY < 0 || mY > mMapHeight) {
             mX = oldX;
             mY = oldY;
@@ -147,12 +154,16 @@ public class UserTank {
         // Only change the angle if the tank has moved
         if (velocityX != 0 || velocityY != 0) {
             mDegrees = angle;
-            updateDataRef(POS_KEY, new Position(mX, mY, mDegrees));
+            Position position = new Position(mX, mY, mDegrees, false);
+            position.standardizePosition();
+            updateDataRef(POS_KEY, position);
         }
     }
 
     public void setFirePosition() {
-        updateDataRef(FIRE_KEY, new Position(mX, mY, mDegrees));
+        Position position = new Position(mX, mY, mDegrees, false);
+        position.standardizePosition();
+        updateDataRef(FIRE_KEY, position);
     }
 
 
@@ -164,20 +175,7 @@ public class UserTank {
      * @param value the value of the new data
      */
     private void updateDataRef(final String key, final Object value) {
-        mUserDataRef.child(key)
-                .setValue(value)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w(TAG, "Error updating document", e);
-                    }
-                });
+        mUserDataRef.child(key).setValue(value);
     }
 
     public float getX() {

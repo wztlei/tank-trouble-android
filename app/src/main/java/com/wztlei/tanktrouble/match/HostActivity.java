@@ -1,18 +1,13 @@
 package com.wztlei.tanktrouble.match;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -22,10 +17,8 @@ import com.wztlei.tanktrouble.Globals;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.BattleActivity;
-import com.wztlei.tanktrouble.battle.Position;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class HostActivity extends AppCompatActivity {
@@ -35,7 +28,7 @@ public class HostActivity extends AppCompatActivity {
     private String mUserId;
     private boolean mBattleActivityStarting;
 
-    private static final String TAG = "WL: HostActivity";
+    private static final String TAG = "WL/HostActivity";
     private static final String GAMES_KEY = Globals.GAMES_KEY;
     private static final String STARTED_KEY = Globals.STARTED_KEY;
     private static final String OPPONENT_IDS_KEY = Globals.OPPONENT_IDS_KEY;

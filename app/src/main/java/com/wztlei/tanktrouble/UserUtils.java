@@ -13,21 +13,22 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.jetbrains.annotations.Contract;
+
 import java.util.Random;
 
 public class UserUtils {
     private static DatabaseReference sDatabase;
     private static SharedPreferences sSharedPref;
-    private static String[] sAdjectiveList;
-    private static String[] sNounList;
-    private static String sUsername;
-    private static String sUserId;
+    private static String[] sAdjectiveList, sNounList;
+    private static String sUsername, sUserId;
     private static int sScreenWidth, sScreenHeight;
+    private static float sScreenScale;
 
     private static final String USERS_KEY = Globals.USERS_KEY;
     private static final String USER_ID_KEY = Globals.USER_ID_KEY;
     private static final String USERNAME_KEY = Globals.USERNAME_KEY;
-    private static final String TAG = "WL: UserUtils";
+    private static final String TAG = "WL/UserUtils";
 
     public static void initialize(Activity activity) {
         Log.d(TAG, "initialize UserUtils");
@@ -46,7 +47,6 @@ public class UserUtils {
 
         // Set the username data in various locations
         setUsername(sUsername);
-
         setScreenSize(activity);
 
         Log.d(TAG, "sUserId=" + sUserId);
@@ -77,6 +77,7 @@ public class UserUtils {
 
             sScreenWidth = metrics.widthPixels;
             sScreenHeight = metrics.heightPixels - statusBarHeight;
+            sScreenScale = sScreenWidth / 1080f;
         }
     }
 
@@ -160,6 +161,7 @@ public class UserUtils {
      *
      * @return  a string storing the randomly generated username
      */
+    @NonNull
     public static String generateRandomUsername() {
 
         Random random = new Random();
@@ -192,14 +194,20 @@ public class UserUtils {
         sSharedPrefEditor.apply();
     }
 
-    public static String getUsername() {
-        return sUsername;
-    }
-    public static String getUserId() {
-        return sUserId;
-    }
+    @Contract(pure = true)
+    public static String getUsername() { return sUsername; }
+
+    @Contract(pure = true)
+    public static String getUserId() { return sUserId; }
+
+    @Contract(pure = true)
     public static int getScreenWidth() { return sScreenWidth; }
+
+    @Contract(pure = true)
     public static int getScreenHeight() { return sScreenHeight; }
+
+    @Contract(pure = true)
+    public static float getScreenScale() { return sScreenScale; }
 
 
 
