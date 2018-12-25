@@ -1,32 +1,30 @@
 package com.wztlei.tanktrouble.battle;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
+import android.graphics.Paint;
 import android.util.Log;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.wztlei.tanktrouble.Globals;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
+import com.wztlei.tanktrouble.map.Coordinate;
+import com.wztlei.tanktrouble.map.MapUtils;
 
 public class UserTank {
 
     private Bitmap mBitmap;
     private DatabaseReference mUserDataRef;
     private float mX, mY, mDegrees;
-    private int mMinX, mMaxX;
-    private int mMinY, mMaxY;
+    private int mLeftWallX, mRightWallX;
+    private int mTopWallY, mBottomWallY;
     private long prevTime;
+    private int mTankWidth, mTankHeight;
 
     private static final String TAG = "WL/UserTank";
     private static final String USERS_KEY = "users";
@@ -42,24 +40,24 @@ public class UserTank {
      * @param activity      the activity in which the player tank is instantiated
      */
     UserTank(Activity activity) {
-        int tankWidth = Math.round(UserUtils.getScreenWidth() * TANK_WIDTH_SCALE);
-        int tankHeight = Math.round(UserUtils.getScreenWidth() * TANK_HEIGHT_SCALE);
+        mTankWidth = Math.max(Math.round(UserUtils.scaleGraphics(TANK_WIDTH_SCALE)), 1);
+        mTankHeight = Math.max(Math.round(UserUtils.scaleGraphics(TANK_HEIGHT_SCALE)), 1);
 
         // Get the blue tank bitmap since it is the user's tank
         mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.blue_tank);
-        mBitmap = Bitmap.createScaledBitmap(mBitmap, tankWidth, tankHeight, false);
+        mBitmap = Bitmap.createScaledBitmap(mBitmap, mTankWidth, mTankHeight, false);
 
         // Get the user document from Firestore
         String userId = UserUtils.getUserId();
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
 
-        if (userId.length() > 0) {
+        if (userId != null && userId.length() > 0) {
             mUserDataRef = database.child(USERS_KEY).child(userId);
         } else {
             Log.e(TAG, "Warning: no user Id");
         }
 
-
+        // TODO: Set random initial coordinates
         // Set the initial x and y coordinate for the tank
         mX = 100;
         mY = 300;
@@ -67,10 +65,10 @@ public class UserTank {
         // Get the boundaries of the map
         int screenWidth = UserUtils.getScreenWidth();
 
-        mMinX = 0;
-        mMaxX = screenWidth;
-        mMinY = Math.round(screenWidth * Globals.TANK_MIN_Y_SCALE);
-        mMaxY = Math.round(screenWidth * Globals.TANK_MAX_Y_SCALE);
+        mLeftWallX = 0;
+        mRightWallX = screenWidth;
+        mTopWallY = Math.round(UserUtils.scaleGraphics(Globals.MAP_TOP_Y_SCALE));
+        mBottomWallY = Math.round(screenWidth * Globals.MAP_BOTTOM_Y_SCALE);
     }
 
     /*private BroadcastReceiver createBroadcastReceiver() {
@@ -107,7 +105,6 @@ public class UserTank {
      * @param canvas the canvas on which the tank is drawn.
      */
     public void draw(Canvas canvas) {
-
         Matrix matrix = new Matrix();
         matrix.setRotate(mDegrees);
         Bitmap rotatedBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
@@ -128,21 +125,28 @@ public class UserTank {
         long deltaTime = newTime - prevTime;
         prevTime = newTime;
 
-        float oldX = mX;
-        float oldY = mY;
-
         // Set the new x and y coordinates assuming the tank can move there
         mX += velocityX * deltaTime * SPEED_SCALE;
         mY += velocityY * deltaTime * SPEED_SCALE;
 
+        int minX, maxX, minY, maxY;
+        minX = mLeftWallX;
+        maxX = mRightWallX;
+        minY = mTopWallY;
+        maxY = mBottomWallY;
+
         // Force the tank to remain within the map horizontally
-        if (mX < mMinX || mX > mMaxX) {
-            mX = oldX;
+        if (mX < minX) {
+            mX = minX;
+        } else if (mX > maxX) {
+            mX = maxX;
         }
 
         // Force the tank to remain within the map vertically
-        if (mY < mMinY || mY > mMaxY) {
-            mY = oldY;
+        if (mY < minY) {
+            mY = minY;
+        } else if (mY > maxY) {
+            mY = maxY;
         }
 
         /* TODO: Stop move tank if hitting a wall?
@@ -160,6 +164,9 @@ public class UserTank {
         }
     }
 
+    /**
+     * Sets the position value in Firebase to the location where the user last fired.
+     */
     public void setFirePosition() {
         Position position = new Position(mX, mY, mDegrees, false);
         position.standardizePosition();

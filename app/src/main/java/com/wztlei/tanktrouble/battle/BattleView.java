@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -15,6 +16,7 @@ import android.view.View;
 
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
+import com.wztlei.tanktrouble.map.MapUtils;
 
 import java.util.ArrayList;
 
@@ -109,6 +111,26 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     /**
+     * Draws the game's graphics onto a canvas.
+     *
+     * @param canvas the canvas on which the game graphics are drawn
+     */
+    @Override
+    public void draw(Canvas canvas) {
+        super.draw(canvas);
+        canvas.drawColor(Color.WHITE);
+        MapUtils.draw(canvas);
+        drawFireButton(canvas);
+        drawJoystick(canvas);
+
+        mUserTank.draw(canvas);
+
+        for (OpponentTank opponentTank : mOpponentTanks) {
+            opponentTank.draw(canvas);
+        }
+    }
+
+    /**
      * Sets the member variables of the Battle View class that are related to graphics.
      */
     private void setGraphicsData() {
@@ -116,8 +138,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         float screenHeight = UserUtils.getScreenHeight();
         float screenWidth = UserUtils.getScreenWidth();
         int controlXMargin = (int) (screenWidth * CONTROL_X_MARGIN_SCALE);
-        int controlYMargin = (int) Math.round(1.5 * controlXMargin);
-
+        int controlYMargin = (int) Math.round(1.2 * controlXMargin);
 
         // Set the joystick, fire button, and control data
         mFireButtonDiameter = Math.round(screenWidth * FIRE_BUTTON_DIAMETER_SCALE);
@@ -127,11 +148,13 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mJoystickMaxDisplacement = Math.round(mJoystickBaseRadius * 0.9f);
 
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
-        mFireBitmap = Bitmap.createScaledBitmap(
-                BitmapFactory.decodeResource (mActivity.getResources(), R.drawable.crosshairs),
-                mFireButtonDiameter, mFireButtonDiameter, false);
-        mFirePressedBitmap = Bitmap.createScaledBitmap(mFireBitmap,
-                mFireButtonPressedDiameter, mFireButtonPressedDiameter, false);
+        if (mFireButtonDiameter > 0) {
+            mFireBitmap = Bitmap.createScaledBitmap(
+                    BitmapFactory.decodeResource (mActivity.getResources(), R.drawable.crosshairs),
+                    mFireButtonDiameter, mFireButtonDiameter, false);
+            mFirePressedBitmap = Bitmap.createScaledBitmap(mFireBitmap,
+                    mFireButtonPressedDiameter, mFireButtonPressedDiameter, false);
+        }
 
         // Set the center of the joystick base, the center of the fire button,
         // and the starting touch events
@@ -139,8 +162,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mJoystickBaseCenterY = (int) screenHeight - controlYMargin - mJoystickBaseRadius;
         mJoystickX = mJoystickBaseCenterX;
         mJoystickY = mJoystickBaseCenterY;
-        mFireButtonOffsetX = (int)(screenWidth - controlXMargin *1.5 - mFireButtonDiameter);
+        mFireButtonOffsetX = (int)(screenWidth - controlXMargin*1.5 - mFireButtonDiameter);
         mFireButtonOffsetY =  mJoystickBaseCenterY - mFireButtonDiameter/2;
+
+        // Set the pointer IDs to be invalid initially
         mJoystickPointerId = MotionEvent.INVALID_POINTER_ID;
         mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
     }
@@ -200,25 +225,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             canvas.drawBitmap(mFirePressedBitmap, (int) x, (int) y, null);
         } else {
             canvas.drawBitmap(mFireBitmap, mFireButtonOffsetX, mFireButtonOffsetY, null);
-        }
-    }
-
-    /**
-     * Draws the game's graphics onto a canvas.
-     *
-     * @param canvas the canvas on which the game graphics are drawn
-     */
-    @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
-        canvas.drawColor(Color.WHITE);
-
-        drawFireButton(canvas);
-        drawJoystick(canvas);
-        mUserTank.draw(canvas);
-
-        for (OpponentTank opponentTank : mOpponentTanks) {
-            opponentTank.draw(canvas);
         }
     }
 

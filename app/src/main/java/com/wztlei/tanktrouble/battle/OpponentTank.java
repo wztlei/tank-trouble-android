@@ -29,8 +29,8 @@ public class OpponentTank {
     private static final float TANK_HEIGHT_SCALE = Globals.TANK_HEIGHT_SCALE;
 
     OpponentTank(Activity activity, String opponentId) {
-        int tankWidth = Math.round(UserUtils.getScreenWidth() * TANK_WIDTH_SCALE);
-        int tankHeight = Math.round(UserUtils.getScreenWidth() * TANK_HEIGHT_SCALE);
+        int tankWidth = Math.round(UserUtils.scaleGraphics(TANK_WIDTH_SCALE));
+        int tankHeight = Math.round(UserUtils.scaleGraphics(TANK_HEIGHT_SCALE));
 
         // Get the red tank bitmap since it is an opponent's tank
         mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.red_tank);
@@ -45,6 +45,27 @@ public class OpponentTank {
             Log.e(TAG, "Warning: no user Id");
         }
 
+        // Get initial position
+        mPosDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                // Get position object and use the values to update the UI
+                Position position = dataSnapshot.getValue(Position.class);
+
+                if (position != null) {
+                    position.setIsStandardized(true);
+                    position.scalePosition();
+                    mX = position.x;
+                    mY = position.y;
+                    mDegrees = position.deg;
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
+
+        // Listen for position changes
         mPosDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -61,9 +82,7 @@ public class OpponentTank {
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
 
     }

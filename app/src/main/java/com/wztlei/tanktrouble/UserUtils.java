@@ -6,7 +6,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.WindowManager;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -55,6 +54,15 @@ public class UserUtils {
         Log.d(TAG, "sScreenHeight=" + sScreenHeight);
     }
 
+    /**
+     * Returns the actual graphics dimension that is scaled by the user's screen width.
+     *
+     * @param scale the ratio of a graphics dimension to the screen width
+     * @return      the scaled value
+     */
+    public static float scaleGraphics(float scale) {
+        return scale*sScreenWidth;
+    }
 
     /**
      * Sets the screen height and width in pixels, accounting for the status bar height.
@@ -62,23 +70,19 @@ public class UserUtils {
      * @param activity the activity from which the method is called
      */
     private static void setScreenSize(Activity activity) {
-        WindowManager wm = (WindowManager) activity.getSystemService(Activity.WINDOW_SERVICE);
+        DisplayMetrics metrics = new DisplayMetrics();
+        activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
-        if (wm != null) {
-            DisplayMetrics metrics = new DisplayMetrics();
-            activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
-
-            int statusBarHeight = 0;
-            int resourceId = activity.getResources().getIdentifier
-                    ("status_bar_height", "dimen", "android");
-            if (resourceId > 0) {
-                statusBarHeight = activity.getResources().getDimensionPixelSize(resourceId);
-            }
-
-            sScreenWidth = metrics.widthPixels;
-            sScreenHeight = metrics.heightPixels - statusBarHeight;
-            sScreenScale = sScreenWidth / 1080f;
+        int statusBarHeight = 0;
+        int resourceId = activity.getResources().getIdentifier
+                ("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            statusBarHeight = activity.getResources().getDimensionPixelSize(resourceId);
         }
+
+        sScreenWidth = metrics.widthPixels;
+        sScreenHeight = metrics.heightPixels - statusBarHeight;
+        sScreenScale = sScreenWidth / 1080f;
     }
 
     /**

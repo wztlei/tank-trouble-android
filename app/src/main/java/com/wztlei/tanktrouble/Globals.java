@@ -13,6 +13,8 @@ public class Globals {
 
     public static final float TANK_WIDTH_SCALE = 110/1080f;
     public static final float TANK_HEIGHT_SCALE = 66/1080f;
-    public static final float TANK_MIN_Y_SCALE = 180/1080f;
-    public static final float TANK_MAX_Y_SCALE = TANK_MIN_Y_SCALE + 1;
+    public static final float MAP_TOP_Y_SCALE = 226/1080f;
+    public static final float MAP_BOTTOM_Y_SCALE = 180/1080f + 1;
+    public static final float MAP_CELL_WIDTH_SCALE = 10/51f;
+    public static final float MAP_WALL_WIDTH_SCALE = 1/51f;
 }

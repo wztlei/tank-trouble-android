@@ -86,7 +86,7 @@ public class HostActivity extends AppCompatActivity {
                 if (dataSnapshot.hasChild(mGamePinStr)) {
                     // If so, retry hosting with game with a new random pin
                     hostGameWithRandomPin();
-                } else if (mUserId.length() > 0) {
+                } else if (mUserId != null && mUserId.length() > 0) {
                     // Process the game pin once it has been created
                     onUniqueRandomPinCreated();
 
