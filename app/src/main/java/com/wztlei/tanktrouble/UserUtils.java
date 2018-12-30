@@ -24,9 +24,9 @@ public class UserUtils {
     private static int sScreenWidth, sScreenHeight;
     private static float sScreenScale;
 
-    private static final String USERS_KEY = Globals.USERS_KEY;
-    private static final String USER_ID_KEY = Globals.USER_ID_KEY;
-    private static final String USERNAME_KEY = Globals.USERNAME_KEY;
+    private static final String USERS_KEY = Constants.USERS_KEY;
+    private static final String USER_ID_KEY = Constants.USER_ID_KEY;
+    private static final String USERNAME_KEY = Constants.USERNAME_KEY;
     private static final String TAG = "WL/UserUtils";
 
     public static void initialize(Activity activity) {

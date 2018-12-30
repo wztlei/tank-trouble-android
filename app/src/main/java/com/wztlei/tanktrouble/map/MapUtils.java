@@ -5,7 +5,7 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.RectF;
 
-import com.wztlei.tanktrouble.Globals;
+import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.UserUtils;
 
 import java.util.ArrayList;
@@ -33,9 +33,9 @@ public class MapUtils {
     private static final float GUN_LENGTH_RATIO = 1/7f;
     private static final float GUN_LEFT_EDGE_RATIO = 39/100f;
     private static final float GUN_RIGHT_EDGE_RATIO = 61/100f;
-    private static final float TOP_Y = UserUtils.scaleGraphics(Globals.MAP_TOP_Y_CONST);
-    private static final float CELL_WIDTH = UserUtils.scaleGraphics(Globals.MAP_CELL_WIDTH_CONST);
-    private static final float WALL_WIDTH = UserUtils.scaleGraphics(Globals.MAP_WALL_WIDTH_CONST);
+    private static final float TOP_Y = UserUtils.scaleGraphics(Constants.MAP_TOP_Y_CONST);
+    private static final float CELL_WIDTH = UserUtils.scaleGraphics(Constants.MAP_CELL_WIDTH_CONST);
+    private static final float WALL_WIDTH = UserUtils.scaleGraphics(Constants.MAP_WALL_WIDTH_CONST);
 
     private static final MapCell[][] DEFAULT_MAP_CELLS = new MapCell[][] {
             {new MapCell(LTB), new MapCell(T), new MapCell(T), new MapCell(T), new MapCell(TR)},

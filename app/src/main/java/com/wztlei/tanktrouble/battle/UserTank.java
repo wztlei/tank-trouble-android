@@ -10,10 +10,12 @@ import android.util.Log;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.wztlei.tanktrouble.Globals;
+import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.map.MapUtils;
+
+import java.util.Random;
 
 public class UserTank {
 
@@ -25,11 +27,11 @@ public class UserTank {
 
     private static final String TAG = "WL/UserTank";
     private static final String USERS_KEY = "users";
-    private static final String POS_KEY = Globals.POS_KEY;
-    private static final String FIRE_KEY = Globals.FIRE_KEY;
+    private static final String POS_KEY = Constants.POS_KEY;
+    private static final String FIRE_KEY = Constants.FIRE_KEY;
     private static final float SPEED_CONST = 0.4f;
-    private static final float TANK_WIDTH_CONST = Globals.TANK_WIDTH_CONST;
-    private static final float TANK_HEIGHT_CONST = Globals.TANK_HEIGHT_CONST;
+    private static final float TANK_WIDTH_CONST = Constants.TANK_WIDTH_CONST;
+    private static final float TANK_HEIGHT_CONST = Constants.TANK_HEIGHT_CONST;
 
     /**
      * Constructor function for the User Tank class.
@@ -54,10 +56,13 @@ public class UserTank {
             Log.e(TAG, "Warning: no user Id");
         }
 
-        // TODO: Set random initial coordinates
-        // Set the initial x and y coordinate for the tank
-        mX = 100;
-        mY = 300;
+        // Set the initial x and y coordinates for the tank
+        do {
+            mX = randomInt(0, UserUtils.getScreenWidth());
+            mY = randomInt((int) UserUtils.scaleGraphics(Constants.MAP_TOP_Y_CONST),
+                    (int) UserUtils.scaleGraphics(Constants.MAP_TOP_Y_CONST+1));
+            mDeg = randomInt(-180, 180);
+        } while (!MapUtils.validTankPosition(mX, mY, mDeg, mWidth, mHeight));
     }
 
     /**
@@ -196,6 +201,19 @@ public class UserTank {
         position.standardizePosition();
         updateDataRef(FIRE_KEY, position);
     }
+
+    /**
+     * Generates a random number on the closed interval [min, max].
+     *
+     * @param min   the minimum number that can be generated
+     * @param max   the maximum number that can be generated
+     * @return      the random number between min and max
+     */
+    private int randomInt (int min, int max){
+        Random random = new Random();
+        return random.nextInt(max-min+1) + min;
+    }
+
 
     /**
      * Accesses the user's data in the Firebase database with a key and

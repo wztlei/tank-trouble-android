@@ -13,7 +13,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.wztlei.tanktrouble.Globals;
+import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 
@@ -23,10 +23,10 @@ public class OpponentTank {
     private float mX, mY, mDeg;
 
     private static final String TAG = "WL/UserTank";
-    private static final String USERS_KEY = Globals.USERS_KEY;
-    private static final String POS_KEY = Globals.POS_KEY;
-    private static final float TANK_WIDTH_CONST = Globals.TANK_WIDTH_CONST;
-    private static final float TANK_HEIGHT_CONST = Globals.TANK_HEIGHT_CONST;
+    private static final String USERS_KEY = Constants.USERS_KEY;
+    private static final String POS_KEY = Constants.POS_KEY;
+    private static final float TANK_WIDTH_CONST = Constants.TANK_WIDTH_CONST;
+    private static final float TANK_HEIGHT_CONST = Constants.TANK_HEIGHT_CONST;
 
     OpponentTank(Activity activity, String opponentId) {
         int tankWidth = Math.round(UserUtils.scaleGraphics(TANK_WIDTH_CONST));

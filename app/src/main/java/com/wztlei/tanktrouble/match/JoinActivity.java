@@ -16,7 +16,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.wztlei.tanktrouble.Globals;
+import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 
@@ -27,8 +27,8 @@ public class JoinActivity extends AppCompatActivity {
     String mGamePinStr;
     boolean mWaitActivityStarting;
 
-    private static final String GAMES_KEY = Globals.GAMES_KEY;
-    private static final String GAME_PIN_KEY = Globals.GAME_PIN_KEY;
+    private static final String GAMES_KEY = Constants.GAMES_KEY;
+    private static final String GAME_PIN_KEY = Constants.GAME_PIN_KEY;
     private static final String TAG = "WL/JoinActivity";
 
     @Override

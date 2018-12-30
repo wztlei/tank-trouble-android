@@ -1,6 +1,6 @@
 package com.wztlei.tanktrouble;
 
-public class Globals {
+public class Constants {
     public static final String USERNAME_KEY = "u";
     public static final String USERS_KEY = "users";
     public static final String USER_ID_KEY = "userId";

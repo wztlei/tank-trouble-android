@@ -84,6 +84,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         mUserTank = new UserTank(mActivity);
+        mX = (int) mUserTank.getX();
+        mY = (int) mUserTank.getY();
+        mDeg = (int) mUserTank.getDegrees();
 
         for (String opponentId : mOpponentIds) {
             mOpponentTanks.add(new OpponentTank(mActivity, opponentId));

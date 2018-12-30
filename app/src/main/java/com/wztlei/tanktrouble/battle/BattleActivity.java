@@ -4,13 +4,13 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-import com.wztlei.tanktrouble.Globals;
+import com.wztlei.tanktrouble.Constants;
 
 import java.util.ArrayList;
 
 public class BattleActivity extends AppCompatActivity {
 
-    private static final String OPPONENT_IDS_KEY = Globals.OPPONENT_IDS_KEY;
+    private static final String OPPONENT_IDS_KEY = Constants.OPPONENT_IDS_KEY;
     private static final String TAG = "WL/BattleActivity";
 
     @Override
@@ -31,8 +31,5 @@ public class BattleActivity extends AppCompatActivity {
         } else {
             setContentView(new BattleView(this, new ArrayList<String>()));
         }
-
-
-
     }
 }

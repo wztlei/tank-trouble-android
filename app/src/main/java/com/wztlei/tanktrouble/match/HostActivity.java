@@ -13,7 +13,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.wztlei.tanktrouble.Globals;
+import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.BattleActivity;
@@ -29,9 +29,9 @@ public class HostActivity extends AppCompatActivity {
     private boolean mBattleActivityStarting;
 
     private static final String TAG = "WL/HostActivity";
-    private static final String GAMES_KEY = Globals.GAMES_KEY;
-    private static final String STARTED_KEY = Globals.STARTED_KEY;
-    private static final String OPPONENT_IDS_KEY = Globals.OPPONENT_IDS_KEY;
+    private static final String GAMES_KEY = Constants.GAMES_KEY;
+    private static final String STARTED_KEY = Constants.STARTED_KEY;
+    private static final String OPPONENT_IDS_KEY = Constants.OPPONENT_IDS_KEY;
     private static final int MIN_GAME_PIN = 1000;
     private static final int MAX_GAME_PIN = 9999;
 
@@ -147,7 +147,6 @@ public class HostActivity extends AppCompatActivity {
     private int randomInt (int min, int max){
         Random random = new Random();
         return random.nextInt(max-min+1) + min;
-
     }
 
     /**

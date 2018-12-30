@@ -14,7 +14,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.wztlei.tanktrouble.Globals;
+import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.BattleActivity;
@@ -27,10 +27,10 @@ public class WaitActivity extends AppCompatActivity {
     private String mUserId;
 
     private static final String TAG = "WL/WaitActivity";
-    private static final String GAMES_KEY = Globals.GAMES_KEY;
-    private static final String GAME_PIN_KEY = Globals.GAME_PIN_KEY;
-    private static final String STARTED_KEY = Globals.STARTED_KEY;
-    private static final String OPPONENT_IDS_KEY = Globals.OPPONENT_IDS_KEY;
+    private static final String GAMES_KEY = Constants.GAMES_KEY;
+    private static final String GAME_PIN_KEY = Constants.GAME_PIN_KEY;
+    private static final String STARTED_KEY = Constants.STARTED_KEY;
+    private static final String OPPONENT_IDS_KEY = Constants.OPPONENT_IDS_KEY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
