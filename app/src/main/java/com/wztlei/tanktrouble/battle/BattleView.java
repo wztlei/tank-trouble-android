@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -30,7 +29,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private ArrayList<OpponentTank> mOpponentTanks;
     private ArrayList<String> mOpponentIds;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
-    private int mX, mY, mDegrees;
+    private int mX, mY, mDeg;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
     private int mJoystickX, mJoystickY;
     private int mJoystickPointerId, mFireButtonPointerId;
@@ -39,11 +38,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private boolean mFireButtonPressed;
 
     private static final String TAG = "WL/BattleView";
-    private static final float JOYSTICK_BASE_RADIUS_SCALE = (float) 165/1080;
-    private static final float JOYSTICK_THRESHOLD_RADIUS_SCALE = (float) 220/1080;
-    private static final float CONTROL_X_MARGIN_SCALE = (float) 110/1080;
-    private static final float FIRE_BUTTON_DIAMETER_SCALE = (float) 200/1080;
-    private static final float FIRE_BUTTON_PRESSED_DIAMETER_SCALE = (float) 150/1080;
+    private static final float JOYSTICK_BASE_RADIUS_CONST = (float) 165/1080;
+    private static final float JOYSTICK_THRESHOLD_RADIUS_CONST = (float) 220/1080;
+    private static final float CONTROL_X_MARGIN_CONST = (float) 110/1080;
+    private static final float FIRE_BUTTON_DIAMETER_CONST = (float) 200/1080;
+    private static final float FIRE_BUTTON_PRESSED_DIAMETER_CONST = (float) 150/1080;
 
     /**
      * Constructor function for the Battle View class.
@@ -137,14 +136,14 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Get the height and width of the device in pixels
         float screenHeight = UserUtils.getScreenHeight();
         float screenWidth = UserUtils.getScreenWidth();
-        int controlXMargin = (int) (screenWidth * CONTROL_X_MARGIN_SCALE);
+        int controlXMargin = (int) (screenWidth * CONTROL_X_MARGIN_CONST);
         int controlYMargin = (int) Math.round(1.2 * controlXMargin);
 
         // Set the joystick, fire button, and control data
-        mFireButtonDiameter = Math.round(screenWidth * FIRE_BUTTON_DIAMETER_SCALE);
-        mFireButtonPressedDiameter = Math.round(screenWidth * FIRE_BUTTON_PRESSED_DIAMETER_SCALE);
-        mJoystickBaseRadius = Math.round(screenWidth * JOYSTICK_BASE_RADIUS_SCALE);
-        mJoystickThresholdRadius = Math.round(screenWidth * JOYSTICK_THRESHOLD_RADIUS_SCALE);
+        mFireButtonDiameter = Math.round(screenWidth * FIRE_BUTTON_DIAMETER_CONST);
+        mFireButtonPressedDiameter = Math.round(screenWidth * FIRE_BUTTON_PRESSED_DIAMETER_CONST);
+        mJoystickBaseRadius = Math.round(screenWidth * JOYSTICK_BASE_RADIUS_CONST);
+        mJoystickThresholdRadius = Math.round(screenWidth * JOYSTICK_THRESHOLD_RADIUS_CONST);
         mJoystickMaxDisplacement = Math.round(mJoystickBaseRadius * 0.9f);
 
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
@@ -182,11 +181,15 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         float velocityX = (float) (deltaX)/mJoystickThresholdRadius;
         float velocityY = (float) (deltaY)/mJoystickThresholdRadius;
 
-        mUserTank.moveAndRotate(velocityX, velocityY, calcDegrees(deltaX, deltaY));
+        if (velocityX == 0 && velocityY == 0) {
+            mUserTank.moveAndRotate(velocityX, velocityY, mDeg);
+        } else {
+            mUserTank.moveAndRotate(velocityX, velocityY, calcDegrees(deltaX, deltaY));
+        }
 
         mX = (int) mUserTank.getX();
         mY = (int) mUserTank.getY();
-        mDegrees = (int) mUserTank.getAngle();
+        mDeg = (int) mUserTank.getDegrees();
     }
 
     /**
@@ -369,7 +372,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             if (!mFireButtonPressed) {
                 mUserTank.setFirePosition();
                 Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY +
-                        " mDegrees=" + mDegrees + " degrees");
+                        " mDeg=" + mDeg + " degrees");
             }
 
             mFireButtonPressed = true;

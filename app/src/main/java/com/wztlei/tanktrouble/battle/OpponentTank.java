@@ -20,17 +20,17 @@ import com.wztlei.tanktrouble.UserUtils;
 public class OpponentTank {
     private Bitmap mBitmap;
     private DatabaseReference mPosDataRef;
-    private float mX, mY, mDegrees;
+    private float mX, mY, mDeg;
 
     private static final String TAG = "WL/UserTank";
     private static final String USERS_KEY = Globals.USERS_KEY;
     private static final String POS_KEY = Globals.POS_KEY;
-    private static final float TANK_WIDTH_SCALE = Globals.TANK_WIDTH_SCALE;
-    private static final float TANK_HEIGHT_SCALE = Globals.TANK_HEIGHT_SCALE;
+    private static final float TANK_WIDTH_CONST = Globals.TANK_WIDTH_CONST;
+    private static final float TANK_HEIGHT_CONST = Globals.TANK_HEIGHT_CONST;
 
     OpponentTank(Activity activity, String opponentId) {
-        int tankWidth = Math.round(UserUtils.scaleGraphics(TANK_WIDTH_SCALE));
-        int tankHeight = Math.round(UserUtils.scaleGraphics(TANK_HEIGHT_SCALE));
+        int tankWidth = Math.round(UserUtils.scaleGraphics(TANK_WIDTH_CONST));
+        int tankHeight = Math.round(UserUtils.scaleGraphics(TANK_HEIGHT_CONST));
 
         // Get the red tank bitmap since it is an opponent's tank
         mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.red_tank);
@@ -57,7 +57,7 @@ public class OpponentTank {
                     position.scalePosition();
                     mX = position.x;
                     mY = position.y;
-                    mDegrees = position.deg;
+                    mDeg = position.deg;
                 }
             }
 
@@ -77,7 +77,7 @@ public class OpponentTank {
                     position.scalePosition();
                     mX = position.x;
                     mY = position.y;
-                    mDegrees = position.deg;
+                    mDeg = position.deg;
                 }
             }
 
@@ -95,7 +95,7 @@ public class OpponentTank {
     public void draw(Canvas canvas) {
 
         Matrix matrix = new Matrix();
-        matrix.setRotate(mDegrees);
+        matrix.setRotate(mDeg);
         Bitmap rotatedBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
                 mBitmap.getWidth(), mBitmap.getHeight(), matrix, false);
         canvas.drawBitmap(rotatedBitmap, mX, mY, null);
