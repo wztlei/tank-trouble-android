@@ -120,9 +120,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         for (OpponentTank opponentTank : mOpponentTanks) {
             opponentTank.draw(canvas);
         }
-
-        Cannonball cannonball = new Cannonball(400, 400, 0);
-        cannonball.draw(canvas);
     }
 
     /**
@@ -403,8 +400,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     /**
-     * Calculates the Euclidean distance between two points, given a displacement in the x-axis
-     * and a displacement in the y-axis using the Pythagorean theorem.
+     * Calculates the distance from the origin (0, 0) to (x, y).
      *
      * @param   x   the displacement in the x-axis
      * @param   y   the displacement in the y-axis

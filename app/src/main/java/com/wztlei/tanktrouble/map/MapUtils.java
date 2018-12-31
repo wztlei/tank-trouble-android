@@ -5,9 +5,10 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.RectF;
 
-import com.crashlytics.android.Crashlytics;
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.UserUtils;
+
+import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
 
@@ -179,19 +180,19 @@ public class MapUtils {
         float risingEdge, fallingEdge, theta;
 
         // Get the edge lengths of the rotated bounding rectangle
-        if (isBetween(deg, -180, -90)) {
+        if (isBetween( -180, deg,-90)) {
             risingEdge = h;
             fallingEdge = w;
             theta = (float) Math.toRadians(Math.abs(deg + 90));
-        } else if (isBetween(deg, -90, 0)){
+        } else if (isBetween( -90, deg,0)){
             risingEdge = w;
             fallingEdge = h;
             theta = (float) Math.toRadians(Math.abs(deg));
-        } else if (isBetween(deg, 0, 90)) {
+        } else if (isBetween(0, deg,  90)) {
             risingEdge = h;
             fallingEdge = w;
             theta = (float) Math.toRadians(90 - deg);
-        } else if (isBetween(deg, 90, 180)) {
+        } else if (isBetween( 90, deg,180)) {
             risingEdge = w;
             fallingEdge = h;
             theta = (float) Math.toRadians(180 - deg);
@@ -209,7 +210,7 @@ public class MapUtils {
 
 
         // Get the points on the left and right edge of the tank body and the front of the gun
-        if (isBetween(deg, -180, -90)) {
+        if (isBetween( -180, deg,-90)) {
             gunFront1 = weightedMidpoint(rectLeft, rectTop, GUN_LEFT_EDGE_RATIO);
             gunFront2 = weightedMidpoint(rectLeft, rectTop, GUN_RIGHT_EDGE_RATIO);
 
@@ -228,7 +229,7 @@ public class MapUtils {
             bodyRight5 = weightedMidpoint(rectTop, rectRight, 5/7f);
             bodyRight6 = weightedMidpoint(rectTop, rectRight, 6/7f);
             bodyRight7 = rectRight;
-        } else if (isBetween(deg, -90, 0)){
+        } else if (isBetween( -90, deg,0)){
             gunFront1 = weightedMidpoint(rectTop, rectRight, GUN_LEFT_EDGE_RATIO);
             gunFront2 = weightedMidpoint(rectTop, rectRight, GUN_RIGHT_EDGE_RATIO);
 
@@ -247,7 +248,7 @@ public class MapUtils {
             bodyRight5 = weightedMidpoint(rectRight, rectBottom, 5/7f);
             bodyRight6 = weightedMidpoint(rectRight, rectBottom, 6/7f);
             bodyRight7 = rectBottom;
-        } else if (isBetween(deg, 0, 90)) {
+        } else if (isBetween( 0, deg,90)) {
             gunFront1 = weightedMidpoint(rectRight, rectBottom, GUN_LEFT_EDGE_RATIO);
             gunFront2 = weightedMidpoint(rectRight, rectBottom, GUN_RIGHT_EDGE_RATIO);
 
@@ -266,7 +267,7 @@ public class MapUtils {
             bodyRight5 = weightedMidpoint(rectBottom, rectLeft, 5/7f);
             bodyRight6 = weightedMidpoint(rectBottom, rectLeft, 6/7f);
             bodyRight7 = rectLeft;
-        } else if (isBetween(deg, 90, 180)) {
+        } else if (isBetween( 90, deg, 180)) {
             gunFront1 = weightedMidpoint(rectBottom, rectLeft, GUN_LEFT_EDGE_RATIO);
             gunFront2 = weightedMidpoint(rectBottom, rectLeft, GUN_RIGHT_EDGE_RATIO);
 
@@ -314,6 +315,39 @@ public class MapUtils {
     }
 
     /**
+     * Returns true if the cannonball is in a valid position and not colliding with a wall,
+     * and false otherwise.
+     *
+     * @param x     the x-coordinate of the cannonball
+     * @param y     the y-coordinate of the cannonball
+     * @param r     the radius of the cannonball
+     * @return      true if the cannonball is in a valid position, and false otherwise
+     */
+    public static boolean validCannonballPosition(float x, float y, float r) {
+        RectF boundingRect = new RectF(x-r, y-r, x+r, y+r);
+
+        // Iterate through all the walls to determine if there are any collisions
+        for (RectF wall : DEFAULT_MAP_WALLS) {
+            // Check for a collision with an edge
+            if (RectF.intersects(boundingRect, wall) &&
+                    (isBetween(wall.left, x, wall.right) ||
+                            isBetween(wall.top, y, wall.bottom))) {
+                return false;
+            }
+
+            // Check for a collision with a corner
+            if ((calcDistance(wall.left, wall.top, x, y) < r) ||
+                    (calcDistance(wall.left, wall.bottom, x, y) < r) ||
+                    (calcDistance(wall.right, wall.top, x, y) < r) ||
+                    (calcDistance(wall.right, wall.bottom, x, y) < r)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Returns the weighted midpoint M between two points pt1 and pt2.
      *
      * @param   pt1     the smaller value
@@ -324,7 +358,7 @@ public class MapUtils {
      */
     private static PointF weightedMidpoint(PointF pt1, PointF pt2, float weight) {
 
-        if (!isBetween(weight, 0, 1)) {
+        if (!isBetween( 0, weight,1)) {
             throw new IllegalArgumentException("weight is not between 0 and 1 inclusive");
         } else {
             return new PointF(pt1.x + (pt2.x - pt1.x) * weight,
@@ -332,8 +366,30 @@ public class MapUtils {
         }
     }
 
-    private static boolean isBetween (float x, float min, float max) {
-        return (min <= x && x <= max);
+    /**
+     * Calculates the Euclidean distance between two points, given a displacement in the x-axis
+     * and a displacement in the y-axis using the Pythagorean theorem.
+     *
+     * @param x1    the x-coordinate of the first point
+     * @param y1    the y-coordinate of the first point
+     * @param x2    the x-coordinate of the second point
+     * @param y2    the y-coordinate of the second point
+     * @return      the distance between the two points
+     */
+    private static float calcDistance (float x1, float y1, float x2, float y2) {
+        return (float) Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2));
+    }
+
+    /**
+     * Returns true if num is in the interval [min, max] and false otherwise.
+     *
+     * @param min   the minimum value of num
+     * @param num   the number to test
+     * @param max   the maximum value of num
+     * @return      true if num is in the interval [min, max] and false otherwise
+     */
+    private static boolean isBetween (float min, float num, float max) {
+        return (min <= num && num <= max);
     }
 
     private static float cos(float rad) {

@@ -5,11 +5,12 @@ import android.graphics.Paint;
 
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.UserUtils;
+import com.wztlei.tanktrouble.map.MapUtils;
 
 public class Cannonball {
 
     private int mX, mY, mDeg;
-    private int radius = (int) UserUtils.scaleGraphics(Constants.CANNONBALL_RADIUS_CONST);
+    private int mRadius = (int) UserUtils.scaleGraphics(Constants.CANNONBALL_RADIUS_CONST);
 
     public Cannonball(int x, int y, int deg) {
         mX = x;
@@ -25,6 +26,6 @@ public class Cannonball {
     public void draw(Canvas canvas) {
         Paint paint = new Paint();
         paint.setARGB(255, 60, 60, 60);
-        canvas.drawCircle(mX, mY, radius, paint);
+        canvas.drawCircle(mX, mY, mRadius, paint);
     }
 }
