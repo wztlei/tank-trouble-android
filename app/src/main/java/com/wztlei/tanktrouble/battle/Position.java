@@ -1,7 +1,5 @@
 package com.wztlei.tanktrouble.battle;
 
-import android.util.Log;
-
 import com.google.firebase.database.Exclude;
 import com.wztlei.tanktrouble.UserUtils;
 

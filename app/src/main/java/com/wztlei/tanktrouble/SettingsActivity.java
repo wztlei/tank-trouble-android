@@ -21,7 +21,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
-     *  Saves the user's inputted settings into Firestore.
+     *  Saves the user's inputted settings into Firebase.
      */
     public void onClickSaveButton(View view) {
         startActivity(new Intent(this, MainActivity.class));

@@ -13,9 +13,11 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.crashlytics.android.Crashlytics;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.map.MapUtils;
+import com.wztlei.tanktrouble.projectile.Cannonball;
 
 import java.util.ArrayList;
 
@@ -51,8 +53,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      */
     public BattleView(Activity activity, ArrayList<String> opponentIds) {
         super(activity);
+
         mActivity = activity;
-        Log.i(TAG, "BattleView");
+        mOpponentIds = opponentIds;
+        mOpponentTanks = new ArrayList<>();
+        Log.d(TAG, "BattleView");
 
         // Callback allows us to intercept events
         getHolder().addCallback(this);
@@ -60,22 +65,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mBattleThread = new BattleThread(getHolder(), this);
         setFocusable(true);
         setGraphicsData();
-        mOpponentIds = opponentIds;
-        mOpponentTanks = new ArrayList<>();
-
         setOnTouchListener(this);
-
-        //ZTE A1R Axon - Me
-        //screen-width=1080
-        //screen-height=1920
-
-        // Samsung - Suyog
-        //screen-width=540
-        //screen-height=960
-
-        // Acer - Mom
-        // sScreenWidth=720
-        // sScreenHeight=1280
     }
 
     @Override
@@ -130,6 +120,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         for (OpponentTank opponentTank : mOpponentTanks) {
             opponentTank.draw(canvas);
         }
+
+        Cannonball cannonball = new Cannonball(400, 400, 0);
+        cannonball.draw(canvas);
     }
 
     /**
@@ -143,14 +136,15 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         int controlYMargin = (int) Math.round(1.2 * controlXMargin);
 
         // Set the joystick, fire button, and control data
-        mFireButtonDiameter = Math.round(screenWidth * FIRE_BUTTON_DIAMETER_CONST);
-        mFireButtonPressedDiameter = Math.round(screenWidth * FIRE_BUTTON_PRESSED_DIAMETER_CONST);
-        mJoystickBaseRadius = Math.round(screenWidth * JOYSTICK_BASE_RADIUS_CONST);
-        mJoystickThresholdRadius = Math.round(screenWidth * JOYSTICK_THRESHOLD_RADIUS_CONST);
+        mFireButtonDiameter = (int) UserUtils.scaleGraphics(FIRE_BUTTON_DIAMETER_CONST);
+        mFireButtonPressedDiameter =
+                (int) UserUtils.scaleGraphics(FIRE_BUTTON_PRESSED_DIAMETER_CONST);
+        mJoystickBaseRadius = (int) UserUtils.scaleGraphics(JOYSTICK_BASE_RADIUS_CONST);
+        mJoystickThresholdRadius = (int) UserUtils.scaleGraphics(JOYSTICK_THRESHOLD_RADIUS_CONST);
         mJoystickMaxDisplacement = Math.round(mJoystickBaseRadius * 0.9f);
 
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
-        if (mFireButtonDiameter > 0) {
+        if (mFireButtonDiameter > 0 && mActivity != null) {
             mFireBitmap = Bitmap.createScaledBitmap(
                     BitmapFactory.decodeResource (mActivity.getResources(), R.drawable.crosshairs),
                     mFireButtonDiameter, mFireButtonDiameter, false);

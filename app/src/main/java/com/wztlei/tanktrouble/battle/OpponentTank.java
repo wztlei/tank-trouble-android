@@ -36,7 +36,7 @@ public class OpponentTank {
         mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.red_tank);
         mBitmap = Bitmap.createScaledBitmap(mBitmap, tankWidth, tankHeight, false);
 
-        // Get the user document from Firestore
+        // Get the user document from Firebase
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
 
         if (opponentId.length() > 0) {

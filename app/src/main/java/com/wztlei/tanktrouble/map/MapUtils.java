@@ -5,6 +5,7 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.RectF;
 
+import com.crashlytics.android.Crashlytics;
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.UserUtils;
 
@@ -34,8 +35,10 @@ public class MapUtils {
     private static final float GUN_LEFT_EDGE_RATIO = 39/100f;
     private static final float GUN_RIGHT_EDGE_RATIO = 61/100f;
     private static final float TOP_Y = UserUtils.scaleGraphics(Constants.MAP_TOP_Y_CONST);
-    private static final float CELL_WIDTH = UserUtils.scaleGraphics(Constants.MAP_CELL_WIDTH_CONST);
-    private static final float WALL_WIDTH = UserUtils.scaleGraphics(Constants.MAP_WALL_WIDTH_CONST);
+    private static final float CELL_WIDTH =
+            UserUtils.scaleGraphics(Constants.MAP_CELL_WIDTH_CONST);
+    private static final float WALL_WIDTH =
+            UserUtils.scaleGraphics(Constants.MAP_WALL_WIDTH_CONST);
 
     private static final MapCell[][] DEFAULT_MAP_CELLS = new MapCell[][] {
             {new MapCell(LTB), new MapCell(T), new MapCell(T), new MapCell(T), new MapCell(TR)},
@@ -53,6 +56,12 @@ public class MapUtils {
     //        | |_  | | |
     //        |_ _ _ _|_|
 
+    /**
+     * Converts a grid of MapCells to an array list of rectangle walls.
+     *
+     * @param   cellGrid    a grid of MapCells
+     * @return              an ArrayList of rectangle walls
+     */
     private static ArrayList<RectF> cellsToWalls(MapCell[][] cellGrid) {
         ArrayList<RectF> mapWalls = new ArrayList<>();
 
@@ -60,21 +69,21 @@ public class MapUtils {
             for (int col = 0; col < cellGrid[row].length; col++) {
                 MapCell mapCell = cellGrid[row][col];
 
-                // Draw the left wall if needed
+                // Add the left wall if needed
                 if (mapCell.hasLeftWall()) {
                     mapWalls.add(new RectF(CELL_WIDTH*col, TOP_Y + CELL_WIDTH*row,
                             CELL_WIDTH*col + WALL_WIDTH,
                             TOP_Y + CELL_WIDTH*row + CELL_WIDTH + WALL_WIDTH));
                 }
 
-                // Draw the top wall if needed
+                // Add the top wall if needed
                 if (mapCell.hasTopWall()) {
                     mapWalls.add(new RectF(CELL_WIDTH*col, TOP_Y + CELL_WIDTH*row,
                             CELL_WIDTH*col + CELL_WIDTH + WALL_WIDTH,
                             TOP_Y + CELL_WIDTH*row + WALL_WIDTH));
                 }
 
-                // Draw the right wall if needed
+                // Add the right wall if needed
                 if (mapCell.hasRightWall()) {
                     mapWalls.add(new RectF(CELL_WIDTH*col + CELL_WIDTH,
                             TOP_Y + CELL_WIDTH*row,
@@ -82,7 +91,7 @@ public class MapUtils {
                             TOP_Y + CELL_WIDTH*row + CELL_WIDTH + WALL_WIDTH));
                 }
 
-                // Draw the bottom wall if needed
+                // Add the bottom wall if needed
                 if (mapCell.hasBottomWall()) {
                     mapWalls.add(new RectF(CELL_WIDTH*col,
                             TOP_Y + CELL_WIDTH*row + CELL_WIDTH,
@@ -125,7 +134,7 @@ public class MapUtils {
      * @return      true if the tank is in a valid position and false otherwise
      */
     public static boolean validTankPosition(float x, float y, float deg, float w, float h) {
-        RectF boundingRect = new RectF(x, y, x+w, y+w);
+        RectF boundingRect = new RectF(x, y, x+w+h, y+w+h);
         PointF[] tankPolygon = tankPolygon(x, y, deg, w, h);
 
         // Go through all the walls of the map

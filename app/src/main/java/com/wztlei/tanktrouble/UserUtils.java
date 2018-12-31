@@ -61,7 +61,7 @@ public class UserUtils {
      * @return      the scaled value
      */
     public static float scaleGraphics(float scale) {
-        return scale*sScreenWidth;
+        return Math.round(scale*sScreenWidth);
     }
 
     /**

@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.PointF;
 import android.util.Log;
 
@@ -26,10 +27,10 @@ public class UserTank {
     private int mWidth, mHeight;
 
     private static final String TAG = "WL/UserTank";
-    private static final String USERS_KEY = "users";
+    private static final String USERS_KEY = Constants.USERS_KEY;
     private static final String POS_KEY = Constants.POS_KEY;
     private static final String FIRE_KEY = Constants.FIRE_KEY;
-    private static final float SPEED_CONST = 0.4f;
+    private static final float SPEED_CONST = UserUtils.scaleGraphics(40/1080f)/100f;
     private static final float TANK_WIDTH_CONST = Constants.TANK_WIDTH_CONST;
     private static final float TANK_HEIGHT_CONST = Constants.TANK_HEIGHT_CONST;
 
@@ -46,7 +47,7 @@ public class UserTank {
         mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.blue_tank);
         mBitmap = Bitmap.createScaledBitmap(mBitmap, mWidth, mHeight, false);
 
-        // Get the user document from Firestore
+        // Get the user document from Firebase
         String userId = UserUtils.getUserId();
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
 
@@ -197,7 +198,11 @@ public class UserTank {
      * Sets the position value in Firebase to the location where the user last fired.
      */
     public void setFirePosition() {
-        Position position = new Position(mX, mY, mDeg, false);
+        PointF[] tankPolygon = MapUtils.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
+        float fireX = tankPolygon[0].x;
+        float fireY = tankPolygon[0].y;
+
+        Position position = new Position(fireX, fireY, mDeg, false);
         position.standardizePosition();
         updateDataRef(FIRE_KEY, position);
     }
