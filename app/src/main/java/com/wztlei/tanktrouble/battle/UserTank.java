@@ -195,6 +195,40 @@ public class UserTank {
     }
 
     /**
+     * Returns true if a cannonball hit the tank and false otherwise.
+     *
+     * @param   cannonballX         the x coordinate of the cannonball
+     * @param   cannonballY         the y coordinate of the cannonball
+     * @param   cannonballRadius    the radius of the cannonball
+     * @return                      true if a cannonball hit the tank and false otherwise
+     */
+    public boolean detectCollision(float cannonballX, float cannonballY, float cannonballRadius) {
+        PointF[] hitbox = MapUtils.tankHitbox(mX, mY, mDeg, mWidth, mHeight);
+
+        for (PointF pointF : hitbox) {
+            if (calcDistance(pointF.x, pointF.y, cannonballX, cannonballY) < cannonballRadius) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Calculates the Euclidean distance between two points, given a displacement in the x-axis
+     * and a displacement in the y-axis using the Pythagorean theorem.
+     *
+     * @param x1    the x-coordinate of the first point
+     * @param y1    the y-coordinate of the first point
+     * @param x2    the x-coordinate of the second point
+     * @param y2    the y-coordinate of the second point
+     * @return      the distance between the two points
+     */
+    private static float calcDistance (float x1, float y1, float x2, float y2) {
+        return (float) Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2));
+    }
+
+    /**
      * Sets the position value in Firebase to the location where the user last fired.
      */
     public void setFirePosition(Position position) {
@@ -216,17 +250,6 @@ public class UserTank {
         return new Position(fireX, fireY, mDeg, false);
     }
 
-    /**
-     * Generates a random number on the closed interval [min, max].
-     *
-     * @param min   the minimum number that can be generated
-     * @param max   the maximum number that can be generated
-     * @return      the random number between min and max
-     */
-    private int randomInt (int min, int max){
-        Random random = new Random();
-        return random.nextInt(max-min+1) + min;
-    }
 
     /**
      * Accesses the user's data in the Firebase database with a key and
@@ -239,7 +262,17 @@ public class UserTank {
         mUserDataRef.child(key).setValue(value);
     }
 
-
+    /**
+     * Generates a random number on the closed interval [min, max].
+     *
+     * @param min   the minimum number that can be generated
+     * @param max   the maximum number that can be generated
+     * @return      the random number between min and max
+     */
+    private int randomInt (int min, int max){
+        Random random = new Random();
+        return random.nextInt(max-min+1) + min;
+    }
 
     public float getX() {
         return mX;

@@ -126,7 +126,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         if (mUserCollision) {
             // If a collision occurred, then do not draw the user's tank
             // Only update and draw the cannonballs
-            mUserCannonballSet.updateAndDetectUserCollision();
+            mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
             mUserCannonballSet.draw(canvas);
         } else {
             // Update and draw the user's tank
@@ -134,7 +134,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             mUserTank.draw(canvas);
 
             // Update and draw the cannonballs
-            mUserCollision = mUserCannonballSet.updateAndDetectUserCollision();
+            mUserCollision = mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
             mUserCannonballSet.draw(canvas);
         }
 
