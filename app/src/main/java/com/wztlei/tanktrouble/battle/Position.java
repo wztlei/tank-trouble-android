@@ -27,7 +27,7 @@ public class Position {
     public float x, y, deg;
 
     @Exclude
-    private boolean isStandardized;
+    public boolean isStandardized;
 
     Position(float x, float y, float deg, boolean isStandardized) {
         this.x = x;

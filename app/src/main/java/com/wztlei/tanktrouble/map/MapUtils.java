@@ -110,7 +110,7 @@ public class MapUtils {
      *
      * @param canvas    the canvas on which the map is drawn
      */
-    public static void draw(Canvas canvas) {
+    public static void drawMap(Canvas canvas) {
         Paint paint = new Paint();
         paint.setARGB(255, 230, 230, 230);
         canvas.drawRect(0, TOP_Y, UserUtils.getScreenWidth(),
@@ -159,8 +159,6 @@ public class MapUtils {
 
     /**
      * Returns an array of PointFs representing a polygon perfectly enclosing a tank.
-     * The array has eight elements which correspond to the eight points of the polygon in
-     * clockwise order.
      *
      * @param x     the x-PointF of the tank
      * @param y     the y-PointF of the tank
@@ -315,6 +313,172 @@ public class MapUtils {
     }
 
     /**
+     * Returns an array of PointFs representing a hitbox perfectly enclosing the tank body.
+     * The hitbox determines if a projectile has hit the tank.
+     *
+     * @param x     the x-PointF of the tank
+     * @param y     the y-PointF of the tank
+     * @param deg   the angle of the tank in degrees
+     * @param w     the width of the tank
+     * @param h     the height of the tank
+     * @return      the array of PointFs representing the polygon
+     */
+    @SuppressWarnings("SuspiciousNameCombination")
+    public static PointF[] tankHitbox(float x, float y, float deg, float w, float h) {
+        PointF rectTop, rectRight, rectBottom, rectLeft;
+        PointF bodyFront1, bodyFront2, bodyFront3;
+        PointF midA1, midA2, midA3;
+        PointF midB1, midB2, midB3;
+        PointF midC1, midC2, midC3;
+        PointF midD1, midD2, midD3;
+        PointF midE1, midE2, midE3;
+        PointF bodyRear1, bodyRear2, bodyRear3;
+        PointF bodyLeft1, bodyLeft2, bodyLeft3, bodyLeft4, bodyLeft5, bodyLeft6, bodyLeft7;
+        PointF bodyRight1, bodyRight2, bodyRight3, bodyRight4, bodyRight5, bodyRight6, bodyRight7;
+        float risingEdge, fallingEdge, theta;
+
+        // Get the edge lengths of the rotated bounding rectangle
+        if (isBetween( -180, deg,-90)) {
+            risingEdge = h;
+            fallingEdge = w;
+            theta = (float) Math.toRadians(Math.abs(deg + 90));
+        } else if (isBetween( -90, deg,0)){
+            risingEdge = w;
+            fallingEdge = h;
+            theta = (float) Math.toRadians(Math.abs(deg));
+        } else if (isBetween(0, deg,  90)) {
+            risingEdge = h;
+            fallingEdge = w;
+            theta = (float) Math.toRadians(90 - deg);
+        } else if (isBetween( 90, deg,180)) {
+            risingEdge = w;
+            fallingEdge = h;
+            theta = (float) Math.toRadians(180 - deg);
+        } else {
+            throw new IllegalArgumentException("angle must be between -180 and 180");
+        }
+
+        // Get the four corners of the rotated bounding rectangle
+        rectTop = new PointF(x + risingEdge*cos(theta), y);
+        rectRight = new PointF(x + risingEdge*cos(theta) + fallingEdge*sin(theta),
+                y + fallingEdge*cos(theta));
+        rectBottom = new PointF(x + fallingEdge*sin(theta),
+                y + fallingEdge*cos(theta) + risingEdge*sin(theta));
+        rectLeft = new PointF(x, y+ risingEdge*sin(theta));
+
+        // Get the points on the left and right edge of the tank body and the front of the gun
+        if (isBetween( -180, deg,-90)) {
+            bodyLeft1 = weightedMidpoint(rectLeft, rectBottom, GUN_LENGTH_RATIO);
+            bodyLeft2 = weightedMidpoint(rectLeft, rectBottom, 2/7f);
+            bodyLeft3 = weightedMidpoint(rectLeft, rectBottom, 3/7f);
+            bodyLeft4 = weightedMidpoint(rectLeft, rectBottom, 4/7f);
+            bodyLeft5 = weightedMidpoint(rectLeft, rectBottom, 5/7f);
+            bodyLeft6 = weightedMidpoint(rectLeft, rectBottom, 6/7f);
+            bodyLeft7 = rectBottom;
+
+            bodyRight1 = weightedMidpoint(rectTop, rectRight, GUN_LENGTH_RATIO);
+            bodyRight2 = weightedMidpoint(rectTop, rectRight, 2/7f);
+            bodyRight3 = weightedMidpoint(rectTop, rectRight, 3/7f);
+            bodyRight4 = weightedMidpoint(rectTop, rectRight, 4/7f);
+            bodyRight5 = weightedMidpoint(rectTop, rectRight, 5/7f);
+            bodyRight6 = weightedMidpoint(rectTop, rectRight, 6/7f);
+            bodyRight7 = rectRight;
+        } else if (isBetween( -90, deg,0)){
+            bodyLeft1 = weightedMidpoint(rectTop, rectLeft, GUN_LENGTH_RATIO);
+            bodyLeft2 = weightedMidpoint(rectTop, rectLeft, 2/7f);
+            bodyLeft3 = weightedMidpoint(rectTop, rectLeft, 3/7f);
+            bodyLeft4 = weightedMidpoint(rectTop, rectLeft, 4/7f);
+            bodyLeft5 = weightedMidpoint(rectTop, rectLeft, 5/7f);
+            bodyLeft6 = weightedMidpoint(rectTop, rectLeft, 6/7f);
+            bodyLeft7 = rectLeft;
+
+            bodyRight1 = weightedMidpoint(rectRight, rectBottom, GUN_LENGTH_RATIO);
+            bodyRight2 = weightedMidpoint(rectRight, rectBottom, 2/7f);
+            bodyRight3 = weightedMidpoint(rectRight, rectBottom, 3/7f);
+            bodyRight4 = weightedMidpoint(rectRight, rectBottom, 4/7f);
+            bodyRight5 = weightedMidpoint(rectRight, rectBottom, 5/7f);
+            bodyRight6 = weightedMidpoint(rectRight, rectBottom, 6/7f);
+            bodyRight7 = rectBottom;
+        } else if (isBetween( 0, deg,90)) {
+            bodyLeft1 = weightedMidpoint(rectRight, rectTop, GUN_LENGTH_RATIO);
+            bodyLeft2 = weightedMidpoint(rectRight, rectTop, 2/7f);
+            bodyLeft3 = weightedMidpoint(rectRight, rectTop, 3/7f);
+            bodyLeft4 = weightedMidpoint(rectRight, rectTop, 4/7f);
+            bodyLeft5 = weightedMidpoint(rectRight, rectTop, 5/7f);
+            bodyLeft6 = weightedMidpoint(rectRight, rectTop, 6/7f);
+            bodyLeft7 = rectTop;
+
+            bodyRight1 = weightedMidpoint(rectBottom, rectLeft, GUN_LENGTH_RATIO);
+            bodyRight2 = weightedMidpoint(rectBottom, rectLeft, 2/7f);
+            bodyRight3 = weightedMidpoint(rectBottom, rectLeft, 3/7f);
+            bodyRight4 = weightedMidpoint(rectBottom, rectLeft, 4/7f);
+            bodyRight5 = weightedMidpoint(rectBottom, rectLeft, 5/7f);
+            bodyRight6 = weightedMidpoint(rectBottom, rectLeft, 6/7f);
+            bodyRight7 = rectLeft;
+        } else if (isBetween( 90, deg, 180)) {
+            bodyLeft1 = weightedMidpoint(rectBottom, rectRight, GUN_LENGTH_RATIO);
+            bodyLeft2 = weightedMidpoint(rectBottom, rectRight, 2/7f);
+            bodyLeft3 = weightedMidpoint(rectBottom, rectRight, 3/7f);
+            bodyLeft4 = weightedMidpoint(rectBottom, rectRight, 4/7f);
+            bodyLeft5 = weightedMidpoint(rectBottom, rectRight, 5/7f);
+            bodyLeft6 = weightedMidpoint(rectBottom, rectRight, 6/7f);
+            bodyLeft7 = rectRight;
+
+            bodyRight1 = weightedMidpoint(rectLeft, rectTop, GUN_LENGTH_RATIO);
+            bodyRight2 = weightedMidpoint(rectLeft, rectTop, 2/7f);
+            bodyRight3 = weightedMidpoint(rectLeft, rectTop, 3/7f);
+            bodyRight4 = weightedMidpoint(rectLeft, rectTop, 4/7f);
+            bodyRight5 = weightedMidpoint(rectLeft, rectTop, 5/7f);
+            bodyRight6 = weightedMidpoint(rectLeft, rectTop, 6/7f);
+            bodyRight7 = rectTop;
+        } else {
+            throw new IllegalArgumentException("angle must be between -180 and 180");
+        }
+
+        // Get the points on the front edge of the tank body
+        bodyFront1 = weightedMidpoint(bodyLeft1, bodyRight1, 0.25f);
+        bodyFront2 = weightedMidpoint(bodyLeft1, bodyRight1, 0.50f);
+        bodyFront3= weightedMidpoint(bodyLeft1, bodyRight1, 0.75f);
+
+        // Get the points for the first midsection
+        midA1 = weightedMidpoint(bodyLeft2, bodyRight2, 0.25f);
+        midA2 = weightedMidpoint(bodyLeft2, bodyRight2, 0.50f);
+        midA3= weightedMidpoint(bodyLeft2, bodyRight2, 0.75f);
+
+        // Get the points for the second midsection
+        midB1 = weightedMidpoint(bodyLeft3, bodyRight3, 0.25f);
+        midB2 = weightedMidpoint(bodyLeft3, bodyRight3, 0.50f);
+        midB3= weightedMidpoint(bodyLeft3, bodyRight3, 0.75f);
+
+        // Get the points for the third midsection
+        midC1 = weightedMidpoint(bodyLeft4, bodyRight4, 0.25f);
+        midC2 = weightedMidpoint(bodyLeft4, bodyRight4, 0.50f);
+        midC3= weightedMidpoint(bodyLeft4, bodyRight4, 0.75f);
+
+        // Get the points for the fourth midsection
+        midD1 = weightedMidpoint(bodyLeft5, bodyRight5, 0.25f);
+        midD2 = weightedMidpoint(bodyLeft5, bodyRight5, 0.50f);
+        midD3= weightedMidpoint(bodyLeft5, bodyRight5, 0.75f);
+
+        // Get the points for the fifth midsection
+        midE1 = weightedMidpoint(bodyLeft6, bodyRight6, 0.25f);
+        midE2 = weightedMidpoint(bodyLeft6, bodyRight6, 0.50f);
+        midE3= weightedMidpoint(bodyLeft6, bodyRight6, 0.75f);
+
+        // Get the points on the rear edge of the tank body
+        bodyRear1 = weightedMidpoint(bodyLeft7, bodyRight7, 0.25f);
+        bodyRear2 = weightedMidpoint(bodyLeft7, bodyRight7, 0.50f);
+        bodyRear3 = weightedMidpoint(bodyLeft7, bodyRight7, 0.75f);
+
+        // Return an array with all the PointFs
+        return new PointF[] {midA1, midA2, midA3, midB1, midB2, midB3,
+                midC1, midC2, midC3, midD1, midD2, midD3, midE1, midE2, midE3,
+                bodyLeft1, bodyLeft2, bodyLeft3, bodyLeft4, bodyLeft5, bodyLeft6, bodyLeft7,
+                bodyRight1, bodyRight2, bodyRight3, bodyRight4, bodyRight5, bodyRight6, bodyRight7,
+                bodyFront1, bodyFront2, bodyFront3, bodyRear1, bodyRear2, bodyRear3};
+    }
+
+    /**
      * Returns true if the cannonball is in a valid position and not colliding with a wall,
      * and false otherwise.
      *
@@ -357,7 +521,7 @@ public class MapUtils {
      * @throws          IllegalArgumentException when weight is outside the interval [0, 1]
      */
     private static PointF weightedMidpoint(PointF pt1, PointF pt2, float weight) {
-
+        // Check that that the weight is within the interval [0, 1]
         if (!isBetween( 0, weight,1)) {
             throw new IllegalArgumentException("weight is not between 0 and 1 inclusive");
         } else {

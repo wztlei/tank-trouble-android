@@ -17,8 +17,8 @@ public class BattleThread extends Thread {
      */
     BattleThread(SurfaceHolder surfaceHolder, BattleView battleView) {
         super();
-        this.mSurfaceHolder = surfaceHolder;
-        this.mBattleView = battleView;
+        mSurfaceHolder = surfaceHolder;
+        mBattleView = battleView;
     }
 
     /**
@@ -40,14 +40,12 @@ public class BattleThread extends Thread {
 
             try {
                 // Lock the canvas to prevent more than one thread from attempting to draw on it
-                canvas = this.mSurfaceHolder.lockCanvas();
+                canvas = mSurfaceHolder.lockCanvas();
 
                 // Draws the new canvas
                 synchronized (mSurfaceHolder) {
-                    this.mBattleView.update();
-
                     if (canvas != null && mBattleView != null) {
-                        this.mBattleView.draw(canvas);
+                        mBattleView.draw(canvas);
                     }
                 }
             } catch (Exception e) {

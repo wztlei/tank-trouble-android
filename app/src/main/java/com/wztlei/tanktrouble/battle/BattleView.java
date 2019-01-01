@@ -18,6 +18,7 @@ import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.map.MapUtils;
 import com.wztlei.tanktrouble.projectile.Cannonball;
+import com.wztlei.tanktrouble.projectile.CannonballSet;
 
 import java.util.ArrayList;
 
@@ -30,6 +31,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private UserTank mUserTank;
     private ArrayList<OpponentTank> mOpponentTanks;
     private ArrayList<String> mOpponentIds;
+    private CannonballSet mUserCannonballSet;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
     private int mX, mY, mDeg;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
@@ -38,6 +40,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private int mJoystickBaseRadius, mJoystickThresholdRadius, mJoystickMaxDisplacement;
     private int mFireButtonDiameter, mFireButtonPressedDiameter;
     private boolean mFireButtonPressed;
+    private boolean mUserCollision;
 
     private static final String TAG = "WL/BattleView";
     private static final float JOYSTICK_BASE_RADIUS_CONST = (float) 165/1080;
@@ -45,6 +48,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private static final float CONTROL_X_MARGIN_CONST = (float) 110/1080;
     private static final float FIRE_BUTTON_DIAMETER_CONST = (float) 200/1080;
     private static final float FIRE_BUTTON_PRESSED_DIAMETER_CONST = (float) 150/1080;
+    private static final int MAX_USER_CANNONBALLS = 5;
 
     /**
      * Constructor function for the Battle View class.
@@ -57,6 +61,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mActivity = activity;
         mOpponentIds = opponentIds;
         mOpponentTanks = new ArrayList<>();
+        mUserCannonballSet = new CannonballSet();
+        mUserCollision = false;
         Log.d(TAG, "BattleView");
 
         // Callback allows us to intercept events
@@ -111,11 +117,26 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     public void draw(Canvas canvas) {
         super.draw(canvas);
         canvas.drawColor(Color.WHITE);
-        MapUtils.draw(canvas);
+        MapUtils.drawMap(canvas);
         drawFireButton(canvas);
         drawJoystick(canvas);
 
-        mUserTank.draw(canvas);
+        // Check whether a cannonball collided with the user's tank
+        // TODO: Send information about the collision to Firebase
+        if (mUserCollision) {
+            // If a collision occurred, then do not draw the user's tank
+            // Only update and draw the cannonballs
+            mUserCannonballSet.updateAndDetectUserCollision();
+            mUserCannonballSet.draw(canvas);
+        } else {
+            // Update and draw the user's tank
+            updateUserTank();
+            mUserTank.draw(canvas);
+
+            // Update and draw the cannonballs
+            mUserCollision = mUserCannonballSet.updateAndDetectUserCollision();
+            mUserCannonballSet.draw(canvas);
+        }
 
         for (OpponentTank opponentTank : mOpponentTanks) {
             opponentTank.draw(canvas);
@@ -141,7 +162,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mJoystickMaxDisplacement = Math.round(mJoystickBaseRadius * 0.9f);
 
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
-        if (mFireButtonDiameter > 0 && mActivity != null) {
+        if (mFireButtonDiameter > 0) {
             mFireBitmap = Bitmap.createScaledBitmap(
                     BitmapFactory.decodeResource (mActivity.getResources(), R.drawable.crosshairs),
                     mFireButtonDiameter, mFireButtonDiameter, false);
@@ -167,7 +188,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * Updates the location and angle of the tank based on the most recent touch events
      * by the user.
      */
-    public void update() {
+    public void updateUserTank() {
         // Determine the displacement of the joystick in the x and y axes
         int deltaX = mJoystickX-mJoystickBaseCenterX;
         int deltaY = mJoystickY-mJoystickBaseCenterY;
@@ -176,9 +197,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         float velocityY = (float) (deltaY)/mJoystickThresholdRadius;
 
         if (velocityX == 0 && velocityY == 0) {
-            mUserTank.moveAndRotate(velocityX, velocityY, mDeg);
+            mUserTank.update(velocityX, velocityY, mDeg);
         } else {
-            mUserTank.moveAndRotate(velocityX, velocityY, calcDegrees(deltaX, deltaY));
+            mUserTank.update(velocityX, velocityY, calcDegrees(deltaX, deltaY));
         }
 
         mX = (int) mUserTank.getX();
@@ -363,8 +384,13 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Determine whether the user has touched close enough to the center of the fire button
         if (displacement <= mFireButtonDiameter) {
-            if (!mFireButtonPressed) {
-                mUserTank.setFirePosition();
+            // Ensure only one cannonball is fired for every button press and
+            // limit the number of cannonballs that can be active simultaneously
+            if (!mFireButtonPressed && mUserCannonballSet.size() < MAX_USER_CANNONBALLS) {
+                Position firePosition = mUserTank.getFirePosition();
+                mUserTank.setFirePosition(firePosition);
+                mUserCannonballSet.add(
+                        new Cannonball(firePosition.x, firePosition.y, firePosition.deg));
                 Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY +
                         " mDeg=" + mDeg + " degrees");
             }

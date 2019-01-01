@@ -47,21 +47,6 @@ public class UserUtils {
         // Set the username data in various locations
         setUsername(sUsername);
         setScreenSize(activity);
-
-        Log.d(TAG, "sUserId=" + sUserId);
-        Log.d(TAG, "sUsername=" + sUsername);
-        Log.d(TAG, "sScreenWidth=" + sScreenWidth);
-        Log.d(TAG, "sScreenHeight=" + sScreenHeight);
-    }
-
-    /**
-     * Returns the actual graphics dimension that is scaled by the user's screen width.
-     *
-     * @param scale the ratio of a graphics dimension to the screen width
-     * @return      the scaled value
-     */
-    public static float scaleGraphics(float scale) {
-        return Math.round(scale*sScreenWidth);
     }
 
     /**
@@ -83,6 +68,16 @@ public class UserUtils {
         sScreenWidth = metrics.widthPixels;
         sScreenHeight = metrics.heightPixels - statusBarHeight;
         sScreenScale = sScreenWidth / 1080f;
+    }
+
+    /**
+     * Returns the actual graphics dimension that is scaled by the user's screen width.
+     *
+     * @param scale the ratio of a graphics dimension to the screen width
+     * @return      the scaled value
+     */
+    public static float scaleGraphics(float scale) {
+        return Math.round(scale*sScreenWidth);
     }
 
     /**

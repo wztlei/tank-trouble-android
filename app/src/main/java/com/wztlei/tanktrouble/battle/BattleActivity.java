@@ -21,7 +21,6 @@ public class BattleActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
         Bundle intentBundle = getIntent().getExtras();
         if (intentBundle != null) {
             ArrayList<String> opponentIds = intentBundle.getStringArrayList(OPPONENT_IDS_KEY);

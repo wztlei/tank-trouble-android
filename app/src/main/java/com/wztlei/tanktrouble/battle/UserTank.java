@@ -78,12 +78,12 @@ public class UserTank {
                 mBitmap.getWidth(), mBitmap.getHeight(), matrix, false);
         canvas.drawBitmap(rotatedBitmap, mX, mY, null);
 
-//        PointF[] tankPolygon = MapUtils.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
+//        PointF[] tankPolygon = MapUtils.tankHitbox(mX, mY, mDeg, mWidth, mHeight);
 //        Paint paint = new Paint();
 //        paint.setARGB(255, 200, 50, 50);
 //
 //        for (PointF pointF : tankPolygon) {
-//            canvas.drawCircle(pointF.x, pointF.y, 5, paint);
+//            canvas.drawCircle(pointF.x, pointF.y, 10, paint);
 //        }
     }
 
@@ -95,7 +95,7 @@ public class UserTank {
      * @param velocityY the velocity that the tank intends to move in the y direction
      * @param angle     the new angle of the tank
      */
-    public void moveAndRotate(float velocityX, float velocityY, float angle) {
+    public void update(float velocityX, float velocityY, float angle) {
         // Get the difference in time between now and the last movement
         long nowTime = System.currentTimeMillis();
         long deltaTime = nowTime - lastTime;
@@ -197,14 +197,23 @@ public class UserTank {
     /**
      * Sets the position value in Firebase to the location where the user last fired.
      */
-    public void setFirePosition() {
+    public void setFirePosition(Position position) {
+        if (!position.isStandardized) {
+            position.standardizePosition();
+        }
+
+        updateDataRef(FIRE_KEY, position);
+    }
+
+    /**
+     * Gets the position of the front of the gun when the tank fired.
+     */
+    public Position getFirePosition (){
         PointF[] tankPolygon = MapUtils.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
         float fireX = tankPolygon[0].x;
         float fireY = tankPolygon[0].y;
 
-        Position position = new Position(fireX, fireY, mDeg, false);
-        position.standardizePosition();
-        updateDataRef(FIRE_KEY, position);
+        return new Position(fireX, fireY, mDeg, false);
     }
 
     /**
@@ -219,7 +228,6 @@ public class UserTank {
         return random.nextInt(max-min+1) + min;
     }
 
-
     /**
      * Accesses the user's data in the Firebase database with a key and
      * updates the data with a new value.
@@ -230,6 +238,8 @@ public class UserTank {
     private void updateDataRef(final String key, final Object value) {
         mUserDataRef.child(key).setValue(value);
     }
+
+
 
     public float getX() {
         return mX;
