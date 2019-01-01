@@ -27,7 +27,7 @@ public class Cannonball {
     }
 
     /**
-     * Updates all the location and direction of the cannonball.
+     * Update the location and direction of the cannonball.
      *
      * @return true if a cannonball collided with the user, and false otherwise
      */

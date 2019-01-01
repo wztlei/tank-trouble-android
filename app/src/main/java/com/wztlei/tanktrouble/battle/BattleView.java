@@ -138,6 +138,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             mUserCannonballSet.draw(canvas);
         }
 
+        // Draw all of the opponents' tanks
         for (OpponentTank opponentTank : mOpponentTanks) {
             opponentTank.draw(canvas);
         }
