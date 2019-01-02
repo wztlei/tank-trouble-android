@@ -48,7 +48,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private static final float CONTROL_X_MARGIN_CONST = (float) 110/1080;
     private static final float FIRE_BUTTON_DIAMETER_CONST = (float) 200/1080;
     private static final float FIRE_BUTTON_PRESSED_DIAMETER_CONST = (float) 150/1080;
-    private static final int MAX_USER_CANNONBALLS = 5;
+    // TODO: Undo test
+    private static final int MAX_USER_CANNONBALLS = 500000000;
 
     /**
      * Constructor function for the Battle View class.
@@ -390,8 +391,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             if (!mFireButtonPressed && mUserCannonballSet.size() < MAX_USER_CANNONBALLS) {
                 Position firePosition = mUserTank.getFirePosition();
                 mUserTank.setFirePosition(firePosition);
-                mUserCannonballSet.add(
-                        new Cannonball(firePosition.x, firePosition.y, firePosition.deg));
+                mUserCannonballSet.add(new Cannonball(
+                        (int) firePosition.x, (int) firePosition.y, (int) firePosition.deg));
                 Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY +
                         " mDeg=" + mDeg + " degrees");
             }
