@@ -2,7 +2,6 @@ package com.wztlei.tanktrouble.projectile;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.util.Log;
 
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.UserUtils;
@@ -13,14 +12,10 @@ public class Cannonball {
 
     private long mFiringTime, mLastTime;
     private int mX, mY, mDeg;
-    private boolean mEscapingCollision;
 
-    private static final String TAG = "WL/Cannonball";
     private static final float SPEED_CONST = UserUtils.scaleGraphics(32/1080f)/100f;
     private static final float RADIUS = UserUtils.scaleGraphics(Constants.CANNONBALL_RADIUS_CONST);
     private static final int TEST_DIST = Math.round(RADIUS + 2);
-
-
 
     public Cannonball(int x, int y, int deg) {
         mX = x;
@@ -28,10 +23,8 @@ public class Cannonball {
 
         if (MapUtils.validCannonballPosition(x, y, RADIUS)) {
             mDeg = deg;
-            mEscapingCollision = false;
         } else {
             handleWallCollision(x, y, deg);
-            mEscapingCollision = true;
         }
 
         mFiringTime = System.currentTimeMillis();
@@ -53,145 +46,137 @@ public class Cannonball {
         float distance = deltaTime * SPEED_CONST;
         int deltaX = (int) Math.round(distance * Math.cos(Math.toRadians(mDeg)));
         int deltaY = (int) Math.round(distance * Math.sin(Math.toRadians(mDeg)));
-        int newX = mX + deltaX;
-        int newY = mY + deltaY;
-
-        //Log.d(TAG, "deltaX" + deltaX + " deltaY" + deltaY);
+        mX += deltaX;
+        mY += deltaY;
 
         // No need to proceed since the cannonball will disappear after colliding with the user
-        if (userTank.detectCollision(newX, newY, RADIUS)) {
-            mX = newX;
-            mY = newY;
-            // TODO: Undo test
+        if (userTank.detectCollision(mX, mY, RADIUS)) {
             //return true;
         }
 
-        if (MapUtils.validCannonballPosition(newX, newY, RADIUS)) {
-            mX = newX;
-            mY = newY;
-            mEscapingCollision = false;
-        }
-//        else if (mEscapingCollision) {
-//            mX = newX;
-//            mY = newY;
-//        }
-        else {
-            mX = newX;
-            mY = newY;
-            handleWallCollision(newX, newY, mDeg);
+        // Detect a wall collision and handle it appropriately
+        if (!MapUtils.validCannonballPosition(mX, mY, RADIUS)) {
+            handleWallCollision(mX, mY, mDeg);
         }
 
         return false;
     }
 
+    /**
+     * Handles a collision with a wall for a cannonball at (x, y) travelling in a direction of deg
+     * degrees. The method updates the location and direction of the cannonball accordingly.
+     *
+     * @param x     the x-coordinate of the cannonball
+     * @param y     the y-coordinate of the cannonball
+     * @param deg   the angle of the direction of the cannonball's movement in degrees
+     */
     private void handleWallCollision(int x, int y, int deg) {
+        int newX = x, newY = y;
         boolean horizontalCollision = false;
         boolean verticalCollision = false;
         mDeg = deg;
-        mEscapingCollision = true;
-        Log.d(TAG, "handleWallCollision");
 
-        int newX = x, newY = y;
-
+        // Handle a cannonball colliding vertically with a wall from the right
         if (MapUtils.validCannonballPosition(x-TEST_DIST, y, RADIUS)) {
-            Log.d(TAG, "pure vertical 1");
             verticalCollision = true;
 
+            // Move the cannonball until we reach a valid position
             while (!MapUtils.validCannonballPosition(newX, y, RADIUS)) {
                 newX--;
             }
         }
 
+        // Handle a cannonball colliding vertically with a wall from the left
         if (MapUtils.validCannonballPosition(x+TEST_DIST, y, RADIUS) && !verticalCollision) {
-            Log.d(TAG, "pure vertical 2");
             verticalCollision = true;
 
+            // Move the cannonball until we reach a valid position
             while (!MapUtils.validCannonballPosition(newX, y, RADIUS)) {
                 newX++;
             }
         }
 
-        if (MapUtils.validCannonballPosition(x, y-TEST_DIST, RADIUS)) {
-            Log.d(TAG, "pure horizontal 1");
+        // Handle a cannonball colliding horizontally with a wall from the top
+        if (MapUtils.validCannonballPosition(x, y-TEST_DIST, RADIUS) && !verticalCollision) {
             horizontalCollision = true;
 
+            // Move the cannonball until we reach a valid position
             while (!MapUtils.validCannonballPosition(x, newY, RADIUS)) {
                 newY--;
             }
         }
 
-        if (MapUtils.validCannonballPosition(x, y+TEST_DIST, RADIUS) && !horizontalCollision) {
-            Log.d(TAG, "pure horizontal 2");
+        // Handle a cannonball colliding horizontally with a wall from the bottom
+        if (MapUtils.validCannonballPosition(x, y+TEST_DIST, RADIUS)
+                && !verticalCollision && !horizontalCollision) {
             horizontalCollision = true;
 
+            // Move the cannonball until we reach a valid position
             while (!MapUtils.validCannonballPosition(x, newY, RADIUS)) {
                 newY++;
             }
         }
 
+        // We have not detected a horizontal or vertical collision yet,
+        // so we try detecting a collision with an inward facing corner
         if (!horizontalCollision && !verticalCollision) {
+            // Determine the angle of collision since each angle can only
+            // collide with one of the four corner orientations
             if (isBetween(-180, deg, -90)
                     && MapUtils.validCannonballPosition(x+TEST_DIST, y+TEST_DIST, RADIUS)) {
+                horizontalCollision = true;
+                verticalCollision = true;
 
+                // Move the cannonball until we reach a valid position
                 while (!MapUtils.validCannonballPosition(newX, newY, RADIUS)) {
                     newX++;
                     newY++;
                 }
-
-                horizontalCollision = true;
-                verticalCollision = true;
-                Log.d(TAG, "[-180, -90]");
             } else if (isBetween(-90, deg, 0)
                     && MapUtils.validCannonballPosition(x-TEST_DIST, y+TEST_DIST, RADIUS)) {
+                horizontalCollision = true;
+                verticalCollision = true;
 
+                // Move the cannonball until we reach a valid position
                 while (!MapUtils.validCannonballPosition(newX, newY, RADIUS)) {
                     newX--;
                     newY++;
                 }
-
-                horizontalCollision = true;
-                verticalCollision = true;
-                Log.d(TAG, "[-90, 0]");
             } else if (isBetween(0, deg, 90)
                     && MapUtils.validCannonballPosition(x-TEST_DIST, y-TEST_DIST, RADIUS)) {
+                horizontalCollision = true;
+                verticalCollision = true;
 
+                // Move the cannonball until we reach a valid position
                 while (!MapUtils.validCannonballPosition(newX, newY, RADIUS)) {
                     newX--;
                     newY--;
                 }
-
-                horizontalCollision = true;
-                verticalCollision = true;
-                Log.d(TAG, "[0, 90]");
             } else if (isBetween(90, deg, 180)
                     && MapUtils.validCannonballPosition(x+TEST_DIST, y-TEST_DIST, RADIUS)) {
+                horizontalCollision = true;
+                verticalCollision = true;
 
+                // Move the cannonball until we reach a valid position
                 while (!MapUtils.validCannonballPosition(newX, newY, RADIUS)) {
                     newX++;
                     newY--;
                 }
-
-                horizontalCollision = true;
-                verticalCollision = true;
-                Log.d(TAG, "[90, 180]");
             }
         }
 
+        // Update the x and y coordinates
         mX = newX;
         mY = newY;
 
+        // Horizontally reflect the angle for a vertical collision
         if (verticalCollision) {
-            Log.d(TAG, "vertical");
             mDeg = horizontallyReflectDeg(mDeg);
         }
 
+        // Vertically reflect the angle for a horizontal collision
         if (horizontalCollision) {
-            Log.d(TAG, "horizontal");
             mDeg = verticallyReflectDeg(mDeg);
-        }
-
-        if (!horizontalCollision && !verticalCollision) {
-            Log.e(TAG, "no collision = contradiction");
         }
     }
 
