@@ -14,7 +14,9 @@ public class Constants {
     public static final float TANK_WIDTH_CONST = 110/1080f;
     public static final float TANK_HEIGHT_CONST = 66/1080f;
     public static final float MAP_TOP_Y_CONST = 225/1080f;
+    public static final float MAP_BOTTOM_Y_CONST = (225+1080)/1080f;
     public static final float MAP_CELL_WIDTH_CONST = 10/51f;
     public static final float MAP_WALL_WIDTH_CONST = 1/51f;
     public static final float CANNONBALL_RADIUS_CONST = 10/1080f;
+    public static final long CANNONBALL_LIFESPAN = 10000;
 }

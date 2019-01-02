@@ -16,6 +16,8 @@ public class Cannonball {
     private static final float SPEED_CONST = UserUtils.scaleGraphics(32/1080f)/100f;
     private static final float RADIUS = UserUtils.scaleGraphics(Constants.CANNONBALL_RADIUS_CONST);
     private static final int TEST_DIST = Math.round(RADIUS + 2);
+    private static final int CANNONBALL_LIFESPAN = (int) Constants.CANNONBALL_LIFESPAN;
+    private static final int START_FADING_AGE = 9800;
 
     public Cannonball(int x, int y, int deg) {
         mX = x;
@@ -193,14 +195,25 @@ public class Cannonball {
     }
 
     /**
-     * Draws the cannonball onto a canvas.
+     * Draws the cannonball onto a canvas. Fades out the cannonball in the last 0.4 s of its life.
      *
      * @param canvas the canvas on which the cannonball is drawn.
      */
     public void draw(Canvas canvas) {
-        Paint paint = new Paint();
-        paint.setARGB(255, 0, 0, 0);
-        canvas.drawCircle(mX, mY, RADIUS, paint);
+        long nowTime = System.currentTimeMillis();
+        long ageTime = nowTime - mFiringTime;
+
+        if (ageTime <= 9800) {
+            Paint paint = new Paint();
+            paint.setARGB(255, 0, 0, 0);
+            canvas.drawCircle(mX, mY, RADIUS, paint);
+        } else {
+            int tint = (int) Math.max(150 * (ageTime - START_FADING_AGE)/
+                    (CANNONBALL_LIFESPAN-START_FADING_AGE), 0);
+            Paint paint = new Paint();
+            paint.setARGB(255, tint, tint, tint);
+            canvas.drawCircle(mX, mY, RADIUS, paint);
+        }
     }
 
     /**
@@ -213,6 +226,10 @@ public class Cannonball {
      */
     private static boolean isBetween (float min, float num, float max) {
         return (min <= num && num <= max);
+    }
+
+    public int getY() {
+        return mY;
     }
 
     public long getFiringTime() {

@@ -2,6 +2,8 @@ package com.wztlei.tanktrouble.projectile;
 
 import android.graphics.Canvas;
 
+import com.wztlei.tanktrouble.Constants;
+import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.UserTank;
 
 import java.util.HashMap;
@@ -12,7 +14,7 @@ public class CannonballSet {
 
     private ConcurrentHashMap<UUID, Cannonball> mCannonballSet;
 
-    private static final long CANNONBALL_LIFESPAN_MS = 10000;
+    private static final long CANNONBALL_LIFESPAN = 10000;
 
     /**
      * Initializes the set of cannonballs as represented by a concurrent hash map.
@@ -56,9 +58,13 @@ public class CannonballSet {
             UUID key = entry.getKey();
             Cannonball cannonball = entry.getValue();
             long deltaTime = nowTime - cannonball.getFiringTime();
+            int cannonballY = cannonball.getY();
 
             // Check whether the cannonball has exceeded its lifespan and remove if necessary
-            if (deltaTime > CANNONBALL_LIFESPAN_MS) {
+            // Also remove the cannonball if it has escaped the map
+            if (deltaTime > CANNONBALL_LIFESPAN
+                    || cannonballY <= UserUtils.scaleGraphics(Constants.MAP_TOP_Y_CONST)
+                    || cannonballY >= UserUtils.scaleGraphics(Constants.MAP_BOTTOM_Y_CONST)) {
                 mCannonballSet.remove(key);
             } else {
                 boolean userCollision = cannonball.updateAndDetectUserCollision(userTank);
