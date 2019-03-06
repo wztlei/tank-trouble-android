@@ -48,8 +48,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private static final float CONTROL_X_MARGIN_CONST = (float) 110/1080;
     private static final float FIRE_BUTTON_DIAMETER_CONST = (float) 200/1080;
     private static final float FIRE_BUTTON_PRESSED_DIAMETER_CONST = (float) 150/1080;
-    // TODO: Undo test
-    private static final int MAX_USER_CANNONBALLS = 500000000;
+    // TODO: Change to 5 in production version
+    private static final int MAX_USER_CANNONBALLS = 10;
 
     /**
      * Constructor function for the Battle View class.
@@ -123,8 +123,15 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         drawJoystick(canvas);
 
         // Check whether a cannonball collided with the user's tank
-        // TODO: Send information about the collision to Firebase
         if (mUserCollision) {
+            // TODO: Handle a collision properly
+            // TODO: Update the collision status in Firebase
+            // TODO: Display animation of tank dying
+            // TODO: Make tank appear after x seconds
+            // Update and draw the user's tank
+            updateUserTank();
+            mUserTank.draw(canvas);
+
             // If a collision occurred, then do not draw the user's tank
             // Only update and draw the cannonballs
             mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
@@ -135,13 +142,17 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             mUserTank.draw(canvas);
 
             // Update and draw the cannonballs
-            mUserCollision = mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
             mUserCannonballSet.draw(canvas);
+            mUserCollision = mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
         }
 
-        // Draw all of the opponents' tanks
+        // Draw all of the opponents' tanks and their cannonballs while detecting collisions
         for (OpponentTank opponentTank : mOpponentTanks) {
             opponentTank.draw(canvas);
+
+            CannonballSet opponentCannonballs = opponentTank.getCannonballSet();
+            opponentCannonballs.draw(canvas);
+            mUserCollision = opponentCannonballs.updateAndDetectUserCollision(mUserTank);
         }
     }
 
@@ -389,10 +400,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             // Ensure only one cannonball is fired for every button press and
             // limit the number of cannonballs that can be active simultaneously
             if (!mFireButtonPressed && mUserCannonballSet.size() < MAX_USER_CANNONBALLS) {
-                Position firePosition = mUserTank.getFirePosition();
-                mUserTank.setFirePosition(firePosition);
-                mUserCannonballSet.add(new Cannonball(
-                        (int) firePosition.x, (int) firePosition.y, (int) firePosition.deg));
+                Position firePos = mUserTank.getFirePosition();
+                Cannonball c = new Cannonball((int) firePos.x, (int) firePos.y, (int) firePos.deg);
+
+                mUserTank.setFirePosition(firePos);
+                mUserCannonballSet.add(c);
                 Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY +
                         " mDeg=" + mDeg + " degrees");
             }

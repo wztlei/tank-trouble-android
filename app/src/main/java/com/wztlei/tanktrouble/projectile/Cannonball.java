@@ -52,8 +52,9 @@ public class Cannonball {
         mY += deltaY;
 
         // No need to proceed since the cannonball will disappear after colliding with the user
-        if (userTank.detectCollision(mX, mY, RADIUS)) {
-            //return true;
+        if (userTank != null && userTank.detectCollision(mX, mY, RADIUS)) {
+            // TODO: Uncomment to detect user tank collision
+            return true;
         }
 
         // Detect a wall collision and handle it appropriately
