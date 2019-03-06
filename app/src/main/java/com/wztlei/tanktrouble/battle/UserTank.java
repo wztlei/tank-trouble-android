@@ -53,6 +53,7 @@ public class UserTank {
 
         if (userId != null && userId.length() > 0) {
             mUserDataRef = database.child(USERS_KEY).child(userId);
+            mUserDataRef.child(FIRE_KEY).setValue(null);
         } else {
             Log.e(TAG, "Warning: no user Id");
         }
@@ -234,8 +235,10 @@ public class UserTank {
     public void setFirePosition(Position position) {
         if (!position.isStandardized) {
             position.standardizePosition();
+
         }
 
+        position.rand = randomInt(0, 999999999);
         updateDataRef(FIRE_KEY, position);
     }
 

@@ -25,6 +25,7 @@ public class Position {
     Position() {}
 
     public float x, y, deg;
+    public int rand;
 
     @Exclude
     public boolean isStandardized;

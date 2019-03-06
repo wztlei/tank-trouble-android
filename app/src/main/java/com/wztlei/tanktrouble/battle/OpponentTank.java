@@ -48,6 +48,7 @@ public class OpponentTank {
         if (opponentId.length() > 0) {
             mPosDataRef = database.child(USERS_KEY).child(opponentId).child(POS_KEY);
             mFireDataRef = database.child(USERS_KEY).child(opponentId).child(FIRE_KEY);
+            mFireDataRef.setValue(null);
         } else {
             Log.e(TAG, "Warning: no user Id");
         }
