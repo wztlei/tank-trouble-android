@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.util.Log;
 
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.UserUtils;
@@ -30,7 +31,7 @@ public class MapUtils {
     private static final String B = "B";
     private static final String L = "L";
 //    private static final String O = "";
-//    private static final String TAG = "WL/MapUtils";
+    private static final String TAG = "WL/MapUtils";
     
     private static final float GUN_LENGTH_RATIO = 1/7f;
     private static final float GUN_LEFT_EDGE_RATIO = 39/100f;
@@ -71,14 +72,14 @@ public class MapUtils {
                 MapCell mapCell = cellGrid[row][col];
 
                 // Add the left wall if needed
-                if (mapCell.hasLeftWall()) {
+                if (mapCell.hasLeftWall() && col == 0) {
                     mapWalls.add(new RectF(CELL_WIDTH*col, TOP_Y + CELL_WIDTH*row,
                             CELL_WIDTH*col + WALL_WIDTH,
                             TOP_Y + CELL_WIDTH*row + CELL_WIDTH + WALL_WIDTH));
                 }
 
                 // Add the top wall if needed
-                if (mapCell.hasTopWall()) {
+                if (mapCell.hasTopWall() && row == 0) {
                     mapWalls.add(new RectF(CELL_WIDTH*col, TOP_Y + CELL_WIDTH*row,
                             CELL_WIDTH*col + CELL_WIDTH + WALL_WIDTH,
                             TOP_Y + CELL_WIDTH*row + WALL_WIDTH));
@@ -102,7 +103,7 @@ public class MapUtils {
             }
         }
 
-       return mapWalls;
+        return mapWalls;
     }
 
     /**
