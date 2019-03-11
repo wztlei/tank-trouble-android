@@ -89,8 +89,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             mOpponentTanks.add(new OpponentTank(mActivity, opponentId));
         }
 
-        mBattleThread.setRunning(true);
-        mBattleThread.start();
+        if (!mBattleThread.isAlive()) {
+            mBattleThread.setRunning(true);
+            mBattleThread.start();
+        }
     }
 
     @Override
