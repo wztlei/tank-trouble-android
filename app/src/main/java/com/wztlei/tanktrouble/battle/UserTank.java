@@ -64,7 +64,7 @@ public class UserTank {
             mY = randomInt(UserUtils.scaleGraphicsInt(Constants.MAP_TOP_Y_CONST),
                     UserUtils.scaleGraphicsInt(Constants.MAP_TOP_Y_CONST+1));
             mDeg = randomInt(-180, 180);
-        } while (!MapUtils.tankWallCollision(mX, mY, mDeg, mWidth, mHeight));
+        } while (MapUtils.tankWallCollision(mX, mY, mDeg, mWidth, mHeight));
     }
 
     /**
@@ -118,8 +118,8 @@ public class UserTank {
                 // Try increasing the movement in the x direction
                 deltaX += unitX;
 
-                // Check whether the new position is valid
-                if (!MapUtils.tankWallCollision(mX + deltaX, mY, angle, mWidth, mHeight)) {
+                // Check whether the new position collides with a wall
+                if (MapUtils.tankWallCollision(mX + deltaX, mY, angle, mWidth, mHeight)) {
                     // Record that an invalid position has been reached and reset deltaX
                     reachedMaxX = true;
                     deltaX -= unitX;
@@ -137,8 +137,8 @@ public class UserTank {
                 // Try increasing the movement in the y direction
                 deltaY += unitY;
 
-                // Check whether the new position is valid
-                if (!MapUtils.tankWallCollision(mX, mY + deltaY, angle, mWidth, mHeight)) {
+                // Check whether the new position collides with a wall
+                if (MapUtils.tankWallCollision(mX, mY + deltaY, angle, mWidth, mHeight)) {
                     // Record that an invalid position has been reached and reset deltaY
                     reachedMaxY = true;
                     deltaY -= unitY;
@@ -154,7 +154,7 @@ public class UserTank {
         // Check whether movement or rotation is possible with either deltaX, deltaY, or angle
         // and move accordingly
         if (deltaX != 0 || deltaY != 0 || (velocityX == 0 && velocityY == 0 &&
-                MapUtils.tankWallCollision(mX, mY, angle, mWidth, mHeight))) {
+                !MapUtils.tankWallCollision(mX, mY, angle, mWidth, mHeight))) {
             mX += deltaX;
             mY += deltaY;
             mDeg = (int) angle;
@@ -178,11 +178,11 @@ public class UserTank {
             int testY2 = Math.round(mY + oldFrontCenter.y - newFrontCenter.y);
 
             // Try rotating while keeping either rotational center unmoved
-            if (MapUtils.tankWallCollision(testX1, testY1, angle, mWidth, mHeight)) {
+            if (!MapUtils.tankWallCollision(testX1, testY1, angle, mWidth, mHeight)) {
                 mX = testX1;
                 mY = testY1;
                 mDeg = (int) angle;
-            } else if (MapUtils.tankWallCollision(testX2, testY2, angle, mWidth, mHeight)) {
+            } else if (!MapUtils.tankWallCollision(testX2, testY2, angle, mWidth, mHeight)) {
                 mX = testX2;
                 mY = testY2;
                 mDeg = (int) angle;

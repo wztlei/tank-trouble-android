@@ -13,7 +13,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
-import com.crashlytics.android.Crashlytics;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.map.MapUtils;

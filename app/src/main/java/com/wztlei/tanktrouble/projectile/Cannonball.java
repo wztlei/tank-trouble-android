@@ -24,9 +24,9 @@ public class Cannonball {
         mY = y;
 
         if (MapUtils.cannonballWallCollision(x, y, RADIUS)) {
-            mDeg = deg;
-        } else {
             handleWallCollision(x, y, deg);
+        } else {
+            mDeg = deg;
         }
 
         mFiringTime = System.currentTimeMillis();
@@ -58,7 +58,7 @@ public class Cannonball {
         }
 
         // Detect a wall collision and handle it appropriately
-        if (!MapUtils.cannonballWallCollision(mX, mY, RADIUS)) {
+        if (MapUtils.cannonballWallCollision(mX, mY, RADIUS)) {
             handleWallCollision(mX, mY, mDeg);
         }
 
@@ -79,43 +79,43 @@ public class Cannonball {
         boolean verticalCollision = false;
         mDeg = deg;
 
-        // Handle a cannonball colliding vertically with a wall from the right
-        if (MapUtils.cannonballWallCollision(x-TEST_DIST, y, RADIUS)) {
+        // Handle a cannonball colliding vertically with a wall to the right
+        if (!MapUtils.cannonballWallCollision(x-TEST_DIST, y, RADIUS)) {
             verticalCollision = true;
 
             // Move the cannonball until we reach a valid position
-            while (!MapUtils.cannonballWallCollision(newX, y, RADIUS)) {
+            while (MapUtils.cannonballWallCollision(newX, y, RADIUS)) {
                 newX--;
             }
         }
 
-        // Handle a cannonball colliding vertically with a wall from the left
-        if (MapUtils.cannonballWallCollision(x+TEST_DIST, y, RADIUS) && !verticalCollision) {
+        // Handle a cannonball colliding vertically with a wall to the left
+        if (!MapUtils.cannonballWallCollision(x+TEST_DIST, y, RADIUS) && !verticalCollision) {
             verticalCollision = true;
 
             // Move the cannonball until we reach a valid position
-            while (!MapUtils.cannonballWallCollision(newX, y, RADIUS)) {
+            while (MapUtils.cannonballWallCollision(newX, y, RADIUS)) {
                 newX++;
             }
         }
 
-        // Handle a cannonball colliding horizontally with a wall from the top
-        if (MapUtils.cannonballWallCollision(x, y-TEST_DIST, RADIUS) && !verticalCollision) {
+        // Handle a cannonball colliding horizontally with a wall to the top
+        if (!MapUtils.cannonballWallCollision(x, y-TEST_DIST, RADIUS) && !verticalCollision) {
             horizontalCollision = true;
 
             // Move the cannonball until we reach a valid position
-            while (!MapUtils.cannonballWallCollision(x, newY, RADIUS)) {
+            while (MapUtils.cannonballWallCollision(x, newY, RADIUS)) {
                 newY--;
             }
         }
 
-        // Handle a cannonball colliding horizontally with a wall from the bottom
-        if (MapUtils.cannonballWallCollision(x, y+TEST_DIST, RADIUS)
+        // Handle a cannonball colliding horizontally with a wall to the bottom
+        if (!MapUtils.cannonballWallCollision(x, y+TEST_DIST, RADIUS)
                 && !verticalCollision && !horizontalCollision) {
             horizontalCollision = true;
 
             // Move the cannonball until we reach a valid position
-            while (!MapUtils.cannonballWallCollision(x, newY, RADIUS)) {
+            while (MapUtils.cannonballWallCollision(x, newY, RADIUS)) {
                 newY++;
             }
         }
@@ -126,42 +126,42 @@ public class Cannonball {
             // Determine the angle of collision since each angle can only
             // collide with one of the four corner orientations
             if (inRange(-180, deg, -90)
-                    && MapUtils.cannonballWallCollision(x+TEST_DIST, y+TEST_DIST, RADIUS)) {
+                    && !MapUtils.cannonballWallCollision(x+TEST_DIST, y+TEST_DIST, RADIUS)) {
                 horizontalCollision = true;
                 verticalCollision = true;
 
                 // Move the cannonball until we reach a valid position
-                while (!MapUtils.cannonballWallCollision(newX, newY, RADIUS)) {
+                while (MapUtils.cannonballWallCollision(newX, newY, RADIUS)) {
                     newX++;
                     newY++;
                 }
             } else if (inRange(-90, deg, 0)
-                    && MapUtils.cannonballWallCollision(x-TEST_DIST, y+TEST_DIST, RADIUS)) {
+                    && !MapUtils.cannonballWallCollision(x-TEST_DIST, y+TEST_DIST, RADIUS)) {
                 horizontalCollision = true;
                 verticalCollision = true;
 
                 // Move the cannonball until we reach a valid position
-                while (!MapUtils.cannonballWallCollision(newX, newY, RADIUS)) {
+                while (MapUtils.cannonballWallCollision(newX, newY, RADIUS)) {
                     newX--;
                     newY++;
                 }
             } else if (inRange(0, deg, 90)
-                    && MapUtils.cannonballWallCollision(x-TEST_DIST, y-TEST_DIST, RADIUS)) {
+                    && !MapUtils.cannonballWallCollision(x-TEST_DIST, y-TEST_DIST, RADIUS)) {
                 horizontalCollision = true;
                 verticalCollision = true;
 
                 // Move the cannonball until we reach a valid position
-                while (!MapUtils.cannonballWallCollision(newX, newY, RADIUS)) {
+                while (MapUtils.cannonballWallCollision(newX, newY, RADIUS)) {
                     newX--;
                     newY--;
                 }
             } else if (inRange(90, deg, 180)
-                    && MapUtils.cannonballWallCollision(x+TEST_DIST, y-TEST_DIST, RADIUS)) {
+                    && !MapUtils.cannonballWallCollision(x+TEST_DIST, y-TEST_DIST, RADIUS)) {
                 horizontalCollision = true;
                 verticalCollision = true;
 
                 // Move the cannonball until we reach a valid position
-                while (!MapUtils.cannonballWallCollision(newX, newY, RADIUS)) {
+                while (MapUtils.cannonballWallCollision(newX, newY, RADIUS)) {
                     newX++;
                     newY--;
                 }

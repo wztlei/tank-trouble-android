@@ -157,14 +157,14 @@ public class MapUtils {
                 for (PointF pointF : tankPolygon) {
                     // We know a tank position is immediately invalid if any point is in the wall
                     if (wall.contains(pointF.x, pointF.y)) {
-                        return false;
+                        return true;
                     }
                 }
             }
         }
 
-        // The tank position passed all the filters, so the position is valid
-        return true;
+        // The tank position passed all the filters, so there is no collision
+        return false;
     }
 
     /**
@@ -507,7 +507,7 @@ public class MapUtils {
 
         // Perform a check for an intersection with a right or bottom map boundary wall
         if (cellRow >= NUM_CELL_ROWS || cellCol >= NUM_CELL_COLS) {
-            return false;
+            return true;
         }
 
         // Store a reference to the map cell of the cannonball
@@ -516,75 +516,79 @@ public class MapUtils {
         // Perform a check for an intersection with an edge of the map cell
         if (inRange(WALL_WIDTH+r, cellX, CELL_WIDTH-r)
                 && inRange(WALL_WIDTH+r, cellY, CELL_WIDTH-r)) {
-            // Return true for a position that is always wall-free (ie. in the centre of a cell)
-            return true;
+            // Return false for a position that is always wall-free (ie. in the centre of a cell)
+            return false;
         } else if (mapCell.hasLeftWall() && cellX < WALL_WIDTH+r) {
-            // Return false for an intersection with a left wall
-            return false;
+            // Return true for an intersection with a left wall
+            return true;
         } else if (mapCell.hasTopWall() && cellY < WALL_WIDTH+r) {
-            // Return false for an intersection with a top wall
-            return false;
+            // Return true for an intersection with a top wall
+            return true;
         } else if (mapCell.hasRightWall() && cellX > CELL_WIDTH-r) {
-            // Return false for an intersection with a right wall
-            return false;
+            // Return true for an intersection with a right wall
+            return true;
         } else if (mapCell.hasBottomWall() && cellY > CELL_WIDTH-r) {
-            // Return false for an intersection with a bottom wall
-            return false;
+            // Return true for an intersection with a bottom wall
+            return true;
         }
 
         // Declare variables to store the existence of intersections with corners
         Rect boundingRect = new Rect(cellX-r, cellY-r, cellX+r, cellY+r);
         boolean bottomLeftCorner = (cellRow < NUM_CELL_ROWS-1) && (cellCol > 0);
 
-        // Detect a collision with a top left corner
+        // Determine if a top left corner can even exist
         if ((cellRow > 0) && (cellCol > 0)) {
             MapCell topLeftCell = DEFAULT_MAP_CELLS[cellRow-1][cellCol-1];
             boolean tlCorner = topLeftCell.hasRightWall() || topLeftCell.hasBottomWall();
 
+            // Detect a collision with a top left corner
             if (tlCorner && (calcDistance(cellX, cellY, WALL_WIDTH, WALL_WIDTH) < r
                     || boundingRect.intersect(new Rect(0, 0, WALL_WIDTH, WALL_WIDTH)))) {
-                return false;
+                return true;
             }
         }
 
-        // Detect a collision with a top right corner
+        // Determine if a top right corner can even exist
         if ((cellRow > 0) && (cellCol < NUM_CELL_COLS-1)) {
             MapCell topRightCell = DEFAULT_MAP_CELLS[cellRow-1][cellCol+1];
             boolean trCorner = topRightCell.hasBottomWall() || topRightCell.hasLeftWall();
 
+            // Detect a collision with a top right corner
             if (trCorner && (calcDistance(cellX, cellY, CELL_WIDTH, WALL_WIDTH) < r
                     || boundingRect.intersect(new Rect(CELL_WIDTH, 0,
                     CELL_WIDTH+WALL_WIDTH, WALL_WIDTH)))) {
-                return false;
+                return true;
             }
         }
 
-        // Detect a collision with a bottom right corner
+        // Determine if a bottom right corner can even exist
         if ((cellRow < NUM_CELL_ROWS-1) && (cellCol < NUM_CELL_COLS-1)) {
             MapCell bottomRightCell = DEFAULT_MAP_CELLS[cellRow+1][cellCol+1];
             boolean brCorner = bottomRightCell.hasLeftWall() || bottomRightCell.hasTopWall();
 
+            // Detect a collision with a bottom right corner
             if (brCorner && (calcDistance(cellX, cellY, CELL_WIDTH, CELL_WIDTH) < r
                     || boundingRect.intersect(new Rect(CELL_WIDTH, CELL_WIDTH,
                     CELL_WIDTH+WALL_WIDTH, CELL_WIDTH+WALL_WIDTH)))) {
-                return false;
+                return true;
             }
         }
 
-        // Detect a collision with a bottom left corner
+        // Determine if a bottom left corner can even exist
         if (bottomLeftCorner) {
             MapCell bottomLeftCell = DEFAULT_MAP_CELLS[cellRow+1][cellCol-1];
             bottomLeftCorner = bottomLeftCell.hasTopWall() || bottomLeftCell.hasRightWall();
 
+            // Detect a collision with a bottom left corner
             if (bottomLeftCorner && (calcDistance(cellX, cellY, WALL_WIDTH, CELL_WIDTH) < r
                     || boundingRect.intersect(new Rect(0, CELL_WIDTH, WALL_WIDTH,
                     CELL_WIDTH+WALL_WIDTH)))) {
-                return false;
+                return true;
             }
         }
 
-        // No collision with wall
-        return true;
+        // The cannonball has passed all the tests, so it does not with the wall
+        return false;
     }
 
     /**
