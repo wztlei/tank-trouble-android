@@ -34,8 +34,8 @@ public class OpponentTank {
     private static final float TANK_HEIGHT_CONST = Constants.TANK_HEIGHT_CONST;
 
     OpponentTank(Activity activity, String opponentId) {
-        int tankWidth = Math.round(UserUtils.scaleGraphics(TANK_WIDTH_CONST));
-        int tankHeight = Math.round(UserUtils.scaleGraphics(TANK_HEIGHT_CONST));
+        int tankWidth = UserUtils.scaleGraphicsInt(TANK_WIDTH_CONST);
+        int tankHeight = UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST);
         mCannonballSet = new CannonballSet();
 
         // Get the red tank bitmap since it is an opponent's tank

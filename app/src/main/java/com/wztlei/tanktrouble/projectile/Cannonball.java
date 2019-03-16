@@ -13,8 +13,8 @@ public class Cannonball {
     private long mFiringTime, mLastTime;
     private int mX, mY, mDeg;
 
-    private static final float SPEED_CONST = UserUtils.scaleGraphics(32/1080f)/100f;
-    private static final float RADIUS = UserUtils.scaleGraphics(Constants.CANNONBALL_RADIUS_CONST);
+    private static final float SPEED_CONST = UserUtils.scaleGraphicsFloat(32/1080f)/100f;
+    private static final int RADIUS = UserUtils.scaleGraphicsInt(Constants.CANNONBALL_RADIUS_CONST);
     private static final int TEST_DIST = Math.round(RADIUS + 2);
     private static final int CANNONBALL_LIFESPAN = (int) Constants.CANNONBALL_LIFESPAN;
     private static final int START_FADING_AGE = 9800;

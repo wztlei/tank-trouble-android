@@ -63,8 +63,8 @@ public class CannonballSet {
             // Check whether the cannonball has exceeded its lifespan and remove if necessary
             // Also remove the cannonball if it has escaped the map
             if (deltaTime > CANNONBALL_LIFESPAN
-                    || cannonballY <= UserUtils.scaleGraphics(Constants.MAP_TOP_Y_CONST)
-                    || cannonballY >= UserUtils.scaleGraphics(Constants.MAP_BOTTOM_Y_CONST)) {
+                    || cannonballY <= UserUtils.scaleGraphicsFloat(Constants.MAP_TOP_Y_CONST)
+                    || cannonballY >= UserUtils.scaleGraphicsFloat(Constants.MAP_BOTTOM_Y_CONST)) {
                 mCannonballSet.remove(key);
             } else {
                 boolean userCollision = cannonball.updateAndDetectUserCollision(userTank);

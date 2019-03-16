@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.telephony.CellIdentity;
 import android.util.Log;
 
 import com.wztlei.tanktrouble.Constants;
@@ -12,6 +13,7 @@ import com.wztlei.tanktrouble.UserUtils;
 import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 public class MapUtils {
 
@@ -32,15 +34,16 @@ public class MapUtils {
     private static final String L = "L";
 //    private static final String O = "";
     private static final String TAG = "WL/MapUtils";
-    
+
     private static final float GUN_LENGTH_RATIO = 1/7f;
     private static final float GUN_LEFT_EDGE_RATIO = 39/100f;
     private static final float GUN_RIGHT_EDGE_RATIO = 61/100f;
-    private static final float TOP_Y = UserUtils.scaleGraphics(Constants.MAP_TOP_Y_CONST);
-    private static final float CELL_WIDTH =
-            UserUtils.scaleGraphics(Constants.MAP_CELL_WIDTH_CONST);
-    private static final float WALL_WIDTH =
-            UserUtils.scaleGraphics(Constants.MAP_WALL_WIDTH_CONST);
+    private static final int TOP_Y =
+            UserUtils.scaleGraphicsInt(Constants.MAP_TOP_Y_CONST);
+    private static final int CELL_WIDTH =
+            UserUtils.scaleGraphicsInt(Constants.MAP_CELL_WIDTH_CONST);
+    private static final int WALL_WIDTH =
+            UserUtils.scaleGraphicsInt(Constants.MAP_WALL_WIDTH_CONST);
 
     private static final MapCell[][] DEFAULT_MAP_CELLS = new MapCell[][] {
             {new MapCell(LTB), new MapCell(T), new MapCell(T), new MapCell(T), new MapCell(TR)},
@@ -50,6 +53,8 @@ public class MapUtils {
             {new MapCell(LB), new MapCell(TB), new MapCell(B), new MapCell(RB), new MapCell(LRB)}};
 
     private static final ArrayList<RectF> DEFAULT_MAP_WALLS = cellsToWalls(DEFAULT_MAP_CELLS);
+    private static final int NUM_CELL_ROWS = DEFAULT_MAP_CELLS.length;
+    private static final int NUM_CELL_COLS = DEFAULT_MAP_CELLS[0].length;
 
     //         _ _ _ _ _
     //        |_        |
@@ -67,20 +72,26 @@ public class MapUtils {
     private static ArrayList<RectF> cellsToWalls(MapCell[][] cellGrid) {
         ArrayList<RectF> mapWalls = new ArrayList<>();
 
+        if (TOP_Y == 0 || WALL_WIDTH == 0 || CELL_WIDTH == 0) {
+            throw new IllegalStateException("one of TOP_Y, WALL_WIDTH, or CELL_WIDTH is zero");
+        }
+
         for (int row = 0; row < cellGrid.length; row++) {
             for (int col = 0; col < cellGrid[row].length; col++) {
                 MapCell mapCell = cellGrid[row][col];
 
                 // Add the left wall if needed
                 if (mapCell.hasLeftWall() && col == 0) {
-                    mapWalls.add(new RectF(CELL_WIDTH*col, TOP_Y + CELL_WIDTH*row,
+                    mapWalls.add(new RectF(CELL_WIDTH*col,
+                            TOP_Y + CELL_WIDTH*row,
                             CELL_WIDTH*col + WALL_WIDTH,
                             TOP_Y + CELL_WIDTH*row + CELL_WIDTH + WALL_WIDTH));
                 }
 
                 // Add the top wall if needed
                 if (mapCell.hasTopWall() && row == 0) {
-                    mapWalls.add(new RectF(CELL_WIDTH*col, TOP_Y + CELL_WIDTH*row,
+                    mapWalls.add(new RectF(CELL_WIDTH*col,
+                            TOP_Y + CELL_WIDTH*row,
                             CELL_WIDTH*col + CELL_WIDTH + WALL_WIDTH,
                             TOP_Y + CELL_WIDTH*row + WALL_WIDTH));
                 }
@@ -488,8 +499,45 @@ public class MapUtils {
      * @param r     the radius of the cannonball
      * @return      true if the cannonball is in a valid position, and false otherwise
      */
-    public static boolean validCannonballPosition(float x, float y, float r) {
+    public static boolean validCannonballPosition(int x, int y, int r) {
         RectF boundingRect = new RectF(x-r, y-r, x+r, y+r);
+
+        int cellRow = (y - TOP_Y) / CELL_WIDTH;
+        int cellCol =  x / CELL_WIDTH;
+        int cellX = x % CELL_WIDTH;
+        int cellY = (y - TOP_Y) % CELL_WIDTH;
+
+
+        //MapCell bottomCell = ;
+
+        // Perform a check for an intersection with a right or bottom map boundary wall
+        if (cellRow >= NUM_CELL_ROWS || cellCol >= NUM_CELL_COLS) {
+            // Return false for intersecting the right or bottom map boundary wall
+            return false;
+        }
+
+        MapCell mapCell = DEFAULT_MAP_CELLS[cellRow][cellCol];
+
+        // Perform a check for an intersection with an edge of the map cell
+        if (isBetween(WALL_WIDTH+r, cellX, CELL_WIDTH-r)
+                && isBetween(WALL_WIDTH+r, cellY, CELL_WIDTH-r)) {
+            // Return true for a position that is always wall-free
+            return true;
+        } else if (mapCell.hasLeftWall() && cellX < WALL_WIDTH+r) {
+            //Log.d(TAG, "left wall");
+            // Return false for an intersection with a left wall
+            return false;
+        } else if (mapCell.hasTopWall() && cellY < WALL_WIDTH+r) {
+            // Return false for an intersection with a top wall
+            return false;
+        } else if (mapCell.hasRightWall() && cellX > CELL_WIDTH-r) {
+            // Return false for an intersection with a right wall
+            return false;
+        } else if (mapCell.hasBottomWall() && cellY > CELL_WIDTH-r) {
+            // Return false for an intersection with a bottom wall
+            return false;
+        }
+
 
         // Iterate through all the walls to determine if there are any collisions
         for (RectF wall : DEFAULT_MAP_WALLS) {

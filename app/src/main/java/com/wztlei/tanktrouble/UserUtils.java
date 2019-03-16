@@ -76,9 +76,20 @@ public class UserUtils {
      * @param scale the ratio of a graphics dimension to the screen width
      * @return      the scaled value
      */
-    public static float scaleGraphics(float scale) {
+    public static float scaleGraphicsFloat(float scale) {
+        return scale*sScreenWidth;
+    }
+
+    /**
+     * Returns the actual graphics dimension that is scaled by the user's screen width.
+     *
+     * @param scale the ratio of a graphics dimension to the screen width
+     * @return      the scaled value
+     */
+    public static int scaleGraphicsInt(float scale) {
         return Math.round(scale*sScreenWidth);
     }
+
 
     /**
      * Sets a new username and calls the appropriate function depending on whether this is the

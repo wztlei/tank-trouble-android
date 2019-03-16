@@ -30,7 +30,7 @@ public class UserTank {
     private static final String USERS_KEY = Constants.USERS_KEY;
     private static final String POS_KEY = Constants.POS_KEY;
     private static final String FIRE_KEY = Constants.FIRE_KEY;
-    private static final float SPEED_CONST = UserUtils.scaleGraphics(40/1080f)/100f;
+    private static final float SPEED_CONST = UserUtils.scaleGraphicsFloat(40/1080f)/100f;
     private static final float TANK_WIDTH_CONST = Constants.TANK_WIDTH_CONST;
     private static final float TANK_HEIGHT_CONST = Constants.TANK_HEIGHT_CONST;
 
@@ -40,8 +40,8 @@ public class UserTank {
      * @param activity      the activity in which the player tank is instantiated
      */
     UserTank(Activity activity) {
-        mWidth = Math.max(Math.round(UserUtils.scaleGraphics(TANK_WIDTH_CONST)), 1);
-        mHeight = Math.max(Math.round(UserUtils.scaleGraphics(TANK_HEIGHT_CONST)), 1);
+        mWidth = Math.max(UserUtils.scaleGraphicsInt(TANK_WIDTH_CONST), 1);
+        mHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
 
         // Get the blue tank bitmap since it is the user's tank
         mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.blue_tank);
@@ -61,8 +61,8 @@ public class UserTank {
         // Set the initial x and y coordinates for the tank
         do {
             mX = randomInt(0, UserUtils.getScreenWidth());
-            mY = randomInt((int) UserUtils.scaleGraphics(Constants.MAP_TOP_Y_CONST),
-                    (int) UserUtils.scaleGraphics(Constants.MAP_TOP_Y_CONST+1));
+            mY = randomInt(UserUtils.scaleGraphicsInt(Constants.MAP_TOP_Y_CONST),
+                    UserUtils.scaleGraphicsInt(Constants.MAP_TOP_Y_CONST+1));
             mDeg = randomInt(-180, 180);
         } while (!MapUtils.validTankPosition(mX, mY, mDeg, mWidth, mHeight));
     }

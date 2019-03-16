@@ -169,11 +169,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         int controlYMargin = (int) Math.round(1.2 * controlXMargin);
 
         // Set the joystick, fire button, and control data
-        mFireButtonDiameter = (int) UserUtils.scaleGraphics(FIRE_BUTTON_DIAMETER_CONST);
-        mFireButtonPressedDiameter =
-                (int) UserUtils.scaleGraphics(FIRE_BUTTON_PRESSED_DIAMETER_CONST);
-        mJoystickBaseRadius = (int) UserUtils.scaleGraphics(JOYSTICK_BASE_RADIUS_CONST);
-        mJoystickThresholdRadius = (int) UserUtils.scaleGraphics(JOYSTICK_THRESHOLD_RADIUS_CONST);
+        mFireButtonDiameter = UserUtils.scaleGraphicsInt(FIRE_BUTTON_DIAMETER_CONST);
+        mFireButtonPressedDiameter = UserUtils.scaleGraphicsInt(FIRE_BUTTON_PRESSED_DIAMETER_CONST);
+        mJoystickBaseRadius = UserUtils.scaleGraphicsInt(JOYSTICK_BASE_RADIUS_CONST);
+        mJoystickThresholdRadius = UserUtils.scaleGraphicsInt(JOYSTICK_THRESHOLD_RADIUS_CONST);
         mJoystickMaxDisplacement = Math.round(mJoystickBaseRadius * 0.9f);
 
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
@@ -407,8 +406,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
                 mUserTank.setFirePosition(firePos);
                 mUserCannonballSet.add(c);
-                Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY +
-                        " mDeg=" + mDeg + " degrees");
+                //Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY + " mDeg=" + mDeg + " degrees");
             }
 
             mFireButtonPressed = true;
