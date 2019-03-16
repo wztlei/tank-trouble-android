@@ -15,7 +15,6 @@ public class BattleActivity extends AppCompatActivity {
 
     private static final String OPPONENT_IDS_KEY = Constants.OPPONENT_IDS_KEY;
     private static final String TAG = "WL/BattleActivity";
-    private boolean backPressed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,16 +38,10 @@ public class BattleActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-
-        if (!backPressed) {
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-        }
     }
 
     @Override
     public void onBackPressed() {
-        backPressed = true;
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
     }

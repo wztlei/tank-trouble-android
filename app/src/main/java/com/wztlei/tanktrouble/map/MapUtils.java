@@ -3,17 +3,14 @@ package com.wztlei.tanktrouble.map;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
-import android.telephony.CellIdentity;
 import android.util.Log;
 
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.UserUtils;
 
-import org.jetbrains.annotations.Contract;
-
 import java.util.ArrayList;
-import java.util.Map;
 
 public class MapUtils {
 
@@ -76,6 +73,7 @@ public class MapUtils {
             throw new IllegalStateException("one of TOP_Y, WALL_WIDTH, or CELL_WIDTH is zero");
         }
 
+        // Iterate through all the rows and columns of a cell grid
         for (int row = 0; row < cellGrid.length; row++) {
             for (int col = 0; col < cellGrid[row].length; col++) {
                 MapCell mapCell = cellGrid[row][col];
@@ -146,7 +144,7 @@ public class MapUtils {
      * @param h     the height of the tank
      * @return      true if the tank is in a valid position and false otherwise
      */
-    public static boolean validTankPosition(float x, float y, float deg, float w, float h) {
+    public static boolean tankWallCollision(float x, float y, float deg, float w, float h) {
         RectF boundingRect = new RectF(x, y, x+w+h, y+w+h);
         PointF[] tankPolygon = tankPolygon(x, y, deg, w, h);
 
@@ -190,19 +188,19 @@ public class MapUtils {
         float risingEdge, fallingEdge, theta;
 
         // Get the edge lengths of the rotated bounding rectangle
-        if (isBetween( -180, deg,-90)) {
+        if (inRange( -180, deg,-90)) {
             risingEdge = h;
             fallingEdge = w;
             theta = (float) Math.toRadians(Math.abs(deg + 90));
-        } else if (isBetween( -90, deg,0)){
+        } else if (inRange( -90, deg,0)){
             risingEdge = w;
             fallingEdge = h;
             theta = (float) Math.toRadians(Math.abs(deg));
-        } else if (isBetween(0, deg,  90)) {
+        } else if (inRange(0, deg,  90)) {
             risingEdge = h;
             fallingEdge = w;
             theta = (float) Math.toRadians(90 - deg);
-        } else if (isBetween( 90, deg,180)) {
+        } else if (inRange( 90, deg,180)) {
             risingEdge = w;
             fallingEdge = h;
             theta = (float) Math.toRadians(180 - deg);
@@ -220,7 +218,7 @@ public class MapUtils {
 
 
         // Get the points on the left and right edge of the tank body and the front of the gun
-        if (isBetween( -180, deg,-90)) {
+        if (inRange( -180, deg,-90)) {
             gunFront1 = weightedMidpoint(rectLeft, rectTop, GUN_LEFT_EDGE_RATIO);
             gunFront2 = weightedMidpoint(rectLeft, rectTop, GUN_RIGHT_EDGE_RATIO);
 
@@ -239,7 +237,7 @@ public class MapUtils {
             bodyRight5 = weightedMidpoint(rectTop, rectRight, 5/7f);
             bodyRight6 = weightedMidpoint(rectTop, rectRight, 6/7f);
             bodyRight7 = rectRight;
-        } else if (isBetween( -90, deg,0)){
+        } else if (inRange( -90, deg,0)){
             gunFront1 = weightedMidpoint(rectTop, rectRight, GUN_LEFT_EDGE_RATIO);
             gunFront2 = weightedMidpoint(rectTop, rectRight, GUN_RIGHT_EDGE_RATIO);
 
@@ -258,7 +256,7 @@ public class MapUtils {
             bodyRight5 = weightedMidpoint(rectRight, rectBottom, 5/7f);
             bodyRight6 = weightedMidpoint(rectRight, rectBottom, 6/7f);
             bodyRight7 = rectBottom;
-        } else if (isBetween( 0, deg,90)) {
+        } else if (inRange( 0, deg,90)) {
             gunFront1 = weightedMidpoint(rectRight, rectBottom, GUN_LEFT_EDGE_RATIO);
             gunFront2 = weightedMidpoint(rectRight, rectBottom, GUN_RIGHT_EDGE_RATIO);
 
@@ -277,7 +275,7 @@ public class MapUtils {
             bodyRight5 = weightedMidpoint(rectBottom, rectLeft, 5/7f);
             bodyRight6 = weightedMidpoint(rectBottom, rectLeft, 6/7f);
             bodyRight7 = rectLeft;
-        } else if (isBetween( 90, deg, 180)) {
+        } else if (inRange( 90, deg, 180)) {
             gunFront1 = weightedMidpoint(rectBottom, rectLeft, GUN_LEFT_EDGE_RATIO);
             gunFront2 = weightedMidpoint(rectBottom, rectLeft, GUN_RIGHT_EDGE_RATIO);
 
@@ -350,19 +348,19 @@ public class MapUtils {
         float risingEdge, fallingEdge, theta;
 
         // Get the edge lengths of the rotated bounding rectangle
-        if (isBetween( -180, deg,-90)) {
+        if (inRange( -180, deg,-90)) {
             risingEdge = h;
             fallingEdge = w;
             theta = (float) Math.toRadians(Math.abs(deg + 90));
-        } else if (isBetween( -90, deg,0)){
+        } else if (inRange( -90, deg,0)){
             risingEdge = w;
             fallingEdge = h;
             theta = (float) Math.toRadians(Math.abs(deg));
-        } else if (isBetween(0, deg,  90)) {
+        } else if (inRange(0, deg,  90)) {
             risingEdge = h;
             fallingEdge = w;
             theta = (float) Math.toRadians(90 - deg);
-        } else if (isBetween( 90, deg,180)) {
+        } else if (inRange( 90, deg,180)) {
             risingEdge = w;
             fallingEdge = h;
             theta = (float) Math.toRadians(180 - deg);
@@ -379,7 +377,7 @@ public class MapUtils {
         rectLeft = new PointF(x, y+ risingEdge*sin(theta));
 
         // Get the points on the left and right edge of the tank body and the front of the gun
-        if (isBetween( -180, deg,-90)) {
+        if (inRange( -180, deg,-90)) {
             bodyLeft1 = weightedMidpoint(rectLeft, rectBottom, GUN_LENGTH_RATIO);
             bodyLeft2 = weightedMidpoint(rectLeft, rectBottom, 2/7f);
             bodyLeft3 = weightedMidpoint(rectLeft, rectBottom, 3/7f);
@@ -395,7 +393,7 @@ public class MapUtils {
             bodyRight5 = weightedMidpoint(rectTop, rectRight, 5/7f);
             bodyRight6 = weightedMidpoint(rectTop, rectRight, 6/7f);
             bodyRight7 = rectRight;
-        } else if (isBetween( -90, deg,0)){
+        } else if (inRange( -90, deg,0)){
             bodyLeft1 = weightedMidpoint(rectTop, rectLeft, GUN_LENGTH_RATIO);
             bodyLeft2 = weightedMidpoint(rectTop, rectLeft, 2/7f);
             bodyLeft3 = weightedMidpoint(rectTop, rectLeft, 3/7f);
@@ -411,7 +409,7 @@ public class MapUtils {
             bodyRight5 = weightedMidpoint(rectRight, rectBottom, 5/7f);
             bodyRight6 = weightedMidpoint(rectRight, rectBottom, 6/7f);
             bodyRight7 = rectBottom;
-        } else if (isBetween( 0, deg,90)) {
+        } else if (inRange( 0, deg,90)) {
             bodyLeft1 = weightedMidpoint(rectRight, rectTop, GUN_LENGTH_RATIO);
             bodyLeft2 = weightedMidpoint(rectRight, rectTop, 2/7f);
             bodyLeft3 = weightedMidpoint(rectRight, rectTop, 3/7f);
@@ -427,7 +425,7 @@ public class MapUtils {
             bodyRight5 = weightedMidpoint(rectBottom, rectLeft, 5/7f);
             bodyRight6 = weightedMidpoint(rectBottom, rectLeft, 6/7f);
             bodyRight7 = rectLeft;
-        } else if (isBetween( 90, deg, 180)) {
+        } else if (inRange( 90, deg, 180)) {
             bodyLeft1 = weightedMidpoint(rectBottom, rectRight, GUN_LENGTH_RATIO);
             bodyLeft2 = weightedMidpoint(rectBottom, rectRight, 2/7f);
             bodyLeft3 = weightedMidpoint(rectBottom, rectRight, 3/7f);
@@ -499,32 +497,28 @@ public class MapUtils {
      * @param r     the radius of the cannonball
      * @return      true if the cannonball is in a valid position, and false otherwise
      */
-    public static boolean validCannonballPosition(int x, int y, int r) {
-        RectF boundingRect = new RectF(x-r, y-r, x+r, y+r);
-
+    @SuppressWarnings({"SuspiciousNameCombination", "RedundantIfStatement"})
+    public static boolean cannonballWallCollision(int x, int y, int r) {
+        // Store the location of the cannonball relative to the map cell
         int cellRow = (y - TOP_Y) / CELL_WIDTH;
         int cellCol =  x / CELL_WIDTH;
         int cellX = x % CELL_WIDTH;
         int cellY = (y - TOP_Y) % CELL_WIDTH;
 
-
-        //MapCell bottomCell = ;
-
         // Perform a check for an intersection with a right or bottom map boundary wall
         if (cellRow >= NUM_CELL_ROWS || cellCol >= NUM_CELL_COLS) {
-            // Return false for intersecting the right or bottom map boundary wall
             return false;
         }
 
+        // Store a reference to the map cell of the cannonball
         MapCell mapCell = DEFAULT_MAP_CELLS[cellRow][cellCol];
 
         // Perform a check for an intersection with an edge of the map cell
-        if (isBetween(WALL_WIDTH+r, cellX, CELL_WIDTH-r)
-                && isBetween(WALL_WIDTH+r, cellY, CELL_WIDTH-r)) {
-            // Return true for a position that is always wall-free
+        if (inRange(WALL_WIDTH+r, cellX, CELL_WIDTH-r)
+                && inRange(WALL_WIDTH+r, cellY, CELL_WIDTH-r)) {
+            // Return true for a position that is always wall-free (ie. in the centre of a cell)
             return true;
         } else if (mapCell.hasLeftWall() && cellX < WALL_WIDTH+r) {
-            //Log.d(TAG, "left wall");
             // Return false for an intersection with a left wall
             return false;
         } else if (mapCell.hasTopWall() && cellY < WALL_WIDTH+r) {
@@ -538,25 +532,58 @@ public class MapUtils {
             return false;
         }
 
+        // Declare variables to store the existence of intersections with corners
+        Rect boundingRect = new Rect(cellX-r, cellY-r, cellX+r, cellY+r);
+        boolean bottomLeftCorner = (cellRow < NUM_CELL_ROWS-1) && (cellCol > 0);
 
-        // Iterate through all the walls to determine if there are any collisions
-        for (RectF wall : DEFAULT_MAP_WALLS) {
-            // Check for a collision with an edge
-            if (RectF.intersects(boundingRect, wall) &&
-                    (isBetween(wall.left, x, wall.right) ||
-                            isBetween(wall.top, y, wall.bottom))) {
-                return false;
-            }
+        // Detect a collision with a top left corner
+        if ((cellRow > 0) && (cellCol > 0)) {
+            MapCell topLeftCell = DEFAULT_MAP_CELLS[cellRow-1][cellCol-1];
+            boolean tlCorner = topLeftCell.hasRightWall() || topLeftCell.hasBottomWall();
 
-            // Check for a collision with a corner
-            if ((calcDistance(wall.left, wall.top, x, y) < r) ||
-                    (calcDistance(wall.left, wall.bottom, x, y) < r) ||
-                    (calcDistance(wall.right, wall.top, x, y) < r) ||
-                    (calcDistance(wall.right, wall.bottom, x, y) < r)) {
+            if (tlCorner && (calcDistance(cellX, cellY, WALL_WIDTH, WALL_WIDTH) < r
+                    || boundingRect.intersect(new Rect(0, 0, WALL_WIDTH, WALL_WIDTH)))) {
                 return false;
             }
         }
 
+        // Detect a collision with a top right corner
+        if ((cellRow > 0) && (cellCol < NUM_CELL_COLS-1)) {
+            MapCell topRightCell = DEFAULT_MAP_CELLS[cellRow-1][cellCol+1];
+            boolean trCorner = topRightCell.hasBottomWall() || topRightCell.hasLeftWall();
+
+            if (trCorner && (calcDistance(cellX, cellY, CELL_WIDTH, WALL_WIDTH) < r
+                    || boundingRect.intersect(new Rect(CELL_WIDTH, 0,
+                    CELL_WIDTH+WALL_WIDTH, WALL_WIDTH)))) {
+                return false;
+            }
+        }
+
+        // Detect a collision with a bottom right corner
+        if ((cellRow < NUM_CELL_ROWS-1) && (cellCol < NUM_CELL_COLS-1)) {
+            MapCell bottomRightCell = DEFAULT_MAP_CELLS[cellRow+1][cellCol+1];
+            boolean brCorner = bottomRightCell.hasLeftWall() || bottomRightCell.hasTopWall();
+
+            if (brCorner && (calcDistance(cellX, cellY, CELL_WIDTH, CELL_WIDTH) < r
+                    || boundingRect.intersect(new Rect(CELL_WIDTH, CELL_WIDTH,
+                    CELL_WIDTH+WALL_WIDTH, CELL_WIDTH+WALL_WIDTH)))) {
+                return false;
+            }
+        }
+
+        // Detect a collision with a bottom left corner
+        if (bottomLeftCorner) {
+            MapCell bottomLeftCell = DEFAULT_MAP_CELLS[cellRow+1][cellCol-1];
+            bottomLeftCorner = bottomLeftCell.hasTopWall() || bottomLeftCell.hasRightWall();
+
+            if (bottomLeftCorner && (calcDistance(cellX, cellY, WALL_WIDTH, CELL_WIDTH) < r
+                    || boundingRect.intersect(new Rect(0, CELL_WIDTH, WALL_WIDTH,
+                    CELL_WIDTH+WALL_WIDTH)))) {
+                return false;
+            }
+        }
+
+        // No collision with wall
         return true;
     }
 
@@ -571,7 +598,7 @@ public class MapUtils {
      */
     private static PointF weightedMidpoint(PointF pt1, PointF pt2, float weight) {
         // Check that that the weight is within the interval [0, 1]
-        if (!isBetween( 0, weight,1)) {
+        if (!inRange( 0, weight,1)) {
             throw new IllegalArgumentException("weight is not between 0 and 1 inclusive");
         } else {
             return new PointF(pt1.x + (pt2.x - pt1.x) * weight,
@@ -601,7 +628,7 @@ public class MapUtils {
      * @param max   the maximum value of num
      * @return      true if num is in the interval [min, max] and false otherwise
      */
-    private static boolean isBetween (float min, float num, float max) {
+    private static boolean inRange (float min, float num, float max) {
         return (min <= num && num <= max);
     }
 
