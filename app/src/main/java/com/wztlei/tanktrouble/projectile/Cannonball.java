@@ -213,10 +213,10 @@ public class Cannonball {
             canvas.drawCircle(mX, mY, RADIUS, paint);
         } else {
             // Fade out the cannonball in the last 200 ms of its lifespan
-            int tint = (int) Math.max(150 * (ageTime - START_FADING_AGE)/
+            int tint = (int) Math.max(255 * (CANNONBALL_LIFESPAN - ageTime)/
                     (CANNONBALL_LIFESPAN-START_FADING_AGE), 0);
             Paint paint = new Paint();
-            paint.setARGB(255, tint, tint, tint);
+            paint.setARGB(tint, 0, 0, 0);
             canvas.drawCircle(mX, mY, RADIUS, paint);
         }
     }
