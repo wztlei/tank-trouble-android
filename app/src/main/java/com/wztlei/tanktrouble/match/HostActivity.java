@@ -73,7 +73,7 @@ public class HostActivity extends AppCompatActivity {
      */
     private void hostGameWithRandomPin() {
         // Create a new random game PIN and display it
-        mGamePinStr = Integer.toString(randomInt(MIN_GAME_PIN, MAX_GAME_PIN));
+        mGamePinStr = Integer.toString(UserUtils.randomInt(MIN_GAME_PIN, MAX_GAME_PIN));
         TextView textGamePin = findViewById(R.id.text_game_pin);
         String textGamePinStr = "PIN: " + mGamePinStr;
         textGamePin.setText(textGamePinStr);
@@ -135,18 +135,6 @@ public class HostActivity extends AppCompatActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
-    }
-
-    /**
-     * Generates a random number on the closed interval [min, max].
-     *
-     * @param min   the minimum number that can be generated
-     * @param max   the maximum number that can be generated
-     * @return      the random number between min and max
-     */
-    private int randomInt (int min, int max){
-        Random random = new Random();
-        return random.nextInt(max-min+1) + min;
     }
 
     /**

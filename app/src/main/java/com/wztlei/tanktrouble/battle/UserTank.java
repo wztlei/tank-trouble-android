@@ -189,7 +189,7 @@ public class UserTank {
             }
         }
 
-        Position position = new Position(mX, mY, mDeg, false);
+        Position position = new Position(mX, mY, mDeg);
         position.standardizePosition();
         updateDataRef(POS_KEY, position);
         lastTime = nowTime;
@@ -230,27 +230,30 @@ public class UserTank {
     }
 
     /**
-     * Sets the position value in Firebase to the location where the user last fired.
-     */
-    public void setFirePosition(Position position) {
-        if (!position.isStandardized) {
-            position.standardizePosition();
-
-        }
-
-        position.rand = randomInt(0, 999999999);
-        updateDataRef(FIRE_KEY, position);
-    }
-
-    /**
      * Gets the position of the front of the gun when the tank fired.
      */
-    public Position getFirePosition (){
+    public Position getFirePosition() {
         PointF[] tankPolygon = MapUtils.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
         float fireX = tankPolygon[0].x;
         float fireY = tankPolygon[0].y;
 
-        return new Position(fireX, fireY, mDeg, false);
+        return new Position(fireX, fireY, mDeg);
+    }
+
+    /**
+     * Returns the position of the front of the gun when the tank fired and
+     * sets the position value in Firebase to the location where the user last fired.
+     */
+    public Position fire() {
+        PointF[] tankPolygon = MapUtils.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
+        Position position =  new Position(tankPolygon[0].x, tankPolygon[0].y, mDeg);
+
+        position.standardizePosition();
+        position.randomize();
+        updateDataRef(FIRE_KEY, position);
+
+        position.scalePosition();
+        return position;
     }
 
 

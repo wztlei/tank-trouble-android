@@ -18,5 +18,6 @@ public class Constants {
     public static final float MAP_CELL_WIDTH_CONST = 10/51f;
     public static final float MAP_WALL_WIDTH_CONST = 1/51f;
     public static final float CANNONBALL_RADIUS_CONST = 10/1080f;
-    public static final long CANNONBALL_LIFESPAN = 10000;
+    public static final float CANNONBALL_SPEED_CONST = 0.32f/1080f;
+    public static final int CANNONBALL_LIFESPAN = 10000;
 }

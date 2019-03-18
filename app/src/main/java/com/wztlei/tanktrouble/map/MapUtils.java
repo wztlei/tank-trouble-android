@@ -1,5 +1,6 @@
 package com.wztlei.tanktrouble.map;
 
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
@@ -8,6 +9,7 @@ import android.graphics.RectF;
 import android.util.Log;
 
 import com.wztlei.tanktrouble.Constants;
+import com.wztlei.tanktrouble.MainActivity;
 import com.wztlei.tanktrouble.UserUtils;
 
 import java.util.ArrayList;
@@ -70,7 +72,7 @@ public class MapUtils {
         ArrayList<RectF> mapWalls = new ArrayList<>();
 
         if (TOP_Y == 0 || WALL_WIDTH == 0 || CELL_WIDTH == 0) {
-            throw new IllegalStateException("one of TOP_Y, WALL_WIDTH, or CELL_WIDTH is zero");
+            return null;
         }
 
         // Iterate through all the rows and columns of a cell grid
@@ -128,6 +130,10 @@ public class MapUtils {
 
         paint.setARGB(255, 120, 120, 120);
 
+        if (DEFAULT_MAP_WALLS == null) {
+            return;
+        }
+
         // Iterate through all the cells in the map
         for (RectF wall : DEFAULT_MAP_WALLS) {
             canvas.drawRect(wall, paint);
@@ -147,6 +153,10 @@ public class MapUtils {
     public static boolean tankWallCollision(float x, float y, float deg, float w, float h) {
         RectF boundingRect = new RectF(x, y, x+w+h, y+w+h);
         PointF[] tankPolygon = tankPolygon(x, y, deg, w, h);
+
+        if (DEFAULT_MAP_WALLS == null) {
+            return false;
+        }
 
         // Go through all the walls of the map
         for (RectF wall : DEFAULT_MAP_WALLS) {
@@ -488,8 +498,12 @@ public class MapUtils {
                 bodyFront1, bodyFront2, bodyFront3, bodyRear1, bodyRear2, bodyRear3};
     }
 
+    public static boolean cannonballWallCollision(float x, float y, int r) {
+        return cannonballWallCollision((int) x, (int) y, r);
+    }
+
     /**
-     * Returns true if the cannonball is in a valid position and not colliding with a wall,
+     * Returns true if the cannonball collides with a wall and false otherwise.
      * and false otherwise.
      *
      * @param x     the x-coordinate of the cannonball
@@ -497,7 +511,7 @@ public class MapUtils {
      * @param r     the radius of the cannonball
      * @return      true if the cannonball is in a valid position, and false otherwise
      */
-    @SuppressWarnings({"SuspiciousNameCombination", "RedundantIfStatement"})
+    @SuppressWarnings({"SuspiciousNameCombination", "SimplifiableIfStatement"})
     public static boolean cannonballWallCollision(int x, int y, int r) {
         // Store the location of the cannonball relative to the map cell
         int cellRow = (y - TOP_Y) / CELL_WIDTH;
@@ -513,7 +527,7 @@ public class MapUtils {
         // Store a reference to the map cell of the cannonball
         MapCell mapCell = DEFAULT_MAP_CELLS[cellRow][cellCol];
 
-        // Perform a check for an intersection with an edge of the map cell
+        // Perform a check for an intersection with an edge of the map cell or a corner
         if (inRange(WALL_WIDTH+r, cellX, CELL_WIDTH-r)
                 && inRange(WALL_WIDTH+r, cellY, CELL_WIDTH-r)) {
             // Return false for a position that is always wall-free (ie. in the centre of a cell)
@@ -530,11 +544,27 @@ public class MapUtils {
         } else if (mapCell.hasBottomWall() && cellY > CELL_WIDTH-r) {
             // Return true for an intersection with a bottom wall
             return true;
+        } else {
+            // The cannonball does not collide with an edge so check for a collision with a corner
+            return cannonballCornerCollision(cellRow, cellCol, cellX, cellY, r);
         }
+    }
 
+    /**
+     * Returns true if the cannonball collides with a wall corner and false otherwise.
+     *
+     * @param cellRow   the cell row within the grid of map cells
+     * @param cellCol   the cell col within the grid of map cells
+     * @param cellX     the x-coordinate within the cell
+     * @param cellY     the y-coordinate within the cell
+     * @param r         the radius of the cannonball
+     * @return          true if the cannonball collides with a wall corner and false otherwise
+     */
+    @SuppressWarnings({"SuspiciousNameCombination", "RedundantIfStatement"})
+    private static boolean cannonballCornerCollision
+            (int cellRow, int cellCol, int cellX, int cellY, int r) {
         // Declare variables to store the existence of intersections with corners
         Rect boundingRect = new Rect(cellX-r, cellY-r, cellX+r, cellY+r);
-        boolean bottomLeftCorner = (cellRow < NUM_CELL_ROWS-1) && (cellCol > 0);
 
         // Determine if a top left corner can even exist
         if ((cellRow > 0) && (cellCol > 0)) {
@@ -575,19 +605,19 @@ public class MapUtils {
         }
 
         // Determine if a bottom left corner can even exist
-        if (bottomLeftCorner) {
+        if ((cellRow < NUM_CELL_ROWS-1) && (cellCol > 0)) {
             MapCell bottomLeftCell = DEFAULT_MAP_CELLS[cellRow+1][cellCol-1];
-            bottomLeftCorner = bottomLeftCell.hasTopWall() || bottomLeftCell.hasRightWall();
+            boolean blCorner = bottomLeftCell.hasTopWall() || bottomLeftCell.hasRightWall();
 
             // Detect a collision with a bottom left corner
-            if (bottomLeftCorner && (calcDistance(cellX, cellY, WALL_WIDTH, CELL_WIDTH) < r
+            if (blCorner && (calcDistance(cellX, cellY, WALL_WIDTH, CELL_WIDTH) < r
                     || boundingRect.intersect(new Rect(0, CELL_WIDTH, WALL_WIDTH,
                     CELL_WIDTH+WALL_WIDTH)))) {
                 return true;
             }
         }
 
-        // The cannonball has passed all the tests, so it does not with the wall
+        // The cannonball has passed all the tests, so it does not with a wall corner
         return false;
     }
 

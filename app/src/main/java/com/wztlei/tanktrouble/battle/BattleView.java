@@ -400,10 +400,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             // Ensure only one cannonball is fired for every button press and
             // limit the number of cannonballs that can be active simultaneously
             if (!mFireButtonPressed && mUserCannonballSet.size() < MAX_USER_CANNONBALLS) {
-                Position firePos = mUserTank.getFirePosition();
+                Position firePos = mUserTank.fire();
                 Cannonball c = new Cannonball((int) firePos.x, (int) firePos.y, (int) firePos.deg);
 
-                mUserTank.setFirePosition(firePos);
                 mUserCannonballSet.add(c);
                 //Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY + " mDeg=" + mDeg + " degrees");
             }

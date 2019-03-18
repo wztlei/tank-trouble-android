@@ -66,7 +66,6 @@ public class OpponentTank {
                 Position position = dataSnapshot.getValue(Position.class);
 
                 if (position != null) {
-                    position.setIsStandardized(true);
                     position.scalePosition();
                     mX = position.x;
                     mY = position.y;
@@ -86,7 +85,6 @@ public class OpponentTank {
                 Position position = dataSnapshot.getValue(Position.class);
 
                 if (position != null) {
-                    position.setIsStandardized(true);
                     position.scalePosition();
                     mX = position.x;
                     mY = position.y;
@@ -108,7 +106,6 @@ public class OpponentTank {
                 Position position = dataSnapshot.getValue(Position.class);
 
                 if (position != null) {
-                    position.setIsStandardized(true);
                     position.scalePosition();
                     float x = position.x;
                     float y = position.y;
