@@ -58,18 +58,14 @@ public class CannonballSet {
             UUID key = entry.getKey();
             Cannonball cannonball = entry.getValue();
             long deltaTime = nowTime - cannonball.getFiringTime();
-            int cannonballY = cannonball.getY();
 
             // Check whether the cannonball has exceeded its lifespan and remove if necessary
-            // Also remove the cannonball if it has escaped the map
-            if (deltaTime > CANNONBALL_LIFESPAN
-                    || cannonballY <= UserUtils.scaleGraphicsFloat(Constants.MAP_TOP_Y_CONST)
-                    || cannonballY >= UserUtils.scaleGraphicsFloat(Constants.MAP_BOTTOM_Y_CONST)) {
+            if (deltaTime > CANNONBALL_LIFESPAN) {
                 mCannonballSet.remove(key);
             } else {
-                boolean userCollision = cannonball.updateAndDetectUserCollision(userTank);
+                cannonball.update();
 
-                if (userCollision) {
+                if (userTank.detectCollision(cannonball)) {
                     detectedUserCollision = true;
                     mCannonballSet.remove(key);
                 }

@@ -15,6 +15,7 @@ import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.map.MapUtils;
+import com.wztlei.tanktrouble.projectile.Cannonball;
 
 import java.util.Random;
 
@@ -198,14 +199,16 @@ public class UserTank {
     /**
      * Returns true if a cannonball hit the tank and false otherwise.
      *
-     * @param   cannonballX         the x coordinate of the cannonball
-     * @param   cannonballY         the y coordinate of the cannonball
-     * @param   cannonballRadius    the radius of the cannonball
+     * @param   cannonball         the x coordinate of the cannonball
      * @return                      true if a cannonball hit the tank and false otherwise
      */
-    public boolean detectCollision(float cannonballX, float cannonballY, float cannonballRadius) {
+    public boolean detectCollision(Cannonball cannonball) {
         PointF[] hitbox = MapUtils.tankHitbox(mX, mY, mDeg, mWidth, mHeight);
+        int cannonballX = cannonball.getX();
+        int cannonballY = cannonball.getY();
+        int cannonballRadius = cannonball.getRadius();
 
+        // Iterate through all the points in the tank's hitbox
         for (PointF pointF : hitbox) {
             if (calcDistance(pointF.x, pointF.y, cannonballX, cannonballY) < cannonballRadius) {
                 return true;
@@ -227,17 +230,6 @@ public class UserTank {
      */
     private static float calcDistance (float x1, float y1, float x2, float y2) {
         return (float) Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2));
-    }
-
-    /**
-     * Gets the position of the front of the gun when the tank fired.
-     */
-    public Position getFirePosition() {
-        PointF[] tankPolygon = MapUtils.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
-        float fireX = tankPolygon[0].x;
-        float fireY = tankPolygon[0].y;
-
-        return new Position(fireX, fireY, mDeg);
     }
 
     /**
