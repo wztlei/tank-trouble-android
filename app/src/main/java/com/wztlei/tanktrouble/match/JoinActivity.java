@@ -67,13 +67,13 @@ public class JoinActivity extends AppCompatActivity {
     }
 
     /**
-     * Called whenever the user clicks the button to enter a game PIN.
+     * Called whenever the user clicks the button to enter a game pin.
      * The method attempts to allow the user to join that game.
      *
      * @param view the button that is clicked
      */
     public void onClickEnterGamePin(View view) {
-        // Get the game PIN entered by the user
+        // Get the game pin entered by the user
         EditText editGamePin = findViewById(R.id.edit_game_pin);
         mGamePinStr = editGamePin.getText().toString();
 

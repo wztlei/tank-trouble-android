@@ -49,7 +49,7 @@ public class HostActivity extends AppCompatActivity {
         // Get the user id
         mUserId = UserUtils.getUserId();
 
-        // Set the random game PIN
+        // Set the random game pin
         hostGameWithRandomPin();
 
         mBattleActivityStarting = false;
@@ -74,7 +74,7 @@ public class HostActivity extends AppCompatActivity {
      * Creates a new game in firebase that is hosted by the current user.
      */
     private void hostGameWithRandomPin() {
-        // Create a new random game PIN and display it
+        // Create a new random game pin and display it
         mGamePinStr = Integer.toString(UserUtils.randomInt(MIN_GAME_PIN, MAX_GAME_PIN));
         TextView textGamePin = findViewById(R.id.text_game_pin);
         String textGamePinStr = "PIN: " + mGamePinStr;
@@ -107,7 +107,7 @@ public class HostActivity extends AppCompatActivity {
     }
 
     /**
-     * Displays the game PIN on the screen and sets a listener to update a text view displaying
+     * Displays the game pin on the screen and sets a listener to update a text view displaying
      * the number of people that are waiting to play the game.
      */
     private void onUniqueRandomPinCreated() {

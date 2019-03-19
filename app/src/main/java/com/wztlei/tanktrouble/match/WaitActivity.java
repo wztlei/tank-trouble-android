@@ -49,7 +49,7 @@ public class WaitActivity extends AppCompatActivity {
     /**
      * Creates a listener to wait for the game to start.
      *
-     * @param gamePinStr the random PIN associated with the game
+     * @param gamePinStr the random pin associated with the game
      */
     private void waitForGameToStart(String gamePinStr) {
         // Get a reference to the game that the user is waiting to start
