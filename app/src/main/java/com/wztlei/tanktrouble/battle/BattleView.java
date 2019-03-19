@@ -90,7 +90,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             }
         }
 
-        if (!mBattleThread.isAlive()) {
+        if (mBattleThread.getState() == Thread.State.NEW) {
             mBattleThread.setRunning(true);
             mBattleThread.start();
         }
