@@ -12,12 +12,15 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.projectile.Cannonball;
 import com.wztlei.tanktrouble.projectile.CannonballSet;
+
+import java.util.ArrayList;
 
 public class OpponentTank {
     private Bitmap mBitmap;
@@ -26,7 +29,7 @@ public class OpponentTank {
     private CannonballSet mCannonballSet;
     private float mX, mY, mDeg;
 
-    private static final String TAG = "WL/UserTank";
+    private static final String TAG = "WL/OpponentTank";
     private static final String USERS_KEY = Constants.USERS_KEY;
     private static final String POS_KEY = Constants.POS_KEY;
     private static final String FIRE_KEY = Constants.FIRE_KEY;
@@ -103,16 +106,19 @@ public class OpponentTank {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 // Get position object and use the values to update the UI
-                Position position = dataSnapshot.getValue(Position.class);
+                GenericTypeIndicator<ArrayList<Coordinate>> t =
+                        new GenericTypeIndicator<ArrayList<Coordinate>>() {};
+                ArrayList<Coordinate> path = dataSnapshot.getValue(t);
 
-                if (position != null) {
-                    position.scalePosition();
-                    float x = position.x;
-                    float y = position.y;
-                    float deg = position.deg;
+                if (path != null) {
+                    path.remove(path.size()-1);
 
-                    Cannonball c = new Cannonball((int) x, (int) y, (int) deg);
-                    mCannonballSet.add(c);
+                    for (Coordinate coordinate : path) {
+                        coordinate.scale();
+                        Log.d(TAG, "x=" + coordinate.x + " y=" + coordinate.y);
+                    }
+
+                    mCannonballSet.add(new Cannonball(path));
                 }
             }
 

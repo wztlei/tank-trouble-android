@@ -14,6 +14,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.Constants;
+import com.wztlei.tanktrouble.MainActivity;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.BattleActivity;
@@ -109,6 +110,9 @@ public class HostActivity extends AppCompatActivity {
      * the number of people that are waiting to play the game.
      */
     private void onUniqueRandomPinCreated() {
+        if (mUserId == null) {
+            startActivity(new Intent(this, MainActivity.class));
+        }
 
         // Get a reference to the game that is being hosted by the current user
         DatabaseReference hostGameDataRef = mGamesDataRef.child(mGamePinStr);

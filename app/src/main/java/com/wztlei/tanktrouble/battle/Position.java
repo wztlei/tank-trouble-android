@@ -9,14 +9,14 @@ public class Position {
 
     private static final float SCREEN_SCALE = UserUtils.getScreenScale();
 
+    // Firebase's Realtime Database requires a no-argument constructor
+    @SuppressWarnings("unused")
+    Position(){}
+
     Position(float x, float y, float deg) {
         this.x = x;
         this.y = y;
         this.deg = deg;
-    }
-
-    public void randomize() {
-        rand = UserUtils.randomInt(0, 999999999);
     }
 
     public void standardizePosition() {

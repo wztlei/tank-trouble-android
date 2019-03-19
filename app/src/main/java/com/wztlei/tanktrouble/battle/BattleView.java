@@ -152,6 +152,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             opponentTank.draw(canvas);
 
             CannonballSet opponentCannonballs = opponentTank.getCannonballSet();
+
+            if (opponentCannonballs.size() > 0) {
+                Log.d(TAG, "size=" + opponentCannonballs.size());
+            }
             opponentCannonballs.draw(canvas);
             mUserCollision = opponentCannonballs.updateAndDetectUserCollision(mUserTank);
         }
@@ -400,10 +404,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             // Ensure only one cannonball is fired for every button press and
             // limit the number of cannonballs that can be active simultaneously
             if (!mFireButtonPressed && mUserCannonballSet.size() < MAX_USER_CANNONBALLS) {
-                Position firePos = mUserTank.fire();
-                Cannonball c = new Cannonball((int) firePos.x, (int) firePos.y, (int) firePos.deg);
-
-                mUserCannonballSet.add(c);
+                Cannonball cannonball = mUserTank.fire();
+                mUserCannonballSet.add(cannonball);
                 //Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY + " mDeg=" + mDeg + " degrees");
             }
 

@@ -2,12 +2,10 @@ package com.wztlei.tanktrouble.projectile;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.util.Log;
 
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.Coordinate;
-import com.wztlei.tanktrouble.battle.UserTank;
 import com.wztlei.tanktrouble.map.MapUtils;
 
 import java.util.ArrayList;
@@ -15,31 +13,48 @@ import java.util.ArrayList;
 public class Cannonball {
 
     private ArrayList<Coordinate> mPath;
-    private int mPathIndex;
-    private int mX, mY;
+    private int mPrevPathIndex;
+    private float mX, mY;
     private long mFiringTime, mLastTime;
 
-
-    private static final String TAG = "WL/Cannonball";
-    private static final float SPEED_CONST =
+    //private static final String TAG = "WL/Cannonball";
+    private static final float SPEED =
             UserUtils.scaleGraphicsFloat(Constants.CANNONBALL_SPEED_CONST);
-    private static final int RADIUS = UserUtils.scaleGraphicsInt(Constants.CANNONBALL_RADIUS_CONST);
-    private static final int TEST_DIST = Math.round(RADIUS + 2);
+    private static final int RADIUS =
+            UserUtils.scaleGraphicsInt(Constants.CANNONBALL_RADIUS_CONST);
     private static final int CANNONBALL_LIFESPAN = Constants.CANNONBALL_LIFESPAN;
     private static final int START_FADING_AGE = 9800;
-    private static final float CANNONBALL_DISTANCE = SPEED_CONST * CANNONBALL_LIFESPAN;
+    private static final int BUFFER = 1000;
+    private static final float CANNONBALL_DISTANCE = SPEED * CANNONBALL_LIFESPAN + BUFFER;
 
+    /**
+     * Constructor method for a cannonball created by the user tank.
+     *
+     * @param x     the x-coordinate from which the cannonball was fired
+     * @param y     the y-coordinate from which the cannonball was fired
+     * @param deg   the angle in degrees at which the cannonball was fired
+     */
     public Cannonball(int x, int y, int deg) {
         mPath = generatePath(x, y, deg);
-        mPathIndex = 0;
+        mPrevPathIndex = 0;
         mX = x;
         mY = y;
         mFiringTime = System.currentTimeMillis();
         mLastTime = mFiringTime;
     }
 
+    /**
+     * Constructor method for a cannonball created by an opponent tank.
+     *
+     * @param path  the path of the cannonball
+     */
     public Cannonball(ArrayList<Coordinate> path) {
         mPath = path;
+        mPrevPathIndex = 0;
+        mX = mPath.get(0).x;
+        mY = mPath.get(0).y;
+        mFiringTime = System.currentTimeMillis();
+        mLastTime = mFiringTime;
     }
 
     /**
@@ -75,7 +90,7 @@ public class Cannonball {
                 boolean verticalWallCollision = collisionRetreatY || !collisionRetreatX;
 
                 // Initialize variables to determine a valid position for a cannonbal
-                float xyDist = (float) Math.sqrt(dx*dx + dy*dy);
+                float xyDist = calcDistance(dx, dy);
                 float testX = x, testY = y, testDist = 1;
 
                 // Loop until we find a coordinate (testX, testY) that does not collide with a wall
@@ -88,7 +103,7 @@ public class Cannonball {
                 // Update x, y, travelDistance, and path
                 x = testX;
                 y = testY;
-                travelDistance += Math.sqrt(dx*dx + dy*dy);
+                travelDistance += calcDistance(dx, dy);
                 path.add(new Coordinate(x, y));
 
                 // Reflect dy for a collision with a horizontal wall
@@ -103,7 +118,7 @@ public class Cannonball {
             } else {
                 x += dx;
                 y += dy;
-                travelDistance += Math.sqrt(dx*dx + dy*dy);
+                travelDistance += calcDistance(dx, dy);
             }
         }
 
@@ -121,10 +136,38 @@ public class Cannonball {
         mLastTime = nowTime;
 
         // Get the displacement in the x and y directions
-        float distance = deltaTime * SPEED_CONST;
+        float movementDist = deltaTime * SPEED;
 
-        // TODO: Move the cannonball using the path variable
+        // Continue moving the cannonball while it still have distance left to move
+        while (movementDist > 0) {
+            // Get the points of the path on either side of the cannonball's location
+            Coordinate prevPathCoord = mPath.get(mPrevPathIndex);
+            Coordinate nextPathCoord = mPath.get(mPrevPathIndex + 1);
 
+            // Get the distance between the adjacent points in the path
+            float pathDx = nextPathCoord.x - prevPathCoord.x;
+            float pathDy = nextPathCoord.y - prevPathCoord.y;
+            float pathDist = calcDistance(pathDx, pathDy);
+
+            // Calculate the distance the cannonball will travel
+            float dx = movementDist * pathDx / pathDist;
+            float dy = movementDist * pathDy / pathDist;
+            float prevDist = calcDistance(prevPathCoord.x, prevPathCoord.y, mX+dx, mY+dy);
+
+            // Determine if we will go past the next coordinate in the path
+            if (prevDist > pathDist) {
+                // Move onto the next coordinate in the path while decrement the distance travelled
+                mPrevPathIndex++;
+                mX = nextPathCoord.x;
+                mY = nextPathCoord.y;
+                movementDist -= calcDistance(mX, mY, nextPathCoord.x, nextPathCoord.y);
+            } else {
+                // We have finished moving so we set movementDist to zero
+                mX += dx;
+                mY += dy;
+                movementDist = 0;
+            }
+        }
     }
 
     /**
@@ -161,24 +204,50 @@ public class Cannonball {
         }
     }
 
+    public ArrayList<Coordinate> getStandardizedPath() {
+        ArrayList<Coordinate> standardizedPath = new ArrayList<>();
+
+        for (Coordinate coordinate : mPath) {
+            standardizedPath.add(coordinate.standardized());
+        }
+
+        int randX = UserUtils.randomInt(0, 999999999);
+        int randY = UserUtils.randomInt(0, 999999999);
+        standardizedPath.add(new Coordinate(randX, randY));
+
+        return standardizedPath;
+    }
+
     /**
-     * Returns true if num is in the interval [min, max] and false otherwise.
+     * Returns the distance between points (x1, y1) and (x2, y2).
      *
-     * @param min   the minimum value of num
-     * @param num   the number to test
-     * @param max   the maximum value of num
-     * @return      true if num is in the interval [min, max] and false otherwise
+     * @param x1    the x-coordinate of point 1
+     * @param y1    the y-coordinate of point 1
+     * @param x2    the x-coordinate of point 2
+     * @param y2    the y-coordinate of point 2
+     * @return      the distance between point 1 and point 2
      */
-    private static boolean inRange (float min, float num, float max) {
-        return (min <= num && num <= max);
+    private float calcDistance(float x1, float y1, float x2, float y2) {
+        return (float) Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+    }
+
+    /**
+     * Returns the distance from moving dx in the x direction and y in the y direction.
+     *
+     * @param dx    displacement in the x direction
+     * @param dy    displacement in the y direction
+     * @return      the distance moved
+     */
+    private float calcDistance(float dx, float dy) {
+        return (float) Math.sqrt(dx*dx + dy*dy);
     }
 
     public int getX() {
-        return mX;
+        return (int) mX;
     }
 
     public int getY() {
-        return mY;
+        return (int) mY;
     }
 
     public int getRadius() {

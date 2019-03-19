@@ -1,9 +1,8 @@
 package com.wztlei.tanktrouble.projectile;
 
 import android.graphics.Canvas;
+import android.util.Log;
 
-import com.wztlei.tanktrouble.Constants;
-import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.UserTank;
 
 import java.util.HashMap;
@@ -15,6 +14,7 @@ public class CannonballSet {
     private ConcurrentHashMap<UUID, Cannonball> mCannonballSet;
 
     private static final long CANNONBALL_LIFESPAN = 10000;
+    private static final String TAG = "WL/CannonballSet";
 
     /**
      * Initializes the set of cannonballs as represented by a concurrent hash map.
@@ -65,9 +65,12 @@ public class CannonballSet {
             } else {
                 cannonball.update();
 
+                Log.d(TAG, "x=" + cannonball.getX() + " y=" + cannonball.getY());
+
                 if (userTank.detectCollision(cannonball)) {
-                    detectedUserCollision = true;
-                    mCannonballSet.remove(key);
+                    // TODO: Uncomment to detect user collision
+//                    detectedUserCollision = true;
+//                    mCannonballSet.remove(key);
                 }
             }
         }

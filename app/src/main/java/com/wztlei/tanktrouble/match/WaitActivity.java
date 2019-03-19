@@ -1,13 +1,10 @@
 package com.wztlei.tanktrouble.match;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
-import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -48,6 +45,11 @@ public class WaitActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Creates a listener to wait for the game to start.
+     *
+     * @param gamePinStr the random PIN associated with the game
+     */
     private void waitForGameToStart(String gamePinStr) {
         // Get a reference to the game that the user is waiting to start
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
@@ -71,6 +73,9 @@ public class WaitActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Called when the host presses the start game button.
+     */
     private void onGameStarted() {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         DatabaseReference waitGameDataRef = database.child(GAMES_KEY).child(mGamePinStr);

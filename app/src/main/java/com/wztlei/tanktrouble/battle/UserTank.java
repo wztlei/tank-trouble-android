@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.PointF;
 import android.util.Log;
 
@@ -236,16 +235,13 @@ public class UserTank {
      * Returns the position of the front of the gun when the tank fired and
      * sets the position value in Firebase to the location where the user last fired.
      */
-    public Position fire() {
+    public Cannonball fire() {
         PointF[] tankPolygon = MapUtils.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
-        Position position =  new Position(tankPolygon[0].x, tankPolygon[0].y, mDeg);
 
-        position.standardizePosition();
-        position.randomize();
-        updateDataRef(FIRE_KEY, position);
+        Cannonball c = new Cannonball((int) tankPolygon[0].x, (int) tankPolygon[0].y, mDeg);
+        updateDataRef(FIRE_KEY, c.getStandardizedPath());
 
-        position.scalePosition();
-        return position;
+        return c;
     }
 
 

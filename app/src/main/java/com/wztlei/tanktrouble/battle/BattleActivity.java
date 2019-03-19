@@ -36,8 +36,8 @@ public class BattleActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     @Override
