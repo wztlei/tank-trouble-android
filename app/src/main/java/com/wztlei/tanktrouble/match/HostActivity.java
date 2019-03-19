@@ -33,6 +33,7 @@ public class HostActivity extends AppCompatActivity {
     private static final String GAMES_KEY = Constants.GAMES_KEY;
     private static final String STARTED_KEY = Constants.STARTED_KEY;
     private static final String OPPONENT_IDS_KEY = Constants.OPPONENT_IDS_KEY;
+    private static final String GAME_PIN_KEY = Constants.GAME_PIN_KEY;
     private static final int MIN_GAME_PIN = 1000;
     private static final int MAX_GAME_PIN = 9999;
 
@@ -61,8 +62,8 @@ public class HostActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
 
         if (!mBattleActivityStarting) {
             mGamesDataRef.child(mGamePinStr).removeValue();
@@ -166,6 +167,7 @@ public class HostActivity extends AppCompatActivity {
                 mBattleActivityStarting = true;
                 Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
                 intent.putExtra(OPPONENT_IDS_KEY, opponentIDs);
+                intent.putExtra(GAME_PIN_KEY, mGamePinStr);
                 startActivity(intent);
             }
 

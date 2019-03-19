@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onClickTestButton(View view) {
         Intent intent = new Intent(this, BattleActivity.class);
+        intent.putExtra(Constants.GAME_PIN_KEY, Constants.TEST_GAME_PIN);
         startActivity(intent);
         Log.d(TAG, "onClickTestButton");
     }

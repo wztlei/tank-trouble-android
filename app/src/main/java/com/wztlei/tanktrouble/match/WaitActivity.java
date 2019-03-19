@@ -12,6 +12,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.Constants;
+import com.wztlei.tanktrouble.MainActivity;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.BattleActivity;
@@ -62,8 +63,10 @@ public class WaitActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 Object snapshotValue = dataSnapshot.getValue();
                 Log.d(TAG, "onDataChange" + snapshotValue);
-
-                if (snapshotValue != null && snapshotValue.toString().equals("true")) {
+                if (snapshotValue == null) {
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    startActivity(intent);
+                } else if (snapshotValue.toString().equals("true")) {
                     onGameStarted();
                 }
             }
@@ -95,6 +98,7 @@ public class WaitActivity extends AppCompatActivity {
 
                 Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
                 intent.putExtra(OPPONENT_IDS_KEY, opponentIDs);
+                intent.putExtra(GAME_PIN_KEY, mGamePinStr);
                 startActivity(intent);
             }
 
