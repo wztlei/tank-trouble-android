@@ -1,12 +1,10 @@
 package com.wztlei.tanktrouble.battle;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -15,7 +13,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.MainActivity;
-import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 
 import java.util.ArrayList;
@@ -35,6 +32,7 @@ public class BattleActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // TODO: Document this class
         Bundle intentBundle = getIntent().getExtras();
 
         if (intentBundle == null) {
@@ -109,8 +107,4 @@ public class BattleActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void startMainActivity() {
-        Intent intent = new Intent(this, MainActivity.class);
-
-    }
 }

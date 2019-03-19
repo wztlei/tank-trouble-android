@@ -125,12 +125,15 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         drawFireButton(canvas);
         drawJoystick(canvas);
 
+        // TODO: Display the score of tank kills
+
         // Check whether a cannonball collided with the user's tank
         if (mUserCollision) {
             // TODO: Handle a collision properly
             // TODO: Update the collision status in Firebase
             // TODO: Display animation of tank dying
             // TODO: Make tank appear after x seconds
+            // TODO: Increment the score and display it
             // Update and draw the user's tank
             updateUserTank();
             mUserTank.draw(canvas);
@@ -150,6 +153,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         }
 
         // Draw all of the opponents' tanks and their cannonballs while detecting collisions
+        // TODO: Remove an opponent tank when the opponent leaves the game
         for (OpponentTank opponentTank : mOpponentTanks) {
             opponentTank.draw(canvas);
 
@@ -191,6 +195,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Set the center of the joystick base, the center of the fire button,
         // and the starting touch events
+        // TODO: Modify joystick and fire button size and location due to Danny's phone size
         mJoystickBaseCenterX = controlXMargin + mJoystickBaseRadius;
         mJoystickBaseCenterY = (int) screenHeight - controlYMargin - mJoystickBaseRadius;
         mJoystickX = mJoystickBaseCenterX;
