@@ -22,7 +22,7 @@ import java.util.ArrayList;
 public class BattleActivity extends AppCompatActivity {
 
     DatabaseReference mGameDataRef;
-    String mGamePinStr;
+    String mGamePin;
 
     private static final String OPPONENT_IDS_KEY = Constants.OPPONENT_IDS_KEY;
     private static final String GAME_PIN_KEY = Constants.GAME_PIN_KEY;
@@ -39,29 +39,32 @@ public class BattleActivity extends AppCompatActivity {
 
         // Set the content view and immediately return when the intent bundle is null
         if (intentBundle == null) {
-            setContentView(new BattleView(this, new ArrayList<String>()));
+            setContentView(new BattleView(this, new ArrayList<String>(), null));
             return;
         }
 
         // Get the opponent IDs and game pin string from the intent bundle
         ArrayList<String> opponentIds = intentBundle.getStringArrayList(OPPONENT_IDS_KEY);
-        mGamePinStr = intentBundle.getString(GAME_PIN_KEY);
+        mGamePin = intentBundle.getString(GAME_PIN_KEY);
 
         // Immediately return if there is no game pin string
-        if (mGamePinStr == null) {
+        if (mGamePin == null) {
             return;
         }
 
+        // Display the graphics with battle view
+        setContentView(new BattleView(this, opponentIds, mGamePin));
+
         // Grab the database reference for the game into which the user has possibly joined
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-        mGameDataRef = database.child(GAMES_KEY).child(mGamePinStr);
+        mGameDataRef = database.child(GAMES_KEY).child(mGamePin);
 
         // Determine if the user has actually joined the game
         mGameDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 // Return immediately if this is a test game
-                if (mGamePinStr.equals(Constants.TEST_GAME_PIN)) {
+                if (mGamePin.equals(Constants.TEST_GAME_PIN)) {
                     return;
                 }
 
@@ -85,8 +88,6 @@ public class BattleActivity extends AppCompatActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
-
-        setContentView(new BattleView(this, opponentIds));
     }
 
     @Override
@@ -120,7 +121,7 @@ public class BattleActivity extends AppCompatActivity {
                 // Remove the game if there are no players left
                 if (numPlayers == 0) {
                     mGameDataRef.removeValue();
-                    Log.d(TAG, "Game with PIN=" + mGamePinStr + " has been deleted.");
+                    Log.d(TAG, "Game with PIN=" + mGamePin + " has been deleted.");
                 }
             }
 

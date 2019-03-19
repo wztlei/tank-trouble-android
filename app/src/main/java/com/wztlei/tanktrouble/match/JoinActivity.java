@@ -24,7 +24,7 @@ public class JoinActivity extends AppCompatActivity {
 
     DatabaseReference mGamesDataRef;
     String mUserId;
-    String mGamePinStr;
+    String mGamePin;
     boolean mWaitActivityStarting;
 
     private static final String GAMES_KEY = Constants.GAMES_KEY;
@@ -61,8 +61,8 @@ public class JoinActivity extends AppCompatActivity {
         super.onStop();
 
         // Remove the user from the game list if the user has not entered the waiting lobby
-        if (!mWaitActivityStarting && mGamePinStr != null) {
-            mGamesDataRef.child(mGamePinStr).child(mUserId).removeValue();
+        if (!mWaitActivityStarting && mGamePin != null) {
+            mGamesDataRef.child(mGamePin).child(mUserId).removeValue();
         }
     }
 
@@ -75,12 +75,12 @@ public class JoinActivity extends AppCompatActivity {
     public void onClickEnterGamePin(View view) {
         // Get the game pin entered by the user
         EditText editGamePin = findViewById(R.id.edit_game_pin);
-        mGamePinStr = editGamePin.getText().toString();
+        mGamePin = editGamePin.getText().toString();
 
         mGamesDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (mGamePinStr.length() > 0 && dataSnapshot.hasChild(mGamePinStr)) {
+                if (mGamePin.length() > 0 && dataSnapshot.hasChild(mGamePin)) {
                     mWaitActivityStarting = true;
                     joinGame();
                 } else {
@@ -98,14 +98,14 @@ public class JoinActivity extends AppCompatActivity {
      * The method also starts the wait activity which functions as a waiting lobby.
      */
     private void joinGame() {
-        mGamesDataRef.child(mGamePinStr)
+        mGamesDataRef.child(mGamePin)
                 .child(mUserId)
                 .setValue("guest")
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
                         Intent intent = new Intent(getApplicationContext(), WaitActivity.class);
-                        intent.putExtra(GAME_PIN_KEY, mGamePinStr);
+                        intent.putExtra(GAME_PIN_KEY, mGamePin);
                         startActivity(intent);
                     }
                 });

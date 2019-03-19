@@ -65,8 +65,6 @@ public class CannonballSet {
             } else {
                 cannonball.update();
 
-                Log.d(TAG, "x=" + cannonball.getX() + " y=" + cannonball.getY());
-
                 if (userTank.detectCollision(cannonball)) {
                     // TODO: Uncomment to detect user collision
 //                    detectedUserCollision = true;

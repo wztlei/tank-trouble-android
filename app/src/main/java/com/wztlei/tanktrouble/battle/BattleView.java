@@ -13,6 +13,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.map.MapUtils;
@@ -20,6 +23,7 @@ import com.wztlei.tanktrouble.projectile.Cannonball;
 import com.wztlei.tanktrouble.projectile.CannonballSet;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 @SuppressLint("ViewConstructor")
 public class BattleView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
@@ -28,16 +32,15 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private Bitmap mFireBitmap, mFirePressedBitmap;
     private BattleThread mBattleThread;
     private UserTank mUserTank;
-    private ArrayList<OpponentTank> mOpponentTanks;
-    private ArrayList<String> mOpponentIds;
+    private HashMap<String, OpponentTank> mOpponentTanks;
     private CannonballSet mUserCannonballSet;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
-    private int mX, mY, mDeg;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
     private int mJoystickX, mJoystickY;
     private int mJoystickPointerId, mFireButtonPointerId;
     private int mJoystickBaseRadius, mJoystickThresholdRadius, mJoystickMaxDisplacement;
     private int mFireButtonDiameter, mFireButtonPressedDiameter;
+    private int mDeg;
     private boolean mFireButtonPressed;
     private boolean mUserCollision;
 
@@ -55,15 +58,31 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      *
      * @param activity the activity in which the battle view is instantiated
      */
-    public BattleView(Activity activity, ArrayList<String> opponentIds) {
+    public BattleView(Activity activity, ArrayList<String> opponentIds, String gamePin) {
         super(activity);
 
+        UserUtils.initialize(activity);
+
         mActivity = activity;
-        mOpponentIds = opponentIds;
-        mOpponentTanks = new ArrayList<>();
+
+        // Set up the user and opponent tanks
+        mUserTank = new UserTank(activity);
+        mOpponentTanks = new HashMap<>();
+        mDeg = (int) mUserTank.getDegrees();
+
+        if (opponentIds != null && gamePin != null) {
+            DatabaseReference gameDataRef = FirebaseDatabase.getInstance().getReference()
+                    .child(Constants.GAMES_KEY).child(gamePin);
+
+            for (String opponentId : opponentIds) {
+                mOpponentTanks.put(opponentId, new OpponentTank(mActivity, opponentId));
+                setOpponentTankListener(gameDataRef, opponentId);
+            }
+        }
+
+        // Set up the cannonball data
         mUserCannonballSet = new CannonballSet();
         mUserCollision = false;
-        Log.d(TAG, "BattleView");
 
         // Callback allows us to intercept events
         getHolder().addCallback(this);
@@ -79,17 +98,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        mUserTank = new UserTank(mActivity);
-        mX = (int) mUserTank.getX();
-        mY = (int) mUserTank.getY();
-        mDeg = (int) mUserTank.getDegrees();
-
-        if (mOpponentIds != null) {
-            for (String opponentId : mOpponentIds) {
-                mOpponentTanks.add(new OpponentTank(mActivity, opponentId));
-            }
-        }
-
         if (mBattleThread.getState() == Thread.State.NEW) {
             mBattleThread.setRunning(true);
             mBattleThread.start();
@@ -154,7 +162,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Draw all of the opponents' tanks and their cannonballs while detecting collisions
         // TODO: Remove an opponent tank when the opponent leaves the game
-        for (OpponentTank opponentTank : mOpponentTanks) {
+        for (OpponentTank opponentTank : mOpponentTanks.values()) {
             opponentTank.draw(canvas);
 
             CannonballSet opponentCannonballs = opponentTank.getCannonballSet();
@@ -165,6 +173,17 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             opponentCannonballs.draw(canvas);
             mUserCollision = opponentCannonballs.updateAndDetectUserCollision(mUserTank);
         }
+    }
+
+    /**
+     *
+     * @param gameDataRef
+     * @param opponentId
+     */
+    private void setOpponentTankListener(DatabaseReference gameDataRef, String opponentId){
+        // TODO: Set up listeners to remove an opponent tank when it disappears
+
+
     }
 
     /**
@@ -223,12 +242,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         if (velocityX == 0 && velocityY == 0) {
             mUserTank.update(velocityX, velocityY, mDeg);
         } else {
-            mUserTank.update(velocityX, velocityY, calcDegrees(deltaX, deltaY));
+            mDeg = calcDegrees(deltaX, deltaY);
+            mUserTank.update(velocityX, velocityY, mDeg);
         }
 
-        mX = (int) mUserTank.getX();
-        mY = (int) mUserTank.getY();
-        mDeg = (int) mUserTank.getDegrees();
     }
 
     /**

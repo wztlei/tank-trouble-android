@@ -21,7 +21,7 @@ import java.util.ArrayList;
 
 public class WaitActivity extends AppCompatActivity {
 
-    private String mGamePinStr;
+    private String mGamePin;
     private String mUserId;
 
     private static final String TAG = "WL/WaitActivity";
@@ -39,9 +39,9 @@ public class WaitActivity extends AppCompatActivity {
         mUserId = UserUtils.getUserId();
 
         if (intentBundle != null) {
-            mGamePinStr = intentBundle.getString(GAME_PIN_KEY);
-            if (mGamePinStr != null) {
-                waitForGameToStart(mGamePinStr);
+            mGamePin = intentBundle.getString(GAME_PIN_KEY);
+            if (mGamePin != null) {
+                waitForGameToStart(mGamePin);
             }
         }
     }
@@ -49,12 +49,12 @@ public class WaitActivity extends AppCompatActivity {
     /**
      * Creates a listener to wait for the game to start.
      *
-     * @param gamePinStr the random pin associated with the game
+     * @param gamePin the random pin associated with the game
      */
-    private void waitForGameToStart(String gamePinStr) {
+    private void waitForGameToStart(String gamePin) {
         // Get a reference to the game that the user is waiting to start
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-        DatabaseReference waitGameDataRef = database.child(GAMES_KEY).child(gamePinStr);
+        DatabaseReference waitGameDataRef = database.child(GAMES_KEY).child(gamePin);
         DatabaseReference startGameField = waitGameDataRef.child(STARTED_KEY);
 
         // Listen for new people joining the game
@@ -81,7 +81,7 @@ public class WaitActivity extends AppCompatActivity {
      */
     private void onGameStarted() {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-        DatabaseReference waitGameDataRef = database.child(GAMES_KEY).child(mGamePinStr);
+        DatabaseReference waitGameDataRef = database.child(GAMES_KEY).child(mGamePin);
 
         waitGameDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -98,7 +98,7 @@ public class WaitActivity extends AppCompatActivity {
 
                 Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
                 intent.putExtra(OPPONENT_IDS_KEY, opponentIDs);
-                intent.putExtra(GAME_PIN_KEY, mGamePinStr);
+                intent.putExtra(GAME_PIN_KEY, mGamePin);
                 startActivity(intent);
             }
 

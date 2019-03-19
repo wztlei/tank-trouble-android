@@ -25,7 +25,7 @@ import java.util.Random;
 public class HostActivity extends AppCompatActivity {
 
     private DatabaseReference mGamesDataRef;
-    private String mGamePinStr;
+    private String mGamePin;
     private String mUserId;
     private boolean mBattleActivityStarting;
 
@@ -66,7 +66,7 @@ public class HostActivity extends AppCompatActivity {
         super.onDestroy();
 
         if (!mBattleActivityStarting) {
-            mGamesDataRef.child(mGamePinStr).removeValue();
+            mGamesDataRef.child(mGamePin).removeValue();
         }
     }
 
@@ -75,17 +75,17 @@ public class HostActivity extends AppCompatActivity {
      */
     private void hostGameWithRandomPin() {
         // Create a new random game pin and display it
-        mGamePinStr = Integer.toString(UserUtils.randomInt(MIN_GAME_PIN, MAX_GAME_PIN));
-        TextView textGamePin = findViewById(R.id.text_game_pin);
-        String textGamePinStr = "PIN: " + mGamePinStr;
-        textGamePin.setText(textGamePinStr);
+        mGamePin = Integer.toString(UserUtils.randomInt(MIN_GAME_PIN, MAX_GAME_PIN));
+        TextView textViewGamePin = findViewById(R.id.text_game_pin);
+        String textGamePin = "PIN: " + mGamePin;
+        textViewGamePin.setText(textGamePin);
 
         // Grab data in the games database
         mGamesDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 // Check if there already exists a game with the newly created random pin
-                if (dataSnapshot.hasChild(mGamePinStr)) {
+                if (dataSnapshot.hasChild(mGamePin)) {
                     // If so, retry hosting with game with a new random pin
                     hostGameWithRandomPin();
                 } else if (mUserId != null && mUserId.length() > 0) {
@@ -116,7 +116,7 @@ public class HostActivity extends AppCompatActivity {
         }
 
         // Get a reference to the game that is being hosted by the current user
-        DatabaseReference hostGameDataRef = mGamesDataRef.child(mGamePinStr);
+        DatabaseReference hostGameDataRef = mGamesDataRef.child(mGamePin);
         hostGameDataRef.child(mUserId).setValue("host");
         hostGameDataRef.child(STARTED_KEY).setValue("false");
 
@@ -148,7 +148,7 @@ public class HostActivity extends AppCompatActivity {
      * @param view the button that is clicked
      */
     public void onClickStartGame(View view) {
-        DatabaseReference hostGameDataRef = mGamesDataRef.child(mGamePinStr);
+        DatabaseReference hostGameDataRef = mGamesDataRef.child(mGamePin);
         hostGameDataRef.child(STARTED_KEY).setValue("true");
 
         hostGameDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -167,7 +167,7 @@ public class HostActivity extends AppCompatActivity {
                 mBattleActivityStarting = true;
                 Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
                 intent.putExtra(OPPONENT_IDS_KEY, opponentIDs);
-                intent.putExtra(GAME_PIN_KEY, mGamePinStr);
+                intent.putExtra(GAME_PIN_KEY, mGamePin);
                 startActivity(intent);
             }
 
