@@ -47,6 +47,8 @@ public class BattleActivity extends AppCompatActivity {
         ArrayList<String> opponentIds = intentBundle.getStringArrayList(OPPONENT_IDS_KEY);
         mGamePin = intentBundle.getString(GAME_PIN_KEY);
 
+        Log.d(TAG, "opponentIds=" + opponentIds);
+
         // Immediately return if there is no game pin string
         if (mGamePin == null) {
             return;
@@ -74,18 +76,6 @@ public class BattleActivity extends AppCompatActivity {
 
         Log.d(TAG, "onStop");
         Log.d(TAG, "isFinishing()==" + isFinishing());
-
-        if (isFinishing() && mGameDataRef != null) {
-            // Remove the user from the game and remove the game once this task has completed
-            mGameDataRef.child(UserUtils.getUserId())
-                    .removeValue()
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            removeGame();
-                        }
-                    });
-        }
     }
 
     @Override
@@ -100,28 +90,6 @@ public class BattleActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         startActivity( new Intent(this, MainActivity.class));
-    }
-
-    /**
-     * Removes the game from the database if necessary.
-     */
-    private void removeGame() {
-        // Remove the game from the database if necessary
-        mGameDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                int numPlayers = (int) dataSnapshot.getChildrenCount() - 1;
-
-                // Remove the game if there are no players left
-                if (numPlayers == 0) {
-                    mGameDataRef.removeValue();
-                    Log.d(TAG, "Game with PIN=" + mGamePin + " has been deleted.");
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {}
-        });
     }
 
     /**

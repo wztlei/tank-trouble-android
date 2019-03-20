@@ -14,6 +14,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -35,6 +37,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
     private Activity mActivity;
     private Bitmap mFireBitmap, mFirePressedBitmap;
+    private DatabaseReference mGameDataRef;
     private BattleThread mBattleThread;
     private UserTank mUserTank;
     private HashMap<String, OpponentTank> mOpponentTanks;
@@ -67,7 +70,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         super(activity);
 
         UserUtils.initialize(activity);
-
         mActivity = activity;
 
         // Set up the user and opponent tanks
@@ -76,12 +78,12 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mDeg = (int) mUserTank.getDegrees();
 
         if (opponentIds != null && gamePin != null) {
-            DatabaseReference gameDataRef = FirebaseDatabase.getInstance().getReference()
+             mGameDataRef = FirebaseDatabase.getInstance().getReference()
                     .child(Constants.GAMES_KEY).child(gamePin);
 
             for (String opponentId : opponentIds) {
                 mOpponentTanks.put(opponentId, new OpponentTank(mActivity, opponentId));
-                setOpponentTankListener(gameDataRef, opponentId);
+                setOpponentTankListener(mGameDataRef, opponentId);
             }
         }
 
@@ -111,6 +113,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        Log.d(TAG, "surfaceDestroyed");
         boolean retry = true;
 
         while (retry) {
@@ -122,6 +125,16 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             }
 
             retry = false;
+        }
+
+        if (mGameDataRef != null) {
+            mGameDataRef.child(UserUtils.getUserId()).removeValue()
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            removeGame();
+                        }
+                    });
         }
     }
 
@@ -166,14 +179,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         }
 
         // Draw all of the opponents' tanks and their cannonballs while detecting collisions
-        Log.d(TAG, "size=" + mOpponentTanks.size());
-
         for (OpponentTank opponentTank : mOpponentTanks.values()) {
-            opponentTank.draw(canvas);
-
             CannonballSet opponentCannonballs = opponentTank.getCannonballSet();
             mUserCollision = opponentCannonballs.updateAndDetectUserCollision(mUserTank);
             opponentCannonballs.draw(canvas);
+            opponentTank.draw(canvas);
         }
     }
 
@@ -196,10 +206,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                     if (key != null && key.equals(opponentId)) {
                         return;
                     }
-
-                    // Remove the opponent tank when they stop playing so it is not drawn anymore
-                    mOpponentTanks.remove(opponentId);
                 }
+
+                // Remove the opponent tank when they stop playing so it is not drawn anymore
+                mOpponentTanks.remove(opponentId);
+                Log.d(TAG, "Removed opponent tank with id=" + opponentId);
             }
 
             @Override
@@ -460,6 +471,27 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             mFireButtonPressed = false;
             mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
         }
+    }
+
+    /**
+     * Removes the game from the database if necessary.
+     */
+    private void removeGame() {
+        // Remove the game from the database if necessary
+        mGameDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                int numPlayers = (int) dataSnapshot.getChildrenCount() - 1;
+
+                // Remove the game if there are no players left
+                if (numPlayers == 0) {
+                    mGameDataRef.removeValue();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
     }
 
     /**

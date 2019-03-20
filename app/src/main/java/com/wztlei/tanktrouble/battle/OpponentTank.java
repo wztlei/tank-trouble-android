@@ -39,7 +39,7 @@ public class OpponentTank {
     OpponentTank(Activity activity, String opponentId) {
         int tankWidth = Math.max(UserUtils.scaleGraphicsInt(TANK_WIDTH_CONST), 1);
         int tankHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
-
+        Log.d(TAG, "tankWidth=" + tankWidth);
         mCannonballSet = new CannonballSet();
 
         // Get the red tank bitmap since it is an opponent's tank
@@ -53,6 +53,7 @@ public class OpponentTank {
             mPosDataRef = database.child(USERS_KEY).child(opponentId).child(POS_KEY);
             mFireDataRef = database.child(USERS_KEY).child(opponentId).child(FIRE_KEY);
             mFireDataRef.setValue(null);
+            Log.d(TAG, "opponentId=" + opponentId);
         } else {
             Log.e(TAG, "Warning: no user Id");
         }
@@ -116,7 +117,6 @@ public class OpponentTank {
 
                     for (Coordinate coordinate : path) {
                         coordinate.scale();
-                        Log.d(TAG, "x=" + coordinate.x + " y=" + coordinate.y);
                     }
 
                     mCannonballSet.add(new Cannonball(path));

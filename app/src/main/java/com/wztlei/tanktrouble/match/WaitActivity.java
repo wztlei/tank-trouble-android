@@ -62,7 +62,7 @@ public class WaitActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 Object snapshotValue = dataSnapshot.getValue();
-                Log.d(TAG, "onDataChange" + snapshotValue);
+
                 if (snapshotValue == null) {
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                     startActivity(intent);
@@ -80,6 +80,7 @@ public class WaitActivity extends AppCompatActivity {
      * Called when the host presses the start game button.
      */
     private void onGameStarted() {
+        // Grab a database reference to the game data in Firebase
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         DatabaseReference waitGameDataRef = database.child(GAMES_KEY).child(mGamePin);
 
@@ -95,6 +96,8 @@ public class WaitActivity extends AppCompatActivity {
                         opponentIDs.add(key);
                     }
                 }
+
+                Log.d(TAG, "opponentIds=" + opponentIDs);
 
                 Intent intent = new Intent(getApplicationContext(), BattleActivity.class);
                 intent.putExtra(OPPONENT_IDS_KEY, opponentIDs);
