@@ -39,7 +39,6 @@ public class OpponentTank {
     OpponentTank(Activity activity, String opponentId) {
         int tankWidth = Math.max(UserUtils.scaleGraphicsInt(TANK_WIDTH_CONST), 1);
         int tankHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
-        Log.d(TAG, "tankWidth=" + tankWidth);
         mCannonballSet = new CannonballSet();
 
         // Get the red tank bitmap since it is an opponent's tank

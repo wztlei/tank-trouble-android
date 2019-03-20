@@ -31,13 +31,6 @@
         android:text="@string/str_join" />
 
     <Button
-        android:id="@+id/button_test"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:onClick="onClickTestButton"
-        android:text="@string/str_test" />
-
-    <Button
         android:id="@+id/button_settings"
         android:layout_width="120dp"
         android:layout_height="wrap_content"

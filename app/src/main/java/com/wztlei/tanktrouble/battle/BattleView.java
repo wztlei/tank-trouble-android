@@ -193,7 +193,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * @param opponentId
      */
     private void setOpponentTankListener(DatabaseReference gameDataRef, final String opponentId){
-        // TODO: Set up listeners to remove an opponent tank when it disappears
         gameDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {

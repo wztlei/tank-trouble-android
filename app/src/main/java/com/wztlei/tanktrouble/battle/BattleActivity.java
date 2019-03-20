@@ -27,7 +27,6 @@ public class BattleActivity extends AppCompatActivity {
     private static final String OPPONENT_IDS_KEY = Constants.OPPONENT_IDS_KEY;
     private static final String GAME_PIN_KEY = Constants.GAME_PIN_KEY;
     private static final String GAMES_KEY = Constants.GAMES_KEY;
-
     private static final String TAG = "WL/BattleActivity";
 
     @Override
@@ -83,8 +82,6 @@ public class BattleActivity extends AppCompatActivity {
         super.onDestroy();
 
         Log.d(TAG, "onDestroy");
-
-
     }
 
     @Override
