@@ -58,7 +58,77 @@ public class BattleActivity extends AppCompatActivity {
         // Grab the database reference for the game into which the user has possibly joined
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         mGameDataRef = database.child(GAMES_KEY).child(mGamePin);
+        validateGame();
+    }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause");
+        Log.d(TAG, "isFinishing()==" + isFinishing());
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        Log.d(TAG, "onStop");
+        Log.d(TAG, "isFinishing()==" + isFinishing());
+
+        if (isFinishing() && mGameDataRef != null) {
+            // Remove the user from the game and remove the game once this task has completed
+            mGameDataRef.child(UserUtils.getUserId())
+                    .removeValue()
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            removeGame();
+                        }
+                    });
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        Log.d(TAG, "onDestroy");
+
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        startActivity( new Intent(this, MainActivity.class));
+    }
+
+    /**
+     * Removes the game from the database if necessary.
+     */
+    private void removeGame() {
+        // Remove the game from the database if necessary
+        mGameDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                int numPlayers = (int) dataSnapshot.getChildrenCount() - 1;
+
+                // Remove the game if there are no players left
+                if (numPlayers == 0) {
+                    mGameDataRef.removeValue();
+                    Log.d(TAG, "Game with PIN=" + mGamePin + " has been deleted.");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
+    }
+
+    /**
+     * Determines if the user has actually joined the game,
+     * and if not, return to the main activity.
+     */
+    private void validateGame() {
         // Determine if the user has actually joined the game
         mGameDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -89,50 +159,4 @@ public class BattleActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
     }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        // Ensure that the game data reference is not null
-        if (mGameDataRef != null) {
-            // Remove the user from the game and remove the game once this task has completed
-            mGameDataRef.child(UserUtils.getUserId())
-                    .removeValue()
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            removeGame();
-                        }
-                    });
-        }
-    }
-
-    /**
-     * Removes the game from the database if necessary
-     */
-    private void removeGame() {
-        // Remove the game from the database if necessary
-        mGameDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                int numPlayers = (int) dataSnapshot.getChildrenCount() - 1;
-
-                // Remove the game if there are no players left
-                if (numPlayers == 0) {
-                    mGameDataRef.removeValue();
-                    Log.d(TAG, "Game with PIN=" + mGamePin + " has been deleted.");
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {}
-        });
-    }
-
-    @Override
-    public void onBackPressed() {
-        startActivity( new Intent(this, MainActivity.class));
-    }
-
 }
