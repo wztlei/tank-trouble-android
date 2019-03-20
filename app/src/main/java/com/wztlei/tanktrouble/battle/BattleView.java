@@ -16,7 +16,6 @@ import android.view.View;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -83,7 +82,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
             for (String opponentId : opponentIds) {
                 mOpponentTanks.put(opponentId, new OpponentTank(mActivity, opponentId));
-                setOpponentTankListener(mGameDataRef, opponentId);
+                detectOpponentLeaving(mGameDataRef, opponentId);
             }
         }
 
@@ -188,11 +187,12 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     /**
-     *
-     * @param gameDataRef
-     * @param opponentId
+     * Sets a listener on the game's database reference to detect an opponent leaving the game.
+     * 
+     * @param gameDataRef   the database reference for the game
+     * @param opponentId    the id of the opponent
      */
-    private void setOpponentTankListener(DatabaseReference gameDataRef, final String opponentId){
+    private void detectOpponentLeaving(DatabaseReference gameDataRef, final String opponentId){
         gameDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
