@@ -52,11 +52,12 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private boolean mUserCollision;
 
     private static final String TAG = "WL/BattleView";
-    private static final float JOYSTICK_BASE_RADIUS_CONST = (float) 165/1080;
-    private static final float JOYSTICK_THRESHOLD_RADIUS_CONST = (float) 220/1080;
-    private static final float CONTROL_X_MARGIN_CONST = (float) 110/1080;
-    private static final float FIRE_BUTTON_DIAMETER_CONST = (float) 200/1080;
-    private static final float FIRE_BUTTON_PRESSED_DIAMETER_CONST = (float) 150/1080;
+    private static final float TOP_Y_CONST = Constants.MAP_TOP_Y_CONST;
+    private static final float JOYSTICK_BASE_RADIUS_CONST = (float) 165/543;
+    private static final float JOYSTICK_THRESHOLD_RADIUS_CONST = (float) 220/543;
+    private static final float CONTROL_X_MARGIN_CONST = (float) 110/543;
+    private static final float FIRE_BUTTON_DIAMETER_CONST = (float) 200/543;
+    private static final float FIRE_BUTTON_PRESSED_DIAMETER_CONST = (float) 150/543;
     // TODO: Change to 5 in production version
     private static final int MAX_USER_CANNONBALLS = 10;
 
@@ -222,16 +223,19 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      */
     private void setGraphicsData() {
         // Get the height and width of the device in pixels
-        float screenHeight = UserUtils.getScreenHeight();
+        float screenHeight = UserUtils.getScreenHeight()-100;
         float screenWidth = UserUtils.getScreenWidth();
-        int controlXMargin = (int) (screenWidth * CONTROL_X_MARGIN_CONST);
+        float controlHeight = screenHeight - UserUtils.scaleGraphicsInt(TOP_Y_CONST) - screenWidth;
+        int controlXMargin = (int) (controlHeight * CONTROL_X_MARGIN_CONST);
         int controlYMargin = (int) Math.round(1.2 * controlXMargin);
 
+        Log.d(TAG, "screenHeight=" + screenHeight);
+
         // Set the joystick, fire button, and control data
-        mFireButtonDiameter = UserUtils.scaleGraphicsInt(FIRE_BUTTON_DIAMETER_CONST);
-        mFireButtonPressedDiameter = UserUtils.scaleGraphicsInt(FIRE_BUTTON_PRESSED_DIAMETER_CONST);
-        mJoystickBaseRadius = UserUtils.scaleGraphicsInt(JOYSTICK_BASE_RADIUS_CONST);
-        mJoystickThresholdRadius = UserUtils.scaleGraphicsInt(JOYSTICK_THRESHOLD_RADIUS_CONST);
+        mFireButtonDiameter = Math.round(controlHeight * FIRE_BUTTON_DIAMETER_CONST);
+        mFireButtonPressedDiameter = Math.round(controlHeight * FIRE_BUTTON_PRESSED_DIAMETER_CONST);
+        mJoystickBaseRadius = Math.round(controlHeight * JOYSTICK_BASE_RADIUS_CONST);
+        mJoystickThresholdRadius = Math.round(controlHeight * JOYSTICK_THRESHOLD_RADIUS_CONST);
         mJoystickMaxDisplacement = Math.round(mJoystickBaseRadius * 0.9f);
 
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
