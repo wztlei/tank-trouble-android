@@ -7,6 +7,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PointF;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -34,7 +37,6 @@ import java.util.HashMap;
 @SuppressLint("ViewConstructor")
 public class BattleView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
 
-    private Activity mActivity;
     private Bitmap mFireBitmap, mFirePressedBitmap;
     private Bitmap[] mExplosionBitmaps;
     private DatabaseReference mGameDataRef;
@@ -42,15 +44,16 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private UserTank mUserTank;
     private HashMap<String, OpponentTank> mOpponentTanks;
     private CannonballSet mUserCannonballSet;
+    private PointF mUserCollision;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
     private int mJoystickX, mJoystickY;
     private int mJoystickPointerId, mFireButtonPointerId;
     private int mJoystickBaseRadius, mJoystickThresholdRadius, mJoystickMaxDisplacement;
     private int mFireButtonDiameter, mFireButtonPressedDiameter;
+    private int mExplosionWidth, mExplosionHeight;
     private int mDeg;
     private boolean mFireButtonPressed;
-    private boolean mUserCollision;
 
     private static final String TAG = "WL/BattleView";
     private static final float TOP_Y_CONST = Constants.MAP_TOP_Y_CONST;
@@ -60,6 +63,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private static final float FIRE_BUTTON_DIAMETER_CONST = (float) 200/543;
     private static final float FIRE_BUTTON_PRESSED_DIAMETER_CONST = (float) 150/543;
     private static final float CONTROL_X_MARGIN_CONST = (float) 125/1080;
+    private static final float EXPLOSION_WIDTH_CONST = (float) 186/1080;
+    private static final float EXPLOSION_HEIGHT_CONST = (float) 126/1080;
     // TODO: Change to 5 in production version
     private static final int MAX_USER_CANNONBALLS = 10;
 
@@ -72,33 +77,34 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         super(activity);
 
         UserUtils.initialize(activity);
-        mActivity = activity;
 
         // Set up the user and opponent tanks
         mUserTank = new UserTank(activity);
         mOpponentTanks = new HashMap<>();
         mDeg = (int) mUserTank.getDegrees();
 
+        // Add the opponent tanks from Firebase
         if (opponentIds != null && gamePin != null) {
              mGameDataRef = FirebaseDatabase.getInstance().getReference()
                     .child(Constants.GAMES_KEY).child(gamePin);
 
             for (String opponentId : opponentIds) {
-                mOpponentTanks.put(opponentId, new OpponentTank(mActivity, opponentId));
+                mOpponentTanks.put(opponentId, new OpponentTank(activity, opponentId));
                 detectOpponentLeaving(mGameDataRef, opponentId);
             }
         }
 
         // Set up the cannonball data
         mUserCannonballSet = new CannonballSet();
-        mUserCollision = false;
+        mUserCollision = null;
 
         // Callback allows us to intercept events
         getHolder().addCallback(this);
 
         mBattleThread = new BattleThread(getHolder(), this);
         setFocusable(true);
-        setGraphicsData();
+        setControlGraphicsData(activity);
+        setExplosionBitmaps(activity);
         setOnTouchListener(this);
     }
 
@@ -129,6 +135,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             retry = false;
         }
 
+        // Remove the game if necessary
         if (mGameDataRef != null) {
             mGameDataRef.child(UserUtils.getUserId()).removeValue()
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -156,7 +163,15 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // TODO: Display the score of tank kills
 
         // Check whether a cannonball collided with the user's tank
-        if (mUserCollision) {
+        if (mUserCollision == null) {
+            // Update and draw the user's tank
+            updateUserTank();
+            mUserTank.draw(canvas);
+
+            // Update and draw the cannonballs
+            mUserCannonballSet.draw(canvas);
+            mUserCollision = mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
+        } else {
             // TODO: Handle a collision properly
             // TODO: Update the collision status in Firebase
             // TODO: Display animation of tank exploding
@@ -170,14 +185,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             // Only update and draw the cannonballs
             mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
             mUserCannonballSet.draw(canvas);
-        } else {
-            // Update and draw the user's tank
-            updateUserTank();
-            mUserTank.draw(canvas);
-
-            // Update and draw the cannonballs
-            mUserCannonballSet.draw(canvas);
-            mUserCollision = mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
+            drawExplosion(canvas, mUserTank.getCenter());
+            mUserCollision = null;
         }
 
         // Draw all of the opponents' tanks and their cannonballs while detecting collisions
@@ -222,12 +231,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
     /**
      * Sets the member variables of the Battle View class that are related to graphics.
+     *
+     * @param activity  the activity in which the battle view is created
      */
-    private void setGraphicsData() {
-//        mExplosionBitmap = Bitmap.createScaledBitmap(
-//                BitmapFactory.decodeResource(mActivity.getResources(), R.drawable.explosion1),
-//                186, 126, false);
-
+    private void setControlGraphicsData(Activity activity) {
         // Get the height and width of the device in pixels
         float screenHeight = UserUtils.getScreenHeight();
         float screenWidth = UserUtils.getScreenWidth();
@@ -243,14 +250,14 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Get the two bitmaps for the fire button (bigger = unpressed; smaller = pressed)
         if (mFireButtonDiameter > 0) {
             mFireBitmap = Bitmap.createScaledBitmap(
-                    BitmapFactory.decodeResource (mActivity.getResources(), R.drawable.fire_button),
+                    BitmapFactory.decodeResource (activity.getResources(), R.drawable.fire_button),
                     mFireButtonDiameter, mFireButtonDiameter, false);
             mFirePressedBitmap = Bitmap.createScaledBitmap(mFireBitmap,
                     mFireButtonPressedDiameter, mFireButtonPressedDiameter, false);
         }
 
         // Get the margin between the joystick base and the edge of the screen
-        int controlXMargin = (int) (screenWidth * CONTROL_X_MARGIN_CONST);
+        int controlXMargin = UserUtils.scaleGraphicsInt(CONTROL_X_MARGIN_CONST);
         int controlYMargin = (int) (controlHeight - 2*mJoystickBaseRadius) / 2;
 
         // Set the joystick base centre, the fire button centre, and the initial joystick position
@@ -264,6 +271,39 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Set the pointer IDs to be invalid initially
         mJoystickPointerId = MotionEvent.INVALID_POINTER_ID;
         mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
+    }
+
+    /**
+     * Initializes the array of bitmaps that displays an explosion.
+     *
+     * @param activity  the activity in which the activity is created
+     */
+    private void setExplosionBitmaps(Activity activity){
+        // Get the width and height of each explosion image
+        mExplosionWidth = UserUtils.scaleGraphicsInt(EXPLOSION_WIDTH_CONST);
+        mExplosionHeight = UserUtils.scaleGraphicsInt(EXPLOSION_HEIGHT_CONST);
+
+        // Fill the explosion bitmap array with bitmaps
+        mExplosionBitmaps = new Bitmap[6];
+        mExplosionBitmaps[0] = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion0),
+                mExplosionWidth, mExplosionHeight, false);
+        mExplosionBitmaps[1] = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion1),
+                mExplosionWidth, mExplosionHeight, false);
+        mExplosionBitmaps[2] = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion2),
+                mExplosionWidth, mExplosionHeight, false);
+        mExplosionBitmaps[3] = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion3),
+                mExplosionWidth, mExplosionHeight, false);
+        mExplosionBitmaps[4] = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion4),
+                mExplosionWidth, mExplosionHeight, false);
+        mExplosionBitmaps[5] = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion5),
+                mExplosionWidth, mExplosionHeight, false);
+
     }
 
     /**
@@ -294,7 +334,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * @param canvas    the canvas on which the joystick is drawn
      */
     public void drawJoystick(Canvas canvas) {
-
         int controlRadius = mJoystickBaseRadius / 2;
 
         // Draw the base of the joystick
@@ -326,6 +365,29 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     /**
+     * Draws the explosion gif at the centre of the tank.
+     *
+     * @param canvas    the canvas on which the explosion is drawn
+     */
+    private void drawExplosion(final Canvas canvas, PointF tankCenter) {
+        final int x = (int) tankCenter.x - mExplosionWidth/2;
+        final int y = (int) tankCenter.y - mExplosionHeight/2;
+        //canvas.drawBitmap(mExplosionBitmaps[0], x, y, null);
+
+        for (int i = 0; i < mExplosionBitmaps.length; i++) {
+            final int index = i;
+
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+
+                @Override
+                public void run() {
+                    canvas.drawBitmap(mExplosionBitmaps[index], x, y, null);
+                }
+            }, 1000 * i);
+        }
+    }
+
+    /**
      * Intercepts touch events to get user input for joystick and fire button control.
      * 
      * @param   view        the view from which the listener is called
@@ -334,7 +396,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      */
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
-
         // Get the pointer index and ID from the motion event object
         int pointerIndex = motionEvent.getActionIndex();
         int pointerId = motionEvent.getPointerId(pointerIndex);

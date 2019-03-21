@@ -512,7 +512,7 @@ public class MapUtils {
      * @return      true if the cannonball is in a valid position, and false otherwise
      */
     @SuppressWarnings({"SuspiciousNameCombination", "SimplifiableIfStatement"})
-    public static boolean cannonballWallCollision(int x, int y, int r) {
+    private static boolean cannonballWallCollision(int x, int y, int r) {
         // Store the location of the cannonball relative to the map cell
         int cellRow = (y - TOP_Y) / CELL_WIDTH;
         int cellCol =  x / CELL_WIDTH;

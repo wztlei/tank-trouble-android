@@ -43,6 +43,7 @@ public class HostActivity extends AppCompatActivity {
         setContentView(R.layout.activity_host);
 
         // Get a reference to the games database
+        UserUtils.initialize(this);
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         mGamesDataRef = database.child(GAMES_KEY);
 

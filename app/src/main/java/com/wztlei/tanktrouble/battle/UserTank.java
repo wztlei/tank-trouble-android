@@ -16,6 +16,7 @@ import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.map.MapUtils;
 import com.wztlei.tanktrouble.projectile.Cannonball;
 
+import java.util.Map;
 import java.util.Random;
 
 public class UserTank {
@@ -268,12 +269,8 @@ public class UserTank {
         return random.nextInt(max-min+1) + min;
     }
 
-    public float getX() {
-        return mX;
-    }
-
-    public float getY() {
-        return mY;
+    public PointF getCenter() {
+        return MapUtils.tankHitbox(mX, mY, mDeg, mWidth, mHeight)[7];
     }
 
     public float getDegrees() {

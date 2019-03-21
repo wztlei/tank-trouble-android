@@ -1,11 +1,14 @@
 package com.wztlei.tanktrouble.projectile;
 
 import android.graphics.Canvas;
+import android.graphics.PointF;
 import android.util.Log;
 
 import com.wztlei.tanktrouble.battle.UserTank;
+import com.wztlei.tanktrouble.map.MapUtils;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -49,9 +52,9 @@ public class CannonballSet {
      *
      * @return true if a cannonball collided with the user, and false otherwise
      */
-    public boolean updateAndDetectUserCollision(UserTank userTank) {
+    public PointF updateAndDetectUserCollision(UserTank userTank) {
+        PointF detectedUserCollision = null;
         long nowTime = System.currentTimeMillis();
-        boolean detectedUserCollision = false;
 
         // Iterate through all the cannonballs in the set
         for (HashMap.Entry<UUID, Cannonball> entry : mCannonballSet.entrySet()) {
@@ -66,9 +69,8 @@ public class CannonballSet {
                 cannonball.update();
 
                 if (userTank.detectCollision(cannonball)) {
-                    // TODO: Uncomment to detect user collision
-//                    detectedUserCollision = true;
-//                    mCannonballSet.remove(key);
+                    detectedUserCollision = userTank.getCenter();
+                    mCannonballSet.remove(key);
                 }
             }
         }
