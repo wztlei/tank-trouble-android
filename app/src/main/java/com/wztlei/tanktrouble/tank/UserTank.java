@@ -1,4 +1,4 @@
-package com.wztlei.tanktrouble.battle;
+package com.wztlei.tanktrouble.tank;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -13,19 +13,17 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
+import com.wztlei.tanktrouble.battle.Position;
 import com.wztlei.tanktrouble.map.MapUtils;
 import com.wztlei.tanktrouble.projectile.Cannonball;
 
-import java.util.Map;
 import java.util.Random;
 
-public class UserTank {
+public class UserTank extends Tank {
 
     private Bitmap mBitmap;
     private DatabaseReference mUserDataRef;
-    private int mX, mY, mDeg;
     private long lastTime;
-    private int mWidth, mHeight;
 
     private static final String TAG = "WL/UserTank";
     private static final String USERS_KEY = Constants.USERS_KEY;
@@ -40,7 +38,7 @@ public class UserTank {
      *
      * @param activity      the activity in which the player tank is instantiated
      */
-    UserTank(Activity activity) {
+    public UserTank(Activity activity) {
         mWidth = Math.max(UserUtils.scaleGraphicsInt(TANK_WIDTH_CONST), 1);
         mHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
 
@@ -161,13 +159,13 @@ public class UserTank {
             mDeg = (int) angle;
         } else {
             // Get the original polygon and get the two old centers of rotation
-            PointF[] oldPolygon = MapUtils.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
+            PointF[] oldPolygon = Tank.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
             PointF oldFrontCenter = oldPolygon[0];
             PointF oldMidCenter = oldPolygon[1];
 
             // Get the new polygon with rotation, but not movement,
             // and get the two new centers of rotation
-            PointF[] newPolygon = MapUtils.tankPolygon(mX, mY, angle, mWidth, mHeight);
+            PointF[] newPolygon = Tank.tankPolygon(mX, mY, angle, mWidth, mHeight);
             PointF newFrontCenter = newPolygon[0];
             PointF newMidCenter = newPolygon[1];
 
@@ -203,7 +201,7 @@ public class UserTank {
      * @return                      true if a cannonball hit the tank and false otherwise
      */
     public boolean detectCollision(Cannonball cannonball) {
-        PointF[] hitbox = MapUtils.tankHitbox(mX, mY, mDeg, mWidth, mHeight);
+        PointF[] hitbox = Tank.tankHitbox(mX, mY, mDeg, mWidth, mHeight);
         int cannonballX = cannonball.getX();
         int cannonballY = cannonball.getY();
         int cannonballRadius = cannonball.getRadius();
@@ -237,7 +235,7 @@ public class UserTank {
      * sets the position value in Firebase to the location where the user last fired.
      */
     public Cannonball fire() {
-        PointF[] tankPolygon = MapUtils.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
+        PointF[] tankPolygon = Tank.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
 
         Cannonball c = new Cannonball((int) tankPolygon[0].x, (int) tankPolygon[0].y, mDeg);
         updateDataRef(FIRE_KEY, c.getStandardizedPath());
@@ -269,11 +267,7 @@ public class UserTank {
         return random.nextInt(max-min+1) + min;
     }
 
-    public PointF getCenter() {
-        return MapUtils.tankHitbox(mX, mY, mDeg, mWidth, mHeight)[7];
-    }
-
-    public float getDegrees() {
+    public int getDegrees() {
         return mDeg;
     }
 }

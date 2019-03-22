@@ -8,8 +8,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -30,19 +28,22 @@ import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.map.MapUtils;
 import com.wztlei.tanktrouble.projectile.Cannonball;
 import com.wztlei.tanktrouble.projectile.CannonballSet;
+import com.wztlei.tanktrouble.tank.OpponentTank;
+import com.wztlei.tanktrouble.tank.UserTank;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 @SuppressLint("ViewConstructor")
 public class BattleView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
 
     private Bitmap mFireBitmap, mFirePressedBitmap;
-    private Bitmap[] mExplosionBitmaps;
     private DatabaseReference mGameDataRef;
     private BattleThread mBattleThread;
     private UserTank mUserTank;
     private HashMap<String, OpponentTank> mOpponentTanks;
+    private HashSet<ExplosionFrame> mExplosionFrames;
     private CannonballSet mUserCannonballSet;
     private PointF mUserCollision;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
@@ -51,7 +52,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private int mJoystickPointerId, mFireButtonPointerId;
     private int mJoystickBaseRadius, mJoystickThresholdRadius, mJoystickMaxDisplacement;
     private int mFireButtonDiameter, mFireButtonPressedDiameter;
-    private int mExplosionWidth, mExplosionHeight;
     private int mDeg;
     private boolean mFireButtonPressed;
 
@@ -63,8 +63,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private static final float FIRE_BUTTON_DIAMETER_CONST = (float) 200/543;
     private static final float FIRE_BUTTON_PRESSED_DIAMETER_CONST = (float) 150/543;
     private static final float CONTROL_X_MARGIN_CONST = (float) 125/1080;
-    private static final float EXPLOSION_WIDTH_CONST = (float) 186/1080;
-    private static final float EXPLOSION_HEIGHT_CONST = (float) 126/1080;
+
     // TODO: Change to 5 in production version
     private static final int MAX_USER_CANNONBALLS = 10;
 
@@ -77,26 +76,29 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         super(activity);
 
         UserUtils.initialize(activity);
+        ExplosionFrame.initialize(activity);
 
         // Set up the user and opponent tanks
         mUserTank = new UserTank(activity);
         mOpponentTanks = new HashMap<>();
-        mDeg = (int) mUserTank.getDegrees();
+        mDeg = mUserTank.getDegrees();
 
         // Add the opponent tanks from Firebase
         if (opponentIds != null && gamePin != null) {
              mGameDataRef = FirebaseDatabase.getInstance().getReference()
                     .child(Constants.GAMES_KEY).child(gamePin);
+            detectOpponentEntering(activity, mGameDataRef);
 
             for (String opponentId : opponentIds) {
                 mOpponentTanks.put(opponentId, new OpponentTank(activity, opponentId));
-                detectOpponentLeaving(mGameDataRef, opponentId);
+                detectOpponentExiting(mGameDataRef, opponentId);
             }
         }
 
-        // Set up the cannonball data
+        // Set up the cannonball and explosion data
         mUserCannonballSet = new CannonballSet();
         mUserCollision = null;
+        mExplosionFrames = new HashSet<>();
 
         // Callback allows us to intercept events
         getHolder().addCallback(this);
@@ -104,7 +106,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         mBattleThread = new BattleThread(getHolder(), this);
         setFocusable(true);
         setControlGraphicsData(activity);
-        setExplosionBitmaps(activity);
         setOnTouchListener(this);
     }
 
@@ -180,12 +181,12 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             // Update and draw the user's tank
             updateUserTank();
             mUserTank.draw(canvas);
+            mExplosionFrames.add(new ExplosionFrame(mUserTank));
 
             // If a collision occurred, then do not draw the user's tank
             // Only update and draw the cannonballs
             mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
             mUserCannonballSet.draw(canvas);
-            drawExplosion(canvas, mUserTank.getCenter());
             mUserCollision = null;
         }
 
@@ -196,6 +197,127 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             opponentCannonballs.draw(canvas);
             opponentTank.draw(canvas);
         }
+
+        // Draw all of the explosions
+        for (ExplosionFrame explosionFrame : mExplosionFrames) {
+            if (explosionFrame.isRemovable()) {
+                mExplosionFrames.remove(explosionFrame);
+            } else {
+                explosionFrame.draw(canvas);
+            }
+        }
+    }
+
+    /**
+     * Intercepts touch events to get user input for joystick and fire button control.
+     *
+     * @param   view        the view from which the listener is called
+     * @param   motionEvent the type of touch motion detected
+     * @return              true if the listener has consumed the event, false otherwise.
+     */
+    @Override
+    public boolean onTouch(View view, MotionEvent motionEvent) {
+        // Get the pointer index and ID from the motion event object
+        int pointerIndex = motionEvent.getActionIndex();
+        int pointerId = motionEvent.getPointerId(pointerIndex);
+
+        // Get the pointer's x and y
+        int pointerX = (int) motionEvent.getX(pointerIndex);
+        int pointerY = (int) motionEvent.getY(pointerIndex);
+
+        // Get masked (not specific to a pointer) action
+        int action = motionEvent.getActionMasked();
+
+        // Determine the type of touch event action
+        switch (action) {
+            // User has put a new pointer down on the screen
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
+                // Only update the joystick data if there is no pointer id
+                // associated with the joystick touch events yet
+                if (mJoystickPointerId == MotionEvent.INVALID_POINTER_ID) {
+                    updateJoystickData(pointerX, pointerY, pointerId, action);
+                }
+
+                // Only update the fire button data if there is no pointer id
+                // associated with the fire button touch events yet
+                if (mFireButtonPointerId == MotionEvent.INVALID_POINTER_ID) {
+                    updateFireButtonData(pointerX, pointerY, pointerId);
+                }
+                break;
+
+            // User has moved a pointer on the screen
+            case MotionEvent.ACTION_MOVE:
+                // Go through all the pointers since getActionIndex() will always be 0
+                // because MotionEvent.ACTION_MOVE is only interested in the primary pointer
+                for (int index = 0; index < motionEvent.getPointerCount(); index++) {
+                    int id = motionEvent.getPointerId(index);
+                    int x = (int) motionEvent.getX(index);
+                    int y = (int) motionEvent.getY(index);
+
+                    // Determine if the moving pointer is a joystick or fire button pointer
+                    // If so, update the joystick or fire button data accordingly
+                    if (id == mJoystickPointerId) {
+                        updateJoystickData(x, y, id, action);
+                    } else if (mJoystickPointerId == MotionEvent.INVALID_POINTER_ID) {
+                        updateJoystickData(x, y, id, action);
+                    } else if (id == mFireButtonPointerId){
+                        updateFireButtonData(x, y, id);
+                    }
+                }
+                break;
+
+            // User has removed a pointer up and off the screen
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+            case MotionEvent.ACTION_CANCEL:
+                // Determine if  the removed pointer is a joystick or fire button pointer
+                // If so, reset the joystick or fire button data accordingly to default values
+                if (pointerId == mJoystickPointerId) {
+                    mJoystickX = mJoystickBaseCenterX;
+                    mJoystickY = mJoystickBaseCenterY;
+                    mJoystickPointerId = MotionEvent.INVALID_POINTER_ID;
+                } else if (pointerId == mFireButtonPointerId){
+                    mFireButtonPressed = false;
+                    mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        return true;
+    }
+
+    /**
+     * Detects an opponent entering the game and adds the opponent tank to the HashMap.
+     *
+     * @param activity      the activity of the battle view
+     * @param gameDataRef   a Firebase Database reference for the game
+     */
+    private void detectOpponentEntering(final Activity activity, DatabaseReference gameDataRef) {
+        gameDataRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String userId = UserUtils.getUserId();
+
+                // Determine if any of the children of the game has a key of the opponent id
+                for (DataSnapshot children : dataSnapshot.getChildren()) {
+                    String key = children.getKey();
+
+                    // Return if we have found a key matching the user id, since
+                    // this means that the user has actually joined the game
+                    if (key != null && !key.equals(Constants.STARTED_KEY)
+                            && !key.equals(userId) && !mOpponentTanks.containsKey(key)) {
+                        mOpponentTanks.put(key, new OpponentTank(activity, key));
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
     }
 
     /**
@@ -204,7 +326,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * @param gameDataRef   the database reference for the game
      * @param opponentId    the id of the opponent
      */
-    private void detectOpponentLeaving(DatabaseReference gameDataRef, final String opponentId){
+    private void detectOpponentExiting(DatabaseReference gameDataRef, final String opponentId){
         gameDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -274,39 +396,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     /**
-     * Initializes the array of bitmaps that displays an explosion.
-     *
-     * @param activity  the activity in which the activity is created
-     */
-    private void setExplosionBitmaps(Activity activity){
-        // Get the width and height of each explosion image
-        mExplosionWidth = UserUtils.scaleGraphicsInt(EXPLOSION_WIDTH_CONST);
-        mExplosionHeight = UserUtils.scaleGraphicsInt(EXPLOSION_HEIGHT_CONST);
-
-        // Fill the explosion bitmap array with bitmaps
-        mExplosionBitmaps = new Bitmap[6];
-        mExplosionBitmaps[0] = Bitmap.createScaledBitmap(
-                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion0),
-                mExplosionWidth, mExplosionHeight, false);
-        mExplosionBitmaps[1] = Bitmap.createScaledBitmap(
-                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion1),
-                mExplosionWidth, mExplosionHeight, false);
-        mExplosionBitmaps[2] = Bitmap.createScaledBitmap(
-                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion2),
-                mExplosionWidth, mExplosionHeight, false);
-        mExplosionBitmaps[3] = Bitmap.createScaledBitmap(
-                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion3),
-                mExplosionWidth, mExplosionHeight, false);
-        mExplosionBitmaps[4] = Bitmap.createScaledBitmap(
-                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion4),
-                mExplosionWidth, mExplosionHeight, false);
-        mExplosionBitmaps[5] = Bitmap.createScaledBitmap(
-                BitmapFactory.decodeResource(activity.getResources(), R.drawable.explosion5),
-                mExplosionWidth, mExplosionHeight, false);
-
-    }
-
-    /**
      * Updates the location and angle of the tank based on the most recent touch events
      * by the user.
      */
@@ -362,111 +451,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         } else {
             canvas.drawBitmap(mFireBitmap, mFireButtonOffsetX, mFireButtonOffsetY, null);
         }
-    }
-
-    /**
-     * Draws the explosion gif at the centre of the tank.
-     *
-     * @param canvas    the canvas on which the explosion is drawn
-     */
-    private void drawExplosion(final Canvas canvas, PointF tankCenter) {
-        final int x = (int) tankCenter.x - mExplosionWidth/2;
-        final int y = (int) tankCenter.y - mExplosionHeight/2;
-        //canvas.drawBitmap(mExplosionBitmaps[0], x, y, null);
-
-        for (int i = 0; i < mExplosionBitmaps.length; i++) {
-            final int index = i;
-
-            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-
-                @Override
-                public void run() {
-                    canvas.drawBitmap(mExplosionBitmaps[index], x, y, null);
-                }
-            }, 1000 * i);
-        }
-    }
-
-    /**
-     * Intercepts touch events to get user input for joystick and fire button control.
-     * 
-     * @param   view        the view from which the listener is called
-     * @param   motionEvent the type of touch motion detected
-     * @return              true if the listener has consumed the event, false otherwise.
-     */
-    @Override
-    public boolean onTouch(View view, MotionEvent motionEvent) {
-        // Get the pointer index and ID from the motion event object
-        int pointerIndex = motionEvent.getActionIndex();
-        int pointerId = motionEvent.getPointerId(pointerIndex);
-
-        // Get the pointer's x and y
-        int pointerX = (int) motionEvent.getX(pointerIndex);
-        int pointerY = (int) motionEvent.getY(pointerIndex);
-
-        // Get masked (not specific to a pointer) action
-        int action = motionEvent.getActionMasked();
-        
-        // Determine the type of touch event action
-        switch (action) {
-            // User has put a new pointer down on the screen
-            case MotionEvent.ACTION_DOWN:
-            case MotionEvent.ACTION_POINTER_DOWN:
-                // Only update the joystick data if there is no pointer id
-                // associated with the joystick touch events yet
-                if (mJoystickPointerId == MotionEvent.INVALID_POINTER_ID) {
-                    updateJoystickData(pointerX, pointerY, pointerId, action);
-                }
-
-                // Only update the fire button data if there is no pointer id
-                // associated with the fire button touch events yet
-                if (mFireButtonPointerId == MotionEvent.INVALID_POINTER_ID) {
-                    updateFireButtonData(pointerX, pointerY, pointerId);
-                }
-                break;
-
-            // User has moved a pointer on the screen
-            case MotionEvent.ACTION_MOVE:
-                // Go through all the pointers since getActionIndex() will always be 0 
-                // because MotionEvent.ACTION_MOVE is only interested in the primary pointer
-                for (int index = 0; index < motionEvent.getPointerCount(); index++) {
-                    int id = motionEvent.getPointerId(index);
-                    int x = (int) motionEvent.getX(index);
-                    int y = (int) motionEvent.getY(index);
-
-                    // Determine if the moving pointer is a joystick or fire button pointer
-                    // If so, update the joystick or fire button data accordingly
-                    if (id == mJoystickPointerId) {
-                        updateJoystickData(x, y, id, action);
-                    } else if (mJoystickPointerId == MotionEvent.INVALID_POINTER_ID) {
-                        updateJoystickData(x, y, id, action);
-                    } else if (id == mFireButtonPointerId){
-                        updateFireButtonData(x, y, id);
-                    }
-                }
-                break;
-
-            // User has removed a pointer up and off the screen
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_POINTER_UP:
-            case MotionEvent.ACTION_CANCEL:
-                // Determine if  the removed pointer is a joystick or fire button pointer
-                // If so, reset the joystick or fire button data accordingly to default values
-                if (pointerId == mJoystickPointerId) {
-                    mJoystickX = mJoystickBaseCenterX;
-                    mJoystickY = mJoystickBaseCenterY;
-                    mJoystickPointerId = MotionEvent.INVALID_POINTER_ID;
-                } else if (pointerId == mFireButtonPointerId){
-                    mFireButtonPressed = false;
-                    mFireButtonPointerId = MotionEvent.INVALID_POINTER_ID;
-                }
-                break;
-
-            default:
-                break;
-        }
-
-        return true;
     }
 
     /**

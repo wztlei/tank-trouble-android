@@ -2,19 +2,15 @@ package com.wztlei.tanktrouble.projectile;
 
 import android.graphics.Canvas;
 import android.graphics.PointF;
-import android.util.Log;
 
-import com.wztlei.tanktrouble.battle.UserTank;
-import com.wztlei.tanktrouble.map.MapUtils;
+import com.wztlei.tanktrouble.tank.UserTank;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 
 public class CannonballSet {
 
-    private ConcurrentHashMap<UUID, Cannonball> mCannonballSet;
+    private HashSet<Cannonball> mCannonballSet;
 
     private static final long CANNONBALL_LIFESPAN = 10000;
     private static final String TAG = "WL/CannonballSet";
@@ -23,7 +19,7 @@ public class CannonballSet {
      * Initializes the set of cannonballs as represented by a concurrent hash map.
      */
     public CannonballSet() {
-        mCannonballSet = new ConcurrentHashMap<>();
+        mCannonballSet = new HashSet<>();
     }
 
     /**
@@ -32,8 +28,7 @@ public class CannonballSet {
      * @param cannonball the cannonball to be added
      */
     public void add(Cannonball cannonball) {
-        UUID uuid = UUID.randomUUID();
-        mCannonballSet.put(uuid, cannonball);
+        mCannonballSet.add(cannonball);
     }
 
     /**
@@ -57,20 +52,19 @@ public class CannonballSet {
         long nowTime = System.currentTimeMillis();
 
         // Iterate through all the cannonballs in the set
-        for (HashMap.Entry<UUID, Cannonball> entry : mCannonballSet.entrySet()) {
-            UUID key = entry.getKey();
-            Cannonball cannonball = entry.getValue();
+        for (Iterator<Cannonball> iterator = mCannonballSet.iterator(); iterator.hasNext();) {
+            Cannonball cannonball = iterator.next();
             long deltaTime = nowTime - cannonball.getFiringTime();
 
             // Check whether the cannonball has exceeded its lifespan and remove if necessary
             if (deltaTime > CANNONBALL_LIFESPAN) {
-                mCannonballSet.remove(key);
+                iterator.remove();
             } else {
                 cannonball.update();
 
                 if (userTank.detectCollision(cannonball)) {
                     detectedUserCollision = userTank.getCenter();
-                    mCannonballSet.remove(key);
+                    iterator.remove();
                 }
             }
         }
@@ -85,7 +79,7 @@ public class CannonballSet {
      */
     public void draw(Canvas canvas) {
         // Iterate through all the cannonballs in the set and draw them
-        for (Cannonball cannonball : mCannonballSet.values()) {
+        for (Cannonball cannonball : mCannonballSet) {
             cannonball.draw(canvas);
         }
     }

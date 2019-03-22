@@ -13,7 +13,7 @@ public class Position {
     @SuppressWarnings("unused")
     Position(){}
 
-    Position(float x, float y, float deg) {
+    public Position(float x, float y, float deg) {
         this.x = x;
         this.y = y;
         this.deg = deg;
