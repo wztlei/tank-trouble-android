@@ -29,6 +29,7 @@ import com.wztlei.tanktrouble.map.MapUtils;
 import com.wztlei.tanktrouble.projectile.Cannonball;
 import com.wztlei.tanktrouble.projectile.CannonballSet;
 import com.wztlei.tanktrouble.tank.OpponentTank;
+import com.wztlei.tanktrouble.tank.TankColor;
 import com.wztlei.tanktrouble.tank.UserTank;
 
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private int mJoystickPointerId, mFireButtonPointerId;
     private int mJoystickBaseRadius, mJoystickThresholdRadius, mJoystickMaxDisplacement;
     private int mFireButtonDiameter, mFireButtonPressedDiameter;
-    private int mDeg;
+    private int mUserDeg;
     private boolean mFireButtonPressed;
 
     private static final String TAG = "WL/BattleView";
@@ -79,20 +80,18 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         ExplosionFrame.initialize(activity);
 
         // Set up the user and opponent tanks
-        mUserTank = new UserTank(activity);
-        mOpponentTanks = new HashMap<>();
-        mDeg = mUserTank.getDegrees();
-
-        // Add the opponent tanks from Firebase
         if (opponentIds != null && gamePin != null) {
-             mGameDataRef = FirebaseDatabase.getInstance().getReference()
+            mUserTank = null;
+            mOpponentTanks = new HashMap<>();
+            mGameDataRef = FirebaseDatabase.getInstance().getReference()
                     .child(Constants.GAMES_KEY).child(gamePin);
-            detectOpponentEntering(activity, mGameDataRef);
+            addEnteringTanks(activity, mGameDataRef);
 
             for (String opponentId : opponentIds) {
-                mOpponentTanks.put(opponentId, new OpponentTank(activity, opponentId));
-                detectOpponentExiting(mGameDataRef, opponentId);
+                removeExitingTanks(mGameDataRef, opponentId);
             }
+        } else if (gamePin == null || gamePin.equals(Constants.TEST_GAME_PIN)) {
+            mUserTank = new UserTank(activity, TankColor.BLUE);
         }
 
         // Set up the cannonball and explosion data
@@ -296,21 +295,32 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * @param activity      the activity of the battle view
      * @param gameDataRef   a Firebase Database reference for the game
      */
-    private void detectOpponentEntering(final Activity activity, DatabaseReference gameDataRef) {
+    private void addEnteringTanks(final Activity activity, DatabaseReference gameDataRef) {
         gameDataRef.addValueEventListener(new ValueEventListener() {
+            @SuppressWarnings("UnnecessaryContinue")
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 String userId = UserUtils.getUserId();
+                TankColor[] tankColors = TankColor.values();
+                int numColors = tankColors.length;
+                int tankIndex = 0;
 
-                // Determine if any of the children of the game has a key of the opponent id
+                // Determine if any of the children of the game has a new key
                 for (DataSnapshot children : dataSnapshot.getChildren()) {
                     String key = children.getKey();
 
-                    // Return if we have found a key matching the user id, since
-                    // this means that the user has actually joined the game
-                    if (key != null && !key.equals(Constants.STARTED_KEY)
-                            && !key.equals(userId) && !mOpponentTanks.containsKey(key)) {
-                        mOpponentTanks.put(key, new OpponentTank(activity, key));
+                    // Add the new opponent to the game
+                    if (key == null || key.equals(Constants.STARTED_KEY)
+                            || tankIndex >= numColors) {
+                        continue;
+                    } else if (key.equals(userId) && tankIndex < numColors && mUserTank == null) {
+                        mUserTank = new UserTank(activity, tankColors[tankIndex]);
+                        mUserDeg = mUserTank.getDegrees();
+                        tankIndex++;
+                    } else if (!mOpponentTanks.containsKey(key)) {
+                        mOpponentTanks.put(key,
+                                new OpponentTank(activity, key, tankColors[tankIndex]));
+                        tankIndex++;
                     }
                 }
             }
@@ -326,7 +336,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * @param gameDataRef   the database reference for the game
      * @param opponentId    the id of the opponent
      */
-    private void detectOpponentExiting(DatabaseReference gameDataRef, final String opponentId){
+    private void removeExitingTanks(DatabaseReference gameDataRef, final String opponentId){
         gameDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -408,10 +418,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         float velocityY = (float) (deltaY)/mJoystickThresholdRadius;
 
         if (velocityX == 0 && velocityY == 0) {
-            mUserTank.update(velocityX, velocityY, mDeg);
+            mUserTank.update(velocityX, velocityY, mUserDeg);
         } else {
-            mDeg = calcDegrees(deltaX, deltaY);
-            mUserTank.update(velocityX, velocityY, mDeg);
+            mUserDeg = calcDegrees(deltaX, deltaY);
+            mUserTank.update(velocityX, velocityY, mUserDeg);
         }
 
     }
@@ -510,7 +520,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             if (!mFireButtonPressed && mUserCannonballSet.size() < MAX_USER_CANNONBALLS) {
                 Cannonball cannonball = mUserTank.fire();
                 mUserCannonballSet.add(cannonball);
-                //Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY + " mDeg=" + mDeg + " degrees");
+                //Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY + " mUserDeg=" + mUserDeg + " degrees");
             }
 
             mFireButtonPressed = true;

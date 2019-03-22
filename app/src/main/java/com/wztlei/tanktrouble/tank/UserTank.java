@@ -26,25 +26,22 @@ public class UserTank extends Tank {
     private long lastTime;
 
     private static final String TAG = "WL/UserTank";
-    private static final String USERS_KEY = Constants.USERS_KEY;
-    private static final String POS_KEY = Constants.POS_KEY;
-    private static final String FIRE_KEY = Constants.FIRE_KEY;
     private static final float SPEED_CONST = UserUtils.scaleGraphicsFloat(40/1080f)/100f;
-    private static final float TANK_WIDTH_CONST = Constants.TANK_WIDTH_CONST;
-    private static final float TANK_HEIGHT_CONST = Constants.TANK_HEIGHT_CONST;
 
     /**
      * Constructor function for the User Tank class.
      *
      * @param activity      the activity in which the player tank is instantiated
      */
-    public UserTank(Activity activity) {
+    public UserTank(Activity activity, TankColor tankColor) {
         mWidth = Math.max(UserUtils.scaleGraphicsInt(TANK_WIDTH_CONST), 1);
         mHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
 
-        // Get the blue tank bitmap since it is the user's tank
-        mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.blue_tank);
+        // Get the tank bitmap and color
+        mColor = tankColor.getPaint();
+        mBitmap = tankColor.getTankBitmap(activity);
         mBitmap = Bitmap.createScaledBitmap(mBitmap, mWidth, mHeight, false);
+
 
         // Get the user document from Firebase
         String userId = UserUtils.getUserId();

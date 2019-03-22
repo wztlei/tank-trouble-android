@@ -26,25 +26,25 @@ import com.wztlei.tanktrouble.tank.Tank;
 import java.util.ArrayList;
 
 public class OpponentTank extends Tank {
-    private Bitmap mBitmap;
     private DatabaseReference mPosDataRef;
     private DatabaseReference mFireDataRef;
     private CannonballSet mCannonballSet;
 
     private static final String TAG = "WL/OpponentTank";
-    private static final String USERS_KEY = Constants.USERS_KEY;
-    private static final String POS_KEY = Constants.POS_KEY;
-    private static final String FIRE_KEY = Constants.FIRE_KEY;
-    private static final float TANK_WIDTH_CONST = Constants.TANK_WIDTH_CONST;
-    private static final float TANK_HEIGHT_CONST = Constants.TANK_HEIGHT_CONST;
 
-    public OpponentTank(Activity activity, String opponentId) {
+
+    /**
+     * @param activity      the activity in which the opponent tank is initialized
+     * @param opponentId    the Firebase ID of the opponent
+     */
+    public OpponentTank(Activity activity, String opponentId, TankColor tankColor) {
         mWidth = Math.max(UserUtils.scaleGraphicsInt(TANK_WIDTH_CONST), 1);
         mHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
         mCannonballSet = new CannonballSet();
 
-        // Get the red tank bitmap since it is an opponent's tank
-        mBitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.red_tank);
+        // Get the tank bitmap
+        mColor = tankColor.getPaint();
+        mBitmap = tankColor.getTankBitmap(activity);
         mBitmap = Bitmap.createScaledBitmap(mBitmap, mWidth, mHeight, false);
 
         // Get the user document from Firebase
