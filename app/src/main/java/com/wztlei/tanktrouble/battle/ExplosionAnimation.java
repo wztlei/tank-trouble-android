@@ -10,7 +10,7 @@ import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.tank.Tank;
 
-public class ExplosionFrame {
+public class ExplosionAnimation {
     
     private long mPrevFrameTime;
     private int mFrameIndex;
@@ -21,8 +21,8 @@ public class ExplosionFrame {
     private static int sExplosionWidth;
     private static int sExplosionHeight;
 
-    private static final float EXPLOSION_WIDTH_CONST = (float) 186/1080;
-    private static final float EXPLOSION_HEIGHT_CONST = (float) 126/1080;
+    private static final float EXPLOSION_WIDTH_CONST = (float) 205/1080;
+    private static final float EXPLOSION_HEIGHT_CONST = (float) 139/1080;
     private static final int EXPLOSION_FRAME_DURATION = 80;
     
     /**
@@ -60,7 +60,7 @@ public class ExplosionFrame {
     /**
      * Constructor function for an explosion frame.
      */
-    public ExplosionFrame(Tank tank) {
+    public ExplosionAnimation(Tank tank) {
         PointF tankCenter = tank.getCenter();
 
         mPrevFrameTime = System.currentTimeMillis();

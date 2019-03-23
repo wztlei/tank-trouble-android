@@ -65,4 +65,25 @@ public enum TankColor {
 
         return b;
     }
+
+    public int getIndex() {
+        int index = -1;
+
+        switch (this) {
+            case BLUE:
+                index = 0;
+                break;
+            case RED:
+                index = 1;
+                break;
+            case GREEN:
+                index = 2;
+                break;
+            case ORANGE:
+                index = 3;
+                break;
+        }
+
+        return index;
+    }
 }

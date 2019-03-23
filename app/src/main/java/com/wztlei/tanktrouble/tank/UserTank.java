@@ -38,7 +38,7 @@ public class UserTank extends Tank {
         mHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
 
         // Get the tank bitmap and color
-        mColor = tankColor.getPaint();
+        mColorIndex = tankColor.getIndex();
         mBitmap = tankColor.getTankBitmap(activity);
         mBitmap = Bitmap.createScaledBitmap(mBitmap, mWidth, mHeight, false);
 

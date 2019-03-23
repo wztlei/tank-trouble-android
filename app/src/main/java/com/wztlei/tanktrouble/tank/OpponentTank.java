@@ -11,26 +11,17 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.UserUtils;
-import com.wztlei.tanktrouble.battle.ExplosionFrame;
-import com.wztlei.tanktrouble.cannonball.Coordinate;
+import com.wztlei.tanktrouble.battle.ExplosionAnimation;
 import com.wztlei.tanktrouble.battle.Position;
-import com.wztlei.tanktrouble.cannonball.Cannonball;
-import com.wztlei.tanktrouble.cannonball.CannonballSet;
-import com.wztlei.tanktrouble.cannonball.Path;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.UUID;
 
 public class OpponentTank extends Tank {
     private DatabaseReference mPosDataRef;
-    private DatabaseReference mFireDataRef;
     private DatabaseReference mDeathDataRef;
-    private CannonballSet mCannonballSet;
-    private HashSet<ExplosionFrame> mExplosionFrames;
+    private HashSet<ExplosionAnimation> mExplosionAnimations;
 
     private static final String TAG = "WL/OpponentTank";
 
@@ -42,11 +33,10 @@ public class OpponentTank extends Tank {
     public OpponentTank(Activity activity, String opponentId, TankColor tankColor) {
         mWidth = Math.max(UserUtils.scaleGraphicsInt(TANK_WIDTH_CONST), 1);
         mHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
-        mCannonballSet = new CannonballSet();
-        mExplosionFrames = new HashSet<>();
+        mExplosionAnimations = new HashSet<>();
 
         // Get the tank bitmap
-        mColor = tankColor.getPaint();
+        mColorIndex = tankColor.getIndex();
         mBitmap = tankColor.getTankBitmap(activity);
         mBitmap = Bitmap.createScaledBitmap(mBitmap, mWidth, mHeight, false);
 
@@ -55,23 +45,20 @@ public class OpponentTank extends Tank {
 
         if (opponentId.length() > 0) {
             mPosDataRef = database.child(USERS_KEY).child(opponentId).child(POS_KEY);
-            mFireDataRef = database.child(USERS_KEY).child(opponentId).child(FIRE_KEY);
             mDeathDataRef = database.child(USERS_KEY).child(opponentId).child(DEATH_KEY);
-            mFireDataRef.setValue(null);
-
 
             addPosDataRefListeners();
-            addFireDataRefListener();
             addDeathDataRefListener();
 
             Log.d(TAG, "opponentId=" + opponentId);
         } else {
             Log.e(TAG, "Warning: no user Id");
         }
-
-
     }
 
+    /**
+     * Add listeners for the position of the opponent tank.
+     */
     private void addPosDataRefListeners() {
         // Get initial position
         mPosDataRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -113,31 +100,6 @@ public class OpponentTank extends Tank {
     }
 
     /**
-     * Attach a listener on the fire data reference to detect opponents firing cannonballs.
-     */
-    private void addFireDataRefListener() {
-        mFireDataRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Path path = dataSnapshot.getValue(Path.class);
-
-                if (path != null && path.getCoordinates() != null) {
-                    ArrayList<Coordinate> pathCoordinates = path.getCoordinates();
-
-                    for (Coordinate coordinate : pathCoordinates) {
-                        coordinate.scale();
-                    }
-
-                    mCannonballSet.add(path.getUUID(), new Cannonball(pathCoordinates));
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {}
-        });
-    }
-
-    /**
      * Attach a listener on the death data reference to detect opponents dying.
      */
     private void addDeathDataRefListener() {
@@ -148,8 +110,7 @@ public class OpponentTank extends Tank {
                 Integer killingCannonball = dataSnapshot.getValue(Integer.class);
 
                 if (killingCannonball != null) {
-                    mCannonballSet.remove(killingCannonball);
-                    mExplosionFrames.add(new ExplosionFrame(me));
+                    mExplosionAnimations.add(new ExplosionAnimation(me));
                 }
             }
 
@@ -172,11 +133,7 @@ public class OpponentTank extends Tank {
         canvas.drawBitmap(rotatedBitmap, mX, mY, null);
     }
 
-    public CannonballSet getCannonballSet() {
-        return mCannonballSet;
-    }
-
-    public HashSet<ExplosionFrame> getExplosionFrames() {
-        return mExplosionFrames;
+    public HashSet<ExplosionAnimation> getExplosionAnimations() {
+        return mExplosionAnimations;
     }
 }

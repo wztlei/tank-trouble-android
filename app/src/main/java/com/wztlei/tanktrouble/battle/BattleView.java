@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PointF;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -36,7 +35,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.UUID;
 
 @SuppressLint("ViewConstructor")
 public class BattleView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
@@ -46,10 +44,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private BattleThread mBattleThread;
     private UserTank mUserTank;
     private HashMap<String, OpponentTank> mOpponentTanks;
-    private HashSet<ExplosionFrame> mExplosionFrames;
-    private CannonballSet mUserCannonballSet;
-    private int mKillingCannonball;
+    private HashSet<ExplosionAnimation> mExplosionAnimations;
+    private CannonballSet mCannonballSet;
     private Paint mJoystickColor;
+    private boolean[] mAvailableTankColors;
+    private int mKillingCannonball;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
     private int mJoystickX, mJoystickY;
@@ -67,6 +66,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private static final float FIRE_BUTTON_DIAMETER_CONST = (float) 200/543;
     private static final float FIRE_BUTTON_PRESSED_DIAMETER_CONST = (float) 150/543;
     private static final float CONTROL_X_MARGIN_CONST = (float) 125/1080;
+    private static final float NUM_TANK_COLORS = 4;
 
     // TODO: Change to 5 in production version
     private static final int MAX_USER_CANNONBALLS = 10;
@@ -80,14 +80,16 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         super(activity);
 
         UserUtils.initialize(activity);
-        ExplosionFrame.initialize(activity);
+        ExplosionAnimation.initialize(activity);
 
         // Set up the user and opponent tanks
         if (opponentIds != null && gamePin != null) {
+            mAvailableTankColors = new boolean[]{true, true, true, true};
             mOpponentTanks = new HashMap<>();
             mGameDataRef = FirebaseDatabase.getInstance().getReference()
                     .child(Constants.GAMES_KEY).child(gamePin);
             mJoystickColor = TankColor.BLUE.getPaint();
+            mCannonballSet = new CannonballSet();
             addEnteringTanks(activity, mGameDataRef);
 
             for (String opponentId : opponentIds) {
@@ -96,13 +98,13 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         } else {
             mUserTank = new UserTank(activity, TankColor.BLUE);
             mJoystickColor = TankColor.BLUE.getPaint();
+            mCannonballSet = new CannonballSet();
         }
 
         // Set up the cannonball and explosion data
         // TODO: Move this cannonball set to the UserTank.java class
-        mUserCannonballSet = new CannonballSet();
         mKillingCannonball = 0;
-        mExplosionFrames = new HashSet<>();
+        mExplosionAnimations = new HashSet<>();
 
         // Callback allows us to intercept events
         getHolder().addCallback(this);
@@ -175,8 +177,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             }
 
             // Update and draw the cannonballs
-            mUserCannonballSet.draw(canvas);
-            mKillingCannonball = mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
+            mCannonballSet.draw(canvas);
+            mKillingCannonball = mCannonballSet.updateAndDetectUserCollision(mUserTank);
         } else {
             // TODO: Update the collision status in Firebase
             // TODO: Make tank appear after x seconds
@@ -186,13 +188,13 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                 updateUserTank();
                 mUserTank.draw(canvas);
                 mUserTank.kill(mKillingCannonball);
-                mExplosionFrames.add(new ExplosionFrame(mUserTank));
+                mExplosionAnimations.add(new ExplosionAnimation(mUserTank));
             }
 
             // If a collision occurred, then do not draw the user's tank
             // Only update and draw the cannonballs
-            mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
-            mUserCannonballSet.draw(canvas);
+            mCannonballSet.updateAndDetectUserCollision(mUserTank);
+            mCannonballSet.draw(canvas);
             mKillingCannonball = 0;
 
             Log.d(TAG, "mUserCollision");
@@ -201,24 +203,11 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // TODO: Display the score of tank kills
         // Draw all of the opponents' tanks and their cannonballs while detecting collisions
         for (OpponentTank opponentTank : mOpponentTanks.values()) {
-            CannonballSet opponentCannonballs = opponentTank.getCannonballSet();
-
-            if (mKillingCannonball == 0) {
-                mKillingCannonball = opponentCannonballs.updateAndDetectUserCollision(mUserTank);
-
-                if (mKillingCannonball != 0) {
-                    mUserTank.kill(mKillingCannonball);
-                }
-            } else {
-                opponentCannonballs.updateAndDetectUserCollision(mUserTank);
-            }
-
-            opponentCannonballs.draw(canvas);
             opponentTank.draw(canvas);
-            drawExplosions(canvas, opponentTank.getExplosionFrames());
+            drawExplosions(canvas, opponentTank.getExplosionAnimations());
         }
 
-        drawExplosions(canvas, mExplosionFrames);
+        drawExplosions(canvas, mExplosionAnimations);
     }
 
     /**
@@ -315,30 +304,39 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 String userId = UserUtils.getUserId();
-                TankColor[] tankColors = TankColor.values();
-                int numColors = tankColors.length;
-                int tankIndex = 0;
+                TankColor tankColor = TankColor.BLUE;
 
                 // Determine if any of the children of the game has a new key
                 for (DataSnapshot children : dataSnapshot.getChildren()) {
                     String key = children.getKey();
 
                     // Add the new opponent to the game
-                    if (key == null || key.equals(Constants.STARTED_KEY)
-                            || tankIndex >= numColors) {
+                    if (key == null || key.equals(Constants.STARTED_KEY)) {
                         continue;
                     } else if (key.equals(userId) && mUserTank == null) {
-                        mUserTank = new UserTank(activity, tankColors[tankIndex]);
+                        for (int i = 0; i < NUM_TANK_COLORS; i++) {
+                            if (mAvailableTankColors[i]) {
+                                tankColor = TankColor.values()[i];
+                                mAvailableTankColors[i] = false;
+                                break;
+                            }
+                        }
+
+                        mUserTank = new UserTank(activity, tankColor);
                         mUserDeg = mUserTank.getDegrees();
-                        mJoystickColor = tankColors[tankIndex].getPaint();
-                        tankIndex++;
+                        mJoystickColor = tankColor.getPaint();
                     } else if (!key.equals(userId) && !mOpponentTanks.containsKey(key)) {
-                        mOpponentTanks.put(key,
-                                new OpponentTank(activity, key, tankColors[tankIndex]));
+                        for (int i = 0; i < NUM_TANK_COLORS; i++) {
+                            if (mAvailableTankColors[i]) {
+                                tankColor = TankColor.values()[i];
+                                mAvailableTankColors[i] = false;
+                                break;
+                            }
+                        }
+
+                        mOpponentTanks.put(key, new OpponentTank(activity, key, tankColor));
+                        mCannonballSet.addOpponent(key);
                         addDeathDataRefListener(key);
-                        tankIndex++;
-                    } else {
-                        tankIndex++;
                     }
                 }
             }
@@ -370,6 +368,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                 }
 
                 // Remove the opponent tank when they stop playing so it is not drawn anymore
+                mAvailableTankColors[mOpponentTanks.get(opponentId).getColorIndex()] = true;
                 mOpponentTanks.remove(opponentId);
                 Log.d(TAG, "Removed opponent tank with id=" + opponentId);
             }
@@ -392,8 +391,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                 Integer killingCannonball = dataSnapshot.getValue(Integer.class);
 
                 if (killingCannonball != null) {
-                    mUserCannonballSet.remove(killingCannonball);
-                    mExplosionFrames.add(new ExplosionFrame(mOpponentTanks.get(opponentId)));
+                    mCannonballSet.remove(killingCannonball);
+                    mExplosionAnimations.add(new ExplosionAnimation(mOpponentTanks.get(opponentId)));
                 }
             }
 
@@ -511,15 +510,15 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * @param canvas        the canvas on which the explosions are drawn
      * @param explosions    the explosions to be drawn
      */
-    public void drawExplosions(Canvas canvas, HashSet<ExplosionFrame> explosions) {
+    public void drawExplosions(Canvas canvas, HashSet<ExplosionAnimation> explosions) {
         // Draw all of the explosions
-        for (Iterator<ExplosionFrame> iterator = explosions.iterator();
+        for (Iterator<ExplosionAnimation> iterator = explosions.iterator();
              iterator.hasNext(); ) {
-            ExplosionFrame explosionFrame = iterator.next();
-            if (explosionFrame.isRemovable()) {
+            ExplosionAnimation ExplosionAnimation = iterator.next();
+            if (ExplosionAnimation.isRemovable()) {
                 iterator.remove();
             } else {
-                explosionFrame.draw(canvas);
+                ExplosionAnimation.draw(canvas);
             }
         }
     }
@@ -578,9 +577,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         if (displacement <= mFireButtonDiameter) {
             // Ensure only one cannonball is fired for every button press and
             // limit the number of cannonballs that can be active simultaneously
-            if (!mFireButtonPressed && mUserCannonballSet.size() < MAX_USER_CANNONBALLS) {
+            if (!mFireButtonPressed && mCannonballSet.size() < MAX_USER_CANNONBALLS) {
                 Cannonball cannonball = mUserTank.fire();
-                mUserCannonballSet.add(cannonball);
+                mCannonballSet.addCannonball(cannonball);
                 //Log.d(TAG, "Projectile fired at x=" + mX + " y=" + mY + " mUserDeg=" + mUserDeg + " degrees");
             }
 

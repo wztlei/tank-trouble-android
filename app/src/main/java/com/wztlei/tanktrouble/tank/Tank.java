@@ -8,9 +8,9 @@ import com.wztlei.tanktrouble.Constants;
 
 public class Tank {
     Bitmap mBitmap;
-    Paint mColor;
     int mX, mY, mDeg;
     int mWidth, mHeight;
+    int mColorIndex;
     int mScore;
     boolean mIsAlive;
 
@@ -366,6 +366,10 @@ public class Tank {
 
     public PointF getCenter() {
         return Tank.tankHitbox(mX, mY, mDeg, mWidth, mHeight)[7];
+    }
+
+    public int getColorIndex() {
+        return mColorIndex;
     }
 
     /**
