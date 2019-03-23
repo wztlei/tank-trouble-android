@@ -150,10 +150,7 @@ public class OpponentTank extends Tank {
                 if (killingCannonball != null) {
                     mCannonballSet.remove(killingCannonball);
                     mExplosionFrames.add(new ExplosionFrame(me));
-                    Log.d(TAG, "killingCannonball=" + killingCannonball);
                 }
-
-                Log.d(TAG, "death out");
             }
 
             @Override

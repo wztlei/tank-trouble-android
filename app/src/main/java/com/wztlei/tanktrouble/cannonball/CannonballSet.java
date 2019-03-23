@@ -4,9 +4,11 @@ import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.PointF;
 import android.util.Log;
+import android.util.SparseArray;
 
 import com.wztlei.tanktrouble.tank.UserTank;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -14,7 +16,7 @@ import java.util.UUID;
 
 public class CannonballSet {
 
-    private HashMap<Integer, Cannonball> mCannonballSet;
+    private SparseArray<Cannonball> mCannonballSet;
 
     private static final long CANNONBALL_LIFESPAN = 10000;
     private static final String TAG = "WL/CannonballSet";
@@ -22,9 +24,8 @@ public class CannonballSet {
     /**
      * Initializes the set of cannonballs as represented by a concurrent hash map.
      */
-    @SuppressLint("UseSparseArrays")
     public CannonballSet() {
-        mCannonballSet = new HashMap<>();
+        mCannonballSet = new SparseArray<>();
     }
 
     /**
@@ -74,26 +75,30 @@ public class CannonballSet {
     public int updateAndDetectUserCollision(UserTank userTank) {
         int detectedUserCollision = 0;
         long nowTime = System.currentTimeMillis();
+        ArrayList<Integer> keysToRemove =  new ArrayList<>();
 
         // Iterate through all the cannonballs in the set
-        for (Iterator<Map.Entry<Integer, Cannonball>> iterator =
-             mCannonballSet.entrySet().iterator(); iterator.hasNext(); ) {
-
-            Map.Entry<Integer, Cannonball> pair = iterator.next();
-            Cannonball cannonball = pair.getValue();
+        for(int i = 0; i < mCannonballSet.size(); i++) {
+            int key = mCannonballSet.keyAt(i);
+            // get the object by the key.
+            Cannonball cannonball = mCannonballSet.get(key);
             long deltaTime = nowTime - cannonball.getFiringTime();
 
             // Check whether the cannonball has exceeded its lifespan and remove if necessary
             if (deltaTime > CANNONBALL_LIFESPAN) {
-                iterator.remove();
+                keysToRemove.add(key);
             } else {
                 cannonball.update();
 
                 if (userTank.detectCollision(cannonball)) {
-                    detectedUserCollision = pair.getKey();
-                    iterator.remove();
+                    detectedUserCollision = key;
+                    keysToRemove.add(key);
                 }
             }
+        }
+
+        for (int i = 0; i < keysToRemove.size(); i++) {
+            mCannonballSet.remove(keysToRemove.get(i));
         }
 
         return detectedUserCollision;
@@ -106,8 +111,8 @@ public class CannonballSet {
      */
     public void draw(Canvas canvas) {
         // Iterate through all the cannonballs in the set and draw them
-        for (Cannonball cannonball : mCannonballSet.values()) {
-            cannonball.draw(canvas);
+        for (int i = 0; i < mCannonballSet.size(); i++) {
+            mCannonballSet.valueAt(i).draw(canvas);
         }
     }
 }

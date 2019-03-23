@@ -165,27 +165,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         drawFireButton(canvas);
         drawJoystick(canvas);
 
-        // TODO: Display the score of tank kills
-        // Draw all of the opponents' tanks and their cannonballs while detecting collisions
-        for (OpponentTank opponentTank : mOpponentTanks.values()) {
-            CannonballSet opponentCannonballs = opponentTank.getCannonballSet();
-
-            if (mKillingCannonball == 0) {
-                mKillingCannonball = opponentCannonballs.updateAndDetectUserCollision(mUserTank);
-
-                if (mKillingCannonball != 0) {
-                    mUserTank.kill(mKillingCannonball);
-                }
-            } else {
-                opponentCannonballs.updateAndDetectUserCollision(mUserTank);
-            }
-
-            opponentCannonballs.draw(canvas);
-            opponentTank.draw(canvas);
-            drawExplosions(canvas, opponentTank.getExplosionFrames());
-        }
-
-
         // Check whether a cannonball collided with the user's tank
         if (mKillingCannonball == 0) {
             // Update and draw the user's tank
@@ -217,6 +196,26 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             mKillingCannonball = 0;
 
             Log.d(TAG, "mUserCollision");
+        }
+
+        // TODO: Display the score of tank kills
+        // Draw all of the opponents' tanks and their cannonballs while detecting collisions
+        for (OpponentTank opponentTank : mOpponentTanks.values()) {
+            CannonballSet opponentCannonballs = opponentTank.getCannonballSet();
+
+            if (mKillingCannonball == 0) {
+                mKillingCannonball = opponentCannonballs.updateAndDetectUserCollision(mUserTank);
+
+                if (mKillingCannonball != 0) {
+                    mUserTank.kill(mKillingCannonball);
+                }
+            } else {
+                opponentCannonballs.updateAndDetectUserCollision(mUserTank);
+            }
+
+            opponentCannonballs.draw(canvas);
+            opponentTank.draw(canvas);
+            drawExplosions(canvas, opponentTank.getExplosionFrames());
         }
 
         drawExplosions(canvas, mExplosionFrames);
