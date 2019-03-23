@@ -49,7 +49,7 @@ public class UserTank extends Tank {
 
         if (userId != null && userId.length() > 0) {
             mUserDataRef = database.child(USERS_KEY).child(userId);
-            mUserDataRef.child(FIRE_KEY).setValue(null);
+            mUserDataRef.child(FIRE_KEY).removeValue();
         } else {
             Log.e(TAG, "Warning: no user Id");
         }

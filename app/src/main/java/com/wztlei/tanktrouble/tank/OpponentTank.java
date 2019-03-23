@@ -13,15 +13,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.UserUtils;
-import com.wztlei.tanktrouble.battle.ExplosionAnimation;
 import com.wztlei.tanktrouble.battle.Position;
-
-import java.util.HashSet;
 
 public class OpponentTank extends Tank {
     private DatabaseReference mPosDataRef;
-    private DatabaseReference mDeathDataRef;
-    private HashSet<ExplosionAnimation> mExplosionAnimations;
 
     private static final String TAG = "WL/OpponentTank";
 
@@ -33,7 +28,6 @@ public class OpponentTank extends Tank {
     public OpponentTank(Activity activity, String opponentId, TankColor tankColor) {
         mWidth = Math.max(UserUtils.scaleGraphicsInt(TANK_WIDTH_CONST), 1);
         mHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
-        mExplosionAnimations = new HashSet<>();
 
         // Get the tank bitmap
         mColorIndex = tankColor.getIndex();
@@ -45,10 +39,7 @@ public class OpponentTank extends Tank {
 
         if (opponentId.length() > 0) {
             mPosDataRef = database.child(USERS_KEY).child(opponentId).child(POS_KEY);
-            mDeathDataRef = database.child(USERS_KEY).child(opponentId).child(DEATH_KEY);
-
             addPosDataRefListeners();
-            addDeathDataRefListener();
 
             Log.d(TAG, "opponentId=" + opponentId);
         } else {
@@ -100,26 +91,6 @@ public class OpponentTank extends Tank {
     }
 
     /**
-     * Attach a listener on the death data reference to detect opponents dying.
-     */
-    private void addDeathDataRefListener() {
-        final OpponentTank me = this;
-        mDeathDataRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Integer killingCannonball = dataSnapshot.getValue(Integer.class);
-
-                if (killingCannonball != null) {
-                    mExplosionAnimations.add(new ExplosionAnimation(me));
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {}
-        });
-    }
-
-    /**
      * Draws the tank bitmap onto a canvas with the proper rotation.
      *
      * @param canvas the canvas on which the tank is drawn.
@@ -131,9 +102,5 @@ public class OpponentTank extends Tank {
         Bitmap rotatedBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
                 mBitmap.getWidth(), mBitmap.getHeight(), matrix, false);
         canvas.drawBitmap(rotatedBitmap, mX, mY, null);
-    }
-
-    public HashSet<ExplosionAnimation> getExplosionAnimations() {
-        return mExplosionAnimations;
     }
 }

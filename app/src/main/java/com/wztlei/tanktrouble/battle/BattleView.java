@@ -24,9 +24,9 @@ import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
-import com.wztlei.tanktrouble.map.MapUtils;
 import com.wztlei.tanktrouble.cannonball.Cannonball;
 import com.wztlei.tanktrouble.cannonball.CannonballSet;
+import com.wztlei.tanktrouble.map.MapUtils;
 import com.wztlei.tanktrouble.tank.OpponentTank;
 import com.wztlei.tanktrouble.tank.TankColor;
 import com.wztlei.tanktrouble.tank.UserTank;
@@ -47,7 +47,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private HashSet<ExplosionAnimation> mExplosionAnimations;
     private CannonballSet mCannonballSet;
     private Paint mJoystickColor;
-    private boolean[] mAvailableTankColors;
+    private boolean[] mUnusedTankColors;
     private int mKillingCannonball;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
@@ -84,7 +84,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Set up the user and opponent tanks
         if (opponentIds != null && gamePin != null) {
-            mAvailableTankColors = new boolean[]{true, true, true, true};
+            mUnusedTankColors = new boolean[]{true, true, true, true};
             mOpponentTanks = new HashMap<>();
             mGameDataRef = FirebaseDatabase.getInstance().getReference()
                     .child(Constants.GAMES_KEY).child(gamePin);
@@ -204,7 +204,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         // Draw all of the opponents' tanks and their cannonballs while detecting collisions
         for (OpponentTank opponentTank : mOpponentTanks.values()) {
             opponentTank.draw(canvas);
-            drawExplosions(canvas, opponentTank.getExplosionAnimations());
         }
 
         drawExplosions(canvas, mExplosionAnimations);
@@ -304,7 +303,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 String userId = UserUtils.getUserId();
-                TankColor tankColor = TankColor.BLUE;
 
                 // Determine if any of the children of the game has a new key
                 for (DataSnapshot children : dataSnapshot.getChildren()) {
@@ -314,26 +312,14 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                     if (key == null || key.equals(Constants.STARTED_KEY)) {
                         continue;
                     } else if (key.equals(userId) && mUserTank == null) {
-                        for (int i = 0; i < NUM_TANK_COLORS; i++) {
-                            if (mAvailableTankColors[i]) {
-                                tankColor = TankColor.values()[i];
-                                mAvailableTankColors[i] = false;
-                                break;
-                            }
-                        }
-
+                        // Initialize the user tank
+                        TankColor tankColor = getUnusedTankColor();
                         mUserTank = new UserTank(activity, tankColor);
                         mUserDeg = mUserTank.getDegrees();
                         mJoystickColor = tankColor.getPaint();
                     } else if (!key.equals(userId) && !mOpponentTanks.containsKey(key)) {
-                        for (int i = 0; i < NUM_TANK_COLORS; i++) {
-                            if (mAvailableTankColors[i]) {
-                                tankColor = TankColor.values()[i];
-                                mAvailableTankColors[i] = false;
-                                break;
-                            }
-                        }
-
+                        // Add an opponent tank
+                        TankColor tankColor = getUnusedTankColor();
                         mOpponentTanks.put(key, new OpponentTank(activity, key, tankColor));
                         mCannonballSet.addOpponent(key);
                         addDeathDataRefListener(key);
@@ -368,7 +354,12 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                 }
 
                 // Remove the opponent tank when they stop playing so it is not drawn anymore
-                mAvailableTankColors[mOpponentTanks.get(opponentId).getColorIndex()] = true;
+                OpponentTank opponentTank = mOpponentTanks.get(opponentId);
+
+                if (opponentTank != null) {
+                    mUnusedTankColors[opponentTank.getColorIndex()] = true;
+                }
+
                 mOpponentTanks.remove(opponentId);
                 Log.d(TAG, "Removed opponent tank with id=" + opponentId);
             }
@@ -392,7 +383,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
                 if (killingCannonball != null) {
                     mCannonballSet.remove(killingCannonball);
-                    mExplosionAnimations.add(new ExplosionAnimation(mOpponentTanks.get(opponentId)));
+                    mExplosionAnimations.add(
+                            new ExplosionAnimation(mOpponentTanks.get(opponentId)));
                 }
             }
 
@@ -610,6 +602,25 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
+    }
+
+    /**
+     * Returns the first unused tank color or blue by default.
+     * 
+     * @return  the first unused tank color
+     */
+    private TankColor getUnusedTankColor() {
+        TankColor tankColor = TankColor.ORANGE;
+        
+        for (int i = 0; i < NUM_TANK_COLORS; i++) {
+            if (mUnusedTankColors[i]) {
+                tankColor = TankColor.values()[i];
+                mUnusedTankColors[i] = false;
+                break;
+            }
+        }
+        
+        return tankColor;
     }
 
     /**
