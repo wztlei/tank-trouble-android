@@ -11,11 +11,13 @@ public class Tank {
     Paint mColor;
     int mX, mY, mDeg;
     int mWidth, mHeight;
+    int mScore;
     boolean mIsAlive;
 
     static final String USERS_KEY = Constants.USERS_KEY;
     static final String POS_KEY = Constants.POS_KEY;
     static final String FIRE_KEY = Constants.FIRE_KEY;
+    static final String DEATH_KEY = Constants.DEATH_KEY;
     static final float TANK_WIDTH_CONST = Constants.TANK_WIDTH_CONST;
     static final float TANK_HEIGHT_CONST = Constants.TANK_HEIGHT_CONST;
     private static final float GUN_LENGTH_RATIO = 1/7f;
@@ -179,7 +181,7 @@ public class Tank {
 
     /**
      * Returns an array of PointFs representing a hitbox perfectly enclosing the tank body.
-     * The hitbox determines if a projectile has hit the tank.
+     * The hitbox determines if a cannonball has hit the tank.
      *
      * @param x     the x-PointF of the tank
      * @param y     the y-PointF of the tank

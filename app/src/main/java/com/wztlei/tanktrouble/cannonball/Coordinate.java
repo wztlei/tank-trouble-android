@@ -1,4 +1,4 @@
-package com.wztlei.tanktrouble.battle;
+package com.wztlei.tanktrouble.cannonball;
 
 import com.wztlei.tanktrouble.UserUtils;
 
@@ -11,7 +11,7 @@ public class Coordinate {
     @SuppressWarnings("unused")
     public Coordinate() {}
 
-    public Coordinate(float x, float y) {
+    Coordinate(float x, float y) {
         this.x = (int) x;
         this.y = (int) y;
     }

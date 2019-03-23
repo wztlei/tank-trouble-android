@@ -2,7 +2,6 @@ package com.wztlei.tanktrouble.tank;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.support.annotation.NonNull;
@@ -14,20 +13,20 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
-import com.wztlei.tanktrouble.Constants;
-import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
-import com.wztlei.tanktrouble.battle.Coordinate;
+import com.wztlei.tanktrouble.cannonball.Coordinate;
 import com.wztlei.tanktrouble.battle.Position;
-import com.wztlei.tanktrouble.projectile.Cannonball;
-import com.wztlei.tanktrouble.projectile.CannonballSet;
-import com.wztlei.tanktrouble.tank.Tank;
+import com.wztlei.tanktrouble.cannonball.Cannonball;
+import com.wztlei.tanktrouble.cannonball.CannonballSet;
+import com.wztlei.tanktrouble.cannonball.Path;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class OpponentTank extends Tank {
     private DatabaseReference mPosDataRef;
     private DatabaseReference mFireDataRef;
+    private DatabaseReference mDeathDataRef;
     private CannonballSet mCannonballSet;
 
     private static final String TAG = "WL/OpponentTank";
@@ -53,14 +52,20 @@ public class OpponentTank extends Tank {
         if (opponentId.length() > 0) {
             mPosDataRef = database.child(USERS_KEY).child(opponentId).child(POS_KEY);
             mFireDataRef = database.child(USERS_KEY).child(opponentId).child(FIRE_KEY);
+            mDeathDataRef = database.child(USERS_KEY).child(opponentId).child(DEATH_KEY);
             mFireDataRef.setValue(null);
+
+
+            addPosDataRefListeners();
+            addFireDataRefListener();
+            addDeathDataRefListener();
+
             Log.d(TAG, "opponentId=" + opponentId);
         } else {
             Log.e(TAG, "Warning: no user Id");
         }
 
-        addPosDataRefListeners();
-        addFireDataRefListener();
+
     }
 
     private void addPosDataRefListeners() {
@@ -103,25 +108,46 @@ public class OpponentTank extends Tank {
         });
     }
 
+    /**
+     * Attach a listener on the fire data reference to detect opponents firing cannonballs.
+     */
     private void addFireDataRefListener() {
-        // Listen for position changes
         mFireDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // Get position object and use the values to update the UI
-                GenericTypeIndicator<ArrayList<Coordinate>> t =
-                        new GenericTypeIndicator<ArrayList<Coordinate>>() {};
-                ArrayList<Coordinate> path = dataSnapshot.getValue(t);
+                Path path = dataSnapshot.getValue(Path.class);
 
-                if (path != null) {
-                    path.remove(path.size()-1);
+                if (path != null && path.getCoordinates() != null) {
+                    ArrayList<Coordinate> pathCoordinates = path.getCoordinates();
 
-                    for (Coordinate coordinate : path) {
+                    for (Coordinate coordinate : pathCoordinates) {
                         coordinate.scale();
                     }
 
-                    mCannonballSet.add(new Cannonball(path));
+                    mCannonballSet.add(path.getUUID(), new Cannonball(pathCoordinates));
                 }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
+    }
+
+    /**
+     * Attach a listener on the death data reference to detect opponents dying.
+     */
+    private void addDeathDataRefListener() {
+        mDeathDataRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Long killingCannonball = dataSnapshot.getValue(Long.class);
+
+                if (killingCannonball != null) {
+                    mCannonballSet.remove(killingCannonball);
+                    Log.d(TAG, "killingCannonball=" + killingCannonball);
+                }
+
+                Log.d(TAG, "death out");
             }
 
             @Override

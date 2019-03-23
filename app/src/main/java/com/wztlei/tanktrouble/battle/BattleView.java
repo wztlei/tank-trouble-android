@@ -26,8 +26,8 @@ import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.map.MapUtils;
-import com.wztlei.tanktrouble.projectile.Cannonball;
-import com.wztlei.tanktrouble.projectile.CannonballSet;
+import com.wztlei.tanktrouble.cannonball.Cannonball;
+import com.wztlei.tanktrouble.cannonball.CannonballSet;
 import com.wztlei.tanktrouble.tank.OpponentTank;
 import com.wztlei.tanktrouble.tank.TankColor;
 import com.wztlei.tanktrouble.tank.UserTank;
@@ -35,6 +35,8 @@ import com.wztlei.tanktrouble.tank.UserTank;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.UUID;
 
 @SuppressLint("ViewConstructor")
 public class BattleView extends SurfaceView implements SurfaceHolder.Callback, View.OnTouchListener {
@@ -46,7 +48,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private HashMap<String, OpponentTank> mOpponentTanks;
     private HashSet<ExplosionFrame> mExplosionFrames;
     private CannonballSet mUserCannonballSet;
-    private PointF mUserCollision;
+    private long mKillingCannonball;
+    private Paint mJoystickColor;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
     private int mJoystickX, mJoystickY;
@@ -81,22 +84,24 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Set up the user and opponent tanks
         if (opponentIds != null && gamePin != null) {
-            mUserTank = null;
             mOpponentTanks = new HashMap<>();
             mGameDataRef = FirebaseDatabase.getInstance().getReference()
                     .child(Constants.GAMES_KEY).child(gamePin);
+            mJoystickColor = TankColor.BLUE.getPaint();
             addEnteringTanks(activity, mGameDataRef);
 
             for (String opponentId : opponentIds) {
                 removeExitingTanks(mGameDataRef, opponentId);
             }
-        } else if (gamePin == null || gamePin.equals(Constants.TEST_GAME_PIN)) {
+        } else {
             mUserTank = new UserTank(activity, TankColor.BLUE);
+            mJoystickColor = TankColor.BLUE.getPaint();
         }
 
         // Set up the cannonball and explosion data
+        // TODO: Move this cannonball set to the UserTank.java class
         mUserCannonballSet = new CannonballSet();
-        mUserCollision = null;
+        mKillingCannonball = 0;
         mExplosionFrames = new HashSet<>();
 
         // Callback allows us to intercept events
@@ -162,45 +167,61 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // TODO: Display the score of tank kills
 
+        // Draw all of the opponents' tanks and their cannonballs while detecting collisions
+        for (OpponentTank opponentTank : mOpponentTanks.values()) {
+            CannonballSet opponentCannonballs = opponentTank.getCannonballSet();
+
+            if (mKillingCannonball == 0) {
+                mKillingCannonball = opponentCannonballs.updateAndDetectUserCollision(mUserTank);
+            } else {
+                opponentCannonballs.updateAndDetectUserCollision(mUserTank);
+            }
+
+            opponentCannonballs.draw(canvas);
+            opponentTank.draw(canvas);
+        }
+
         // Check whether a cannonball collided with the user's tank
-        if (mUserCollision == null) {
+        if (mKillingCannonball == 0) {
             // Update and draw the user's tank
-            updateUserTank();
-            mUserTank.draw(canvas);
+            if (mUserTank != null) {
+                updateUserTank();
+                mUserTank.draw(canvas);
+                mUserTank.respawn();
+            }
 
             // Update and draw the cannonballs
             mUserCannonballSet.draw(canvas);
-            mUserCollision = mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
+            mKillingCannonball = mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
         } else {
-            // TODO: Handle a collision properly
             // TODO: Update the collision status in Firebase
-            // TODO: Display animation of tank exploding
             // TODO: Make tank appear after x seconds
             // TODO: Increment the score and display it
             // Update and draw the user's tank
-            updateUserTank();
-            mUserTank.draw(canvas);
-            mExplosionFrames.add(new ExplosionFrame(mUserTank));
+            if (mUserTank != null) {
+                updateUserTank();
+                mUserTank.draw(canvas);
+                mUserTank.kill(mKillingCannonball);
+                mExplosionFrames.add(new ExplosionFrame(mUserTank));
+            }
 
             // If a collision occurred, then do not draw the user's tank
             // Only update and draw the cannonballs
             mUserCannonballSet.updateAndDetectUserCollision(mUserTank);
             mUserCannonballSet.draw(canvas);
-            mUserCollision = null;
+            mKillingCannonball = 0;
+
+            Log.d(TAG, "mUserCollision");
         }
 
-        // Draw all of the opponents' tanks and their cannonballs while detecting collisions
-        for (OpponentTank opponentTank : mOpponentTanks.values()) {
-            CannonballSet opponentCannonballs = opponentTank.getCannonballSet();
-            mUserCollision = opponentCannonballs.updateAndDetectUserCollision(mUserTank);
-            opponentCannonballs.draw(canvas);
-            opponentTank.draw(canvas);
-        }
+
 
         // Draw all of the explosions
-        for (ExplosionFrame explosionFrame : mExplosionFrames) {
+        for (Iterator<ExplosionFrame> iterator = mExplosionFrames.iterator();
+             iterator.hasNext(); ) {
+            ExplosionFrame explosionFrame = iterator.next();
             if (explosionFrame.isRemovable()) {
-                mExplosionFrames.remove(explosionFrame);
+                iterator.remove();
             } else {
                 explosionFrame.draw(canvas);
             }
@@ -313,13 +334,17 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                     if (key == null || key.equals(Constants.STARTED_KEY)
                             || tankIndex >= numColors) {
                         continue;
-                    } else if (key.equals(userId) && tankIndex < numColors && mUserTank == null) {
+                    } else if (key.equals(userId) && mUserTank == null) {
                         mUserTank = new UserTank(activity, tankColors[tankIndex]);
                         mUserDeg = mUserTank.getDegrees();
+                        mJoystickColor = tankColors[tankIndex].getPaint();
                         tankIndex++;
-                    } else if (!mOpponentTanks.containsKey(key)) {
+                    } else if (!key.equals(userId) && !mOpponentTanks.containsKey(key)) {
                         mOpponentTanks.put(key,
                                 new OpponentTank(activity, key, tankColors[tankIndex]));
+                        addDeathDataRefListener(key);
+                        tankIndex++;
+                    } else {
                         tankIndex++;
                     }
                 }
@@ -354,6 +379,25 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                 // Remove the opponent tank when they stop playing so it is not drawn anymore
                 mOpponentTanks.remove(opponentId);
                 Log.d(TAG, "Removed opponent tank with id=" + opponentId);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
+    }
+
+    /**
+     * Attach a listener on the death data reference to detect opponents dying.
+     */
+    private void addDeathDataRefListener(final String opponentId) {
+        DatabaseReference deathDataRef = FirebaseDatabase.getInstance().getReference()
+                .child(Constants.USERS_KEY).child(opponentId).child(Constants.DEATH_KEY);
+
+        deathDataRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Long killingCannonball = dataSnapshot.getValue(Long.class);
+                mUserCannonballSet.remove(killingCannonball);
             }
 
             @Override
@@ -409,6 +453,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * Updates the location and angle of the tank based on the most recent touch events
      * by the user.
      */
+    @SuppressWarnings("UnnecessaryReturnStatement")
     public void updateUserTank() {
         // Determine the displacement of the joystick in the x and y axes
         int deltaX = mJoystickX-mJoystickBaseCenterX;
@@ -417,13 +462,14 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         float velocityX = (float) (deltaX)/mJoystickThresholdRadius;
         float velocityY = (float) (deltaY)/mJoystickThresholdRadius;
 
-        if (velocityX == 0 && velocityY == 0) {
+        if (mUserTank == null) {
+            return;
+        } else if (velocityX == 0 && velocityY == 0) {
             mUserTank.update(velocityX, velocityY, mUserDeg);
         } else {
             mUserDeg = calcDegrees(deltaX, deltaY);
             mUserTank.update(velocityX, velocityY, mUserDeg);
         }
-
     }
 
     /**
@@ -442,8 +488,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                 mJoystickBaseRadius, colors);
 
         // Draw the actual joystick controller of the joystick
-        colors.setARGB(255, 79, 121, 255);
-        canvas.drawCircle(mJoystickX, mJoystickY, controlRadius, colors);
+        canvas.drawCircle(mJoystickX, mJoystickY, controlRadius, mJoystickColor);
     }
 
     /**

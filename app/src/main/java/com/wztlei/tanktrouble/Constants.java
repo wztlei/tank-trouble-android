@@ -10,6 +10,7 @@ public class Constants {
     public static final String GAME_PIN_KEY = "pin";
     public static final String STARTED_KEY = "started";
     public static final String OPPONENT_IDS_KEY = "opponents";
+    public static final String DEATH_KEY = "death";
     public static final String TEST_GAME_PIN = "0000";
 
     public static final float TANK_WIDTH_CONST = 110/1080f;

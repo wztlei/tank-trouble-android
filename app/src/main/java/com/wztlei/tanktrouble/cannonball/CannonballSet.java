@@ -1,16 +1,20 @@
-package com.wztlei.tanktrouble.projectile;
+package com.wztlei.tanktrouble.cannonball;
 
+import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.PointF;
+import android.util.Log;
 
 import com.wztlei.tanktrouble.tank.UserTank;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
 
 public class CannonballSet {
 
-    private HashSet<Cannonball> mCannonballSet;
+    private HashMap<Long, Cannonball> mCannonballSet;
 
     private static final long CANNONBALL_LIFESPAN = 10000;
     private static final String TAG = "WL/CannonballSet";
@@ -18,8 +22,9 @@ public class CannonballSet {
     /**
      * Initializes the set of cannonballs as represented by a concurrent hash map.
      */
+    @SuppressLint("UseSparseArrays")
     public CannonballSet() {
-        mCannonballSet = new HashSet<>();
+        mCannonballSet = new HashMap<>();
     }
 
     /**
@@ -28,7 +33,29 @@ public class CannonballSet {
      * @param cannonball the cannonball to be added
      */
     public void add(Cannonball cannonball) {
-        mCannonballSet.add(cannonball);
+        mCannonballSet.put(cannonball.getUUID(), cannonball);
+    }
+
+    /**
+     * Adds a new cannonball to the set.
+     *
+     * @param cannonball the cannonball to be added
+     */
+    public void add(Long uuid, Cannonball cannonball) {
+        Log.d(TAG, "" +uuid);
+        mCannonballSet.put(uuid, cannonball);
+    }
+
+    /**
+     * Removes a cannonball from the set.
+     *
+     * @param uuid  the uuid as a string of the cannonball to be removed
+     */
+    public void remove(Long uuid) {
+        if (!mCannonballSet.containsKey(uuid)) {
+            Log.d(TAG, "" +uuid);
+        }
+        mCannonballSet.remove(uuid);
     }
 
     /**
@@ -45,15 +72,18 @@ public class CannonballSet {
      * removes cannonballs after they have exceeded their lifespan,
      * and detects if a collision has occurred with the user.
      *
-     * @return true if a cannonball collided with the user, and false otherwise
+     * @return the uuid string key if a cannonball collided with the user, and null otherwise
      */
-    public PointF updateAndDetectUserCollision(UserTank userTank) {
-        PointF detectedUserCollision = null;
+    public Long updateAndDetectUserCollision(UserTank userTank) {
+        long detectedUserCollision = 0;
         long nowTime = System.currentTimeMillis();
 
         // Iterate through all the cannonballs in the set
-        for (Iterator<Cannonball> iterator = mCannonballSet.iterator(); iterator.hasNext();) {
-            Cannonball cannonball = iterator.next();
+        for (Iterator<Map.Entry<Long, Cannonball>> iterator =
+             mCannonballSet.entrySet().iterator(); iterator.hasNext(); ) {
+
+            Map.Entry<Long, Cannonball> pair = iterator.next();
+            Cannonball cannonball = pair.getValue();
             long deltaTime = nowTime - cannonball.getFiringTime();
 
             // Check whether the cannonball has exceeded its lifespan and remove if necessary
@@ -63,7 +93,7 @@ public class CannonballSet {
                 cannonball.update();
 
                 if (userTank.detectCollision(cannonball)) {
-                    detectedUserCollision = userTank.getCenter();
+                    detectedUserCollision = pair.getKey();
                     iterator.remove();
                 }
             }
@@ -79,7 +109,7 @@ public class CannonballSet {
      */
     public void draw(Canvas canvas) {
         // Iterate through all the cannonballs in the set and draw them
-        for (Cannonball cannonball : mCannonballSet) {
+        for (Cannonball cannonball : mCannonballSet.values()) {
             cannonball.draw(canvas);
         }
     }

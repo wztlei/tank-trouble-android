@@ -1,11 +1,10 @@
-package com.wztlei.tanktrouble.projectile;
+package com.wztlei.tanktrouble.cannonball;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.UserUtils;
-import com.wztlei.tanktrouble.battle.Coordinate;
 import com.wztlei.tanktrouble.map.MapUtils;
 
 import java.util.ArrayList;
@@ -16,6 +15,7 @@ public class Cannonball {
     private int mPrevPathIndex;
     private float mX, mY;
     private long mFiringTime, mLastTime;
+    private long mUUID;
 
     //private static final String TAG = "WL/Cannonball";
     private static final float SPEED =
@@ -41,6 +41,24 @@ public class Cannonball {
         mY = y;
         mFiringTime = System.currentTimeMillis();
         mLastTime = mFiringTime;
+        mUUID = 0;
+    }
+
+    /**
+     * Constructor method for a cannonball created by the user tank.
+     *
+     * @param x     the x-coordinate from which the cannonball was fired
+     * @param y     the y-coordinate from which the cannonball was fired
+     * @param deg   the angle in degrees at which the cannonball was fired
+     */
+    public Cannonball(int x, int y, int deg, long uuid) {
+        mPath = generatePath(x, y, deg);
+        mPrevPathIndex = 0;
+        mX = x;
+        mY = y;
+        mFiringTime = System.currentTimeMillis();
+        mLastTime = mFiringTime;
+        mUUID = uuid;
     }
 
     /**
@@ -204,18 +222,14 @@ public class Cannonball {
         }
     }
 
-    public ArrayList<Coordinate> getStandardizedPath() {
-        ArrayList<Coordinate> standardizedPath = new ArrayList<>();
+    public Path getStandardizedPath() {
+        ArrayList<Coordinate> standardizedCoords = new ArrayList<>();
 
         for (Coordinate coordinate : mPath) {
-            standardizedPath.add(coordinate.standardized());
+            standardizedCoords.add(coordinate.standardized());
         }
 
-        int randX = UserUtils.randomInt(0, 999999999);
-        int randY = UserUtils.randomInt(0, 999999999);
-        standardizedPath.add(new Coordinate(randX, randY));
-
-        return standardizedPath;
+        return new Path(standardizedCoords, mUUID);
     }
 
     /**
@@ -257,4 +271,10 @@ public class Cannonball {
     public long getFiringTime() {
         return mFiringTime;
     }
+
+    public long getUUID() {
+        return mUUID;
+    }
+
+
 }

@@ -2,7 +2,6 @@ package com.wztlei.tanktrouble.tank;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
@@ -11,13 +10,14 @@ import android.util.Log;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.wztlei.tanktrouble.Constants;
-import com.wztlei.tanktrouble.R;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.Position;
+import com.wztlei.tanktrouble.cannonball.Path;
 import com.wztlei.tanktrouble.map.MapUtils;
-import com.wztlei.tanktrouble.projectile.Cannonball;
+import com.wztlei.tanktrouble.cannonball.Cannonball;
 
 import java.util.Random;
+import java.util.UUID;
 
 public class UserTank extends Tank {
 
@@ -56,9 +56,9 @@ public class UserTank extends Tank {
 
         // Set the initial x and y coordinates for the tank
         do {
-            mX = randomInt(0, UserUtils.getScreenWidth());
-            mY = randomInt(UserUtils.scaleGraphicsInt(Constants.MAP_TOP_Y_CONST),
-                    UserUtils.scaleGraphicsInt(Constants.MAP_TOP_Y_CONST+1));
+            mX = randomInt(50, UserUtils.getScreenWidth());
+            mY = randomInt(UserUtils.scaleGraphicsInt(1.1f * Constants.MAP_TOP_Y_CONST),
+                    UserUtils.scaleGraphicsInt(0.9f*Constants.MAP_TOP_Y_CONST + 1));
             mDeg = randomInt(-180, 180);
         } while (MapUtils.tankWallCollision(mX, mY, mDeg, mWidth, mHeight));
     }
@@ -74,14 +74,6 @@ public class UserTank extends Tank {
         Bitmap rotatedBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
                 mBitmap.getWidth(), mBitmap.getHeight(), matrix, false);
         canvas.drawBitmap(rotatedBitmap, mX, mY, null);
-
-//        PointF[] tankPolygon = MapUtils.tankHitbox(mX, mY, mDeg, mWidth, mHeight);
-//        Paint paint = new Paint();
-//        paint.setARGB(255, 200, 50, 50);
-//
-//        for (PointF pointF : tankPolygon) {
-//            canvas.drawCircle(pointF.x, pointF.y, 10, paint);
-//        }
     }
 
     /**
@@ -234,12 +226,20 @@ public class UserTank extends Tank {
     public Cannonball fire() {
         PointF[] tankPolygon = Tank.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
 
-        Cannonball c = new Cannonball((int) tankPolygon[0].x, (int) tankPolygon[0].y, mDeg);
+        Cannonball c = new Cannonball((int) tankPolygon[0].x, (int) tankPolygon[0].y, mDeg,
+                UUID.randomUUID().getMostSignificantBits());
         updateDataRef(FIRE_KEY, c.getStandardizedPath());
 
         return c;
     }
 
+    public void kill(long killingCannonball) {
+        updateDataRef(Constants.DEATH_KEY, killingCannonball);
+    }
+
+    public void respawn(){
+        updateDataRef(Constants.DEATH_KEY, null);
+    }
 
     /**
      * Accesses the user's data in the Firebase database with a key and
