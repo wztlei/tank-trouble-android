@@ -7,12 +7,12 @@ import java.util.UUID;
 
 public class Path {
     private ArrayList<Coordinate> coords;
-    private long uuid;
+    private int uuid;
 
     @SuppressWarnings("unused")
     Path() {}
 
-    Path(ArrayList<Coordinate> coords, long uuid) {
+    Path(ArrayList<Coordinate> coords, int uuid) {
         this.uuid = uuid;
         this.coords = coords;
     }
@@ -31,7 +31,7 @@ public class Path {
     }
 
     @PropertyName("uuid")
-    public long getUUID() {
+    public int getUUID() {
         return uuid;
     }
 

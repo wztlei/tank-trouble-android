@@ -227,13 +227,13 @@ public class UserTank extends Tank {
         PointF[] tankPolygon = Tank.tankPolygon(mX, mY, mDeg, mWidth, mHeight);
 
         Cannonball c = new Cannonball((int) tankPolygon[0].x, (int) tankPolygon[0].y, mDeg,
-                UUID.randomUUID().getMostSignificantBits());
+                UserUtils.randomInt(1, Integer.MAX_VALUE-10));
         updateDataRef(FIRE_KEY, c.getStandardizedPath());
 
         return c;
     }
 
-    public void kill(long killingCannonball) {
+    public void kill(int killingCannonball) {
         updateDataRef(Constants.DEATH_KEY, killingCannonball);
     }
 

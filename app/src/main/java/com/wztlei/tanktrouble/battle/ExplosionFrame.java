@@ -60,7 +60,7 @@ public class ExplosionFrame {
     /**
      * Constructor function for an explosion frame.
      */
-    ExplosionFrame(Tank tank) {
+    public ExplosionFrame(Tank tank) {
         PointF tankCenter = tank.getCenter();
 
         mPrevFrameTime = System.currentTimeMillis();

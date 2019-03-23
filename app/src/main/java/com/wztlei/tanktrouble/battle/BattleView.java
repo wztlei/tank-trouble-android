@@ -48,7 +48,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private HashMap<String, OpponentTank> mOpponentTanks;
     private HashSet<ExplosionFrame> mExplosionFrames;
     private CannonballSet mUserCannonballSet;
-    private long mKillingCannonball;
+    private int mKillingCannonball;
     private Paint mJoystickColor;
     private int mJoystickBaseCenterX, mJoystickBaseCenterY;
     private int mFireButtonOffsetX, mFireButtonOffsetY;
@@ -166,20 +166,25 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         drawJoystick(canvas);
 
         // TODO: Display the score of tank kills
-
         // Draw all of the opponents' tanks and their cannonballs while detecting collisions
         for (OpponentTank opponentTank : mOpponentTanks.values()) {
             CannonballSet opponentCannonballs = opponentTank.getCannonballSet();
 
             if (mKillingCannonball == 0) {
                 mKillingCannonball = opponentCannonballs.updateAndDetectUserCollision(mUserTank);
+
+                if (mKillingCannonball != 0) {
+                    mUserTank.kill(mKillingCannonball);
+                }
             } else {
                 opponentCannonballs.updateAndDetectUserCollision(mUserTank);
             }
 
             opponentCannonballs.draw(canvas);
             opponentTank.draw(canvas);
+            drawExplosions(canvas, opponentTank.getExplosionFrames());
         }
+
 
         // Check whether a cannonball collided with the user's tank
         if (mKillingCannonball == 0) {
@@ -214,18 +219,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             Log.d(TAG, "mUserCollision");
         }
 
-
-
-        // Draw all of the explosions
-        for (Iterator<ExplosionFrame> iterator = mExplosionFrames.iterator();
-             iterator.hasNext(); ) {
-            ExplosionFrame explosionFrame = iterator.next();
-            if (explosionFrame.isRemovable()) {
-                iterator.remove();
-            } else {
-                explosionFrame.draw(canvas);
-            }
-        }
+        drawExplosions(canvas, mExplosionFrames);
     }
 
     /**
@@ -396,8 +390,12 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         deathDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Long killingCannonball = dataSnapshot.getValue(Long.class);
-                mUserCannonballSet.remove(killingCannonball);
+                Integer killingCannonball = dataSnapshot.getValue(Integer.class);
+
+                if (killingCannonball != null) {
+                    mUserCannonballSet.remove(killingCannonball);
+                    mExplosionFrames.add(new ExplosionFrame(mOpponentTanks.get(opponentId)));
+                }
             }
 
             @Override
@@ -505,6 +503,25 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             canvas.drawBitmap(mFirePressedBitmap, (int) x, (int) y, null);
         } else {
             canvas.drawBitmap(mFireBitmap, mFireButtonOffsetX, mFireButtonOffsetY, null);
+        }
+    }
+
+    /**
+     * Draws explosions onto the canvas.
+     *
+     * @param canvas        the canvas on which the explosions are drawn
+     * @param explosions    the explosions to be drawn
+     */
+    public void drawExplosions(Canvas canvas, HashSet<ExplosionFrame> explosions) {
+        // Draw all of the explosions
+        for (Iterator<ExplosionFrame> iterator = explosions.iterator();
+             iterator.hasNext(); ) {
+            ExplosionFrame explosionFrame = iterator.next();
+            if (explosionFrame.isRemovable()) {
+                iterator.remove();
+            } else {
+                explosionFrame.draw(canvas);
+            }
         }
     }
 

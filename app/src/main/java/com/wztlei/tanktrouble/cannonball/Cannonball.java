@@ -15,7 +15,7 @@ public class Cannonball {
     private int mPrevPathIndex;
     private float mX, mY;
     private long mFiringTime, mLastTime;
-    private long mUUID;
+    private int mUUID;
 
     //private static final String TAG = "WL/Cannonball";
     private static final float SPEED =
@@ -51,7 +51,7 @@ public class Cannonball {
      * @param y     the y-coordinate from which the cannonball was fired
      * @param deg   the angle in degrees at which the cannonball was fired
      */
-    public Cannonball(int x, int y, int deg, long uuid) {
+    public Cannonball(int x, int y, int deg, int uuid) {
         mPath = generatePath(x, y, deg);
         mPrevPathIndex = 0;
         mX = x;
@@ -272,7 +272,7 @@ public class Cannonball {
         return mFiringTime;
     }
 
-    public long getUUID() {
+    public int getUUID() {
         return mUUID;
     }
 

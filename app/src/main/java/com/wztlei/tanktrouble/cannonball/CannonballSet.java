@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class CannonballSet {
 
-    private HashMap<Long, Cannonball> mCannonballSet;
+    private HashMap<Integer, Cannonball> mCannonballSet;
 
     private static final long CANNONBALL_LIFESPAN = 10000;
     private static final String TAG = "WL/CannonballSet";
@@ -41,7 +41,7 @@ public class CannonballSet {
      *
      * @param cannonball the cannonball to be added
      */
-    public void add(Long uuid, Cannonball cannonball) {
+    public void add(int uuid, Cannonball cannonball) {
         Log.d(TAG, "" +uuid);
         mCannonballSet.put(uuid, cannonball);
     }
@@ -51,10 +51,7 @@ public class CannonballSet {
      *
      * @param uuid  the uuid as a string of the cannonball to be removed
      */
-    public void remove(Long uuid) {
-        if (!mCannonballSet.containsKey(uuid)) {
-            Log.d(TAG, "" +uuid);
-        }
+    public void remove(int uuid) {
         mCannonballSet.remove(uuid);
     }
 
@@ -74,15 +71,15 @@ public class CannonballSet {
      *
      * @return the uuid string key if a cannonball collided with the user, and null otherwise
      */
-    public Long updateAndDetectUserCollision(UserTank userTank) {
-        long detectedUserCollision = 0;
+    public int updateAndDetectUserCollision(UserTank userTank) {
+        int detectedUserCollision = 0;
         long nowTime = System.currentTimeMillis();
 
         // Iterate through all the cannonballs in the set
-        for (Iterator<Map.Entry<Long, Cannonball>> iterator =
+        for (Iterator<Map.Entry<Integer, Cannonball>> iterator =
              mCannonballSet.entrySet().iterator(); iterator.hasNext(); ) {
 
-            Map.Entry<Long, Cannonball> pair = iterator.next();
+            Map.Entry<Integer, Cannonball> pair = iterator.next();
             Cannonball cannonball = pair.getValue();
             long deltaTime = nowTime - cannonball.getFiringTime();
 

@@ -14,6 +14,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 import com.wztlei.tanktrouble.UserUtils;
+import com.wztlei.tanktrouble.battle.ExplosionFrame;
 import com.wztlei.tanktrouble.cannonball.Coordinate;
 import com.wztlei.tanktrouble.battle.Position;
 import com.wztlei.tanktrouble.cannonball.Cannonball;
@@ -21,6 +22,7 @@ import com.wztlei.tanktrouble.cannonball.CannonballSet;
 import com.wztlei.tanktrouble.cannonball.Path;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.UUID;
 
 public class OpponentTank extends Tank {
@@ -28,6 +30,7 @@ public class OpponentTank extends Tank {
     private DatabaseReference mFireDataRef;
     private DatabaseReference mDeathDataRef;
     private CannonballSet mCannonballSet;
+    private HashSet<ExplosionFrame> mExplosionFrames;
 
     private static final String TAG = "WL/OpponentTank";
 
@@ -40,6 +43,7 @@ public class OpponentTank extends Tank {
         mWidth = Math.max(UserUtils.scaleGraphicsInt(TANK_WIDTH_CONST), 1);
         mHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
         mCannonballSet = new CannonballSet();
+        mExplosionFrames = new HashSet<>();
 
         // Get the tank bitmap
         mColor = tankColor.getPaint();
@@ -137,13 +141,15 @@ public class OpponentTank extends Tank {
      * Attach a listener on the death data reference to detect opponents dying.
      */
     private void addDeathDataRefListener() {
+        final OpponentTank me = this;
         mDeathDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Long killingCannonball = dataSnapshot.getValue(Long.class);
+                Integer killingCannonball = dataSnapshot.getValue(Integer.class);
 
                 if (killingCannonball != null) {
                     mCannonballSet.remove(killingCannonball);
+                    mExplosionFrames.add(new ExplosionFrame(me));
                     Log.d(TAG, "killingCannonball=" + killingCannonball);
                 }
 
@@ -171,5 +177,9 @@ public class OpponentTank extends Tank {
 
     public CannonballSet getCannonballSet() {
         return mCannonballSet;
+    }
+
+    public HashSet<ExplosionFrame> getExplosionFrames() {
+        return mExplosionFrames;
     }
 }
