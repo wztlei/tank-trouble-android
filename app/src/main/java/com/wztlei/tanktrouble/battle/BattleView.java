@@ -70,9 +70,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private static final float SCORE_TEXT_MARGIN_Y_CONST = (float) 20/1080;
     private static final float SCORE_TEXT_SIZE_CONST = (float) 50/1080;
     private static final float NUM_TANK_COLORS = 4;
-
-    // TODO: Change to 5 in production version
-    private static final int MAX_USER_CANNONBALLS = 10;
+    private static final int MAX_USER_CANNONBALLS = 5;
 
     /**
      * Constructor function for the Battle View class.
@@ -184,7 +182,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         } else {
             // TODO: Update the collision status in Firebase
             // TODO: Make tank appear after x seconds
-            // TODO: Increment the score and display it
+            // TODO: Increment the score
             // Update and draw the user's tank
             if (mUserTank != null) {
                 updateUserTank();
@@ -198,11 +196,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             mCannonballSet.updateAndDetectUserCollision(mUserTank);
             mCannonballSet.draw(canvas);
             mKillingCannonball = 0;
-
-            Log.d(TAG, "mUserCollision");
         }
 
-        // TODO: Display the score of tank kills
         // Draw all of the opponents' tanks and their cannonballs while detecting collisions
         for (OpponentTank opponentTank : mOpponentTanks.values()) {
             opponentTank.draw(canvas);
@@ -361,10 +356,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
                 if (opponentTank != null) {
                     mUnusedTankColors[opponentTank.getColorIndex()] = true;
+                    mOpponentTanks.remove(opponentId);
                 }
-
-                mOpponentTanks.remove(opponentId);
-                Log.d(TAG, "Removed opponent tank with id=" + opponentId);
             }
 
             @Override
@@ -373,17 +366,20 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     }
 
     /**
-     * Attach a listener on the death data reference to detect opponents dying.
+     * Attach a listener on the death data reference to detect opponents dying
+     * and display an explosion animation when they do.
      */
     private void addDeathDataRefListener(final String opponentId) {
         DatabaseReference deathDataRef = FirebaseDatabase.getInstance().getReference()
                 .child(Constants.USERS_KEY).child(opponentId).child(Constants.DEATH_KEY);
 
+        // Attach a listener onto the death data reference
         deathDataRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 Integer killingCannonball = dataSnapshot.getValue(Integer.class);
 
+                // Remove the cannonball and add an explosion animation
                 if (killingCannonball != null) {
                     mCannonballSet.remove(killingCannonball);
                     mExplosionAnimations.add(
@@ -506,15 +502,16 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * @param canvas        the canvas on which the explosions are drawn
      */
     private void drawExplosions(Canvas canvas) {
+        Iterator<ExplosionAnimation> iterator = mExplosionAnimations.iterator();
+
         // Draw all of the explosions
-        for (Iterator<ExplosionAnimation> iterator = mExplosionAnimations.iterator();
-             iterator.hasNext(); ) {
+        while (iterator.hasNext()) {
             ExplosionAnimation ExplosionAnimation = iterator.next();
             if (ExplosionAnimation.isRemovable()) {
                 iterator.remove();
             } else {
                 ExplosionAnimation.draw(canvas);
-        }
+            }
         }
     }
 
@@ -525,8 +522,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      */
     private void drawScores(Canvas canvas) {
         if (mUserTank != null) {
-            // Get the dimensions of the tanks and scores
+            // Get the score of the user as a string
             String score = Integer.toString(mUserTank.getScore());
+
+            // Calculate the necessary dimensions
             int screenWidth = UserUtils.getScreenWidth();
             int numTanks = mOpponentTanks.size() + 1;
             int tankWidth = mUserTank.getWidth();            
@@ -537,22 +536,29 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             int textSize = UserUtils.scaleGraphicsInt(SCORE_TEXT_SIZE_CONST);
             int tankIndex = 1;
 
+            // Store the format of the score number
             Paint textPaint = new Paint();
             textPaint.setARGB(255, 0, 0, 0);
             textPaint.setTextAlign(Paint.Align.CENTER);
             textPaint.setTextSize(textSize);
 
+            // Draw the user tank in the header and its score below
             canvas.drawBitmap(mUserTank.getBitmap(), marginX, marginY, null);
             canvas.drawText(score, marginX  + tankWidth/2, textY, textPaint);
 
+            // Draw all the opponent tanks in the header and their scores
             for (OpponentTank opponentTank : mOpponentTanks.values()) {
-                Bitmap bitmap = opponentTank.getBitmap();
-                int offsetX = marginX + tankIndex * (tankWidth + marginX);
-                score = Integer.toString(opponentTank.getScore());
+                if (tankIndex < NUM_TANK_COLORS) {
+                    // Get the bitmap, x-coordinate offset, and score of the opponent tank
+                    Bitmap bitmap = opponentTank.getBitmap();
+                    int offsetX = marginX + tankIndex * (tankWidth + marginX);
+                    score = Integer.toString(opponentTank.getScore());
+                    tankIndex++;
 
-                canvas.drawBitmap(bitmap, offsetX, marginY, null);
-                canvas.drawText(score,offsetX + tankWidth/2, textY, textPaint);
-                tankIndex++;
+                    // Draw the opponent tank and its score
+                    canvas.drawBitmap(bitmap, offsetX, marginY, null);
+                    canvas.drawText(score, offsetX + tankWidth / 2, textY, textPaint);
+                }
             }
         }
     }
