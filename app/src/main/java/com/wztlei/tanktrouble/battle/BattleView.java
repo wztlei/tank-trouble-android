@@ -65,7 +65,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
     private static final float JOYSTICK_DISPLACEMENT_CONST = 0.9f;
     private static final float FIRE_BUTTON_DIAMETER_CONST = (float) 200/543;
     private static final float FIRE_BUTTON_PRESSED_DIAMETER_CONST = (float) 150/543;
-    private static final float CONTROL_X_MARGIN_CONST = (float) 125/1080;
+    private static final float CONTROL_MARGIN_X_CONST = (float) 125/1080;
+    private static final float SCORE_MARGIN_Y_CONST = (float) 50/1080;
+    private static final float SCORE_TEXT_MARGIN_Y_CONST = (float) 20/1080;
+    private static final float SCORE_TEXT_SIZE_CONST = (float) 50/1080;
     private static final float NUM_TANK_COLORS = 4;
 
     // TODO: Change to 5 in production version
@@ -102,7 +105,6 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         }
 
         // Set up the cannonball and explosion data
-        // TODO: Move this cannonball set to the UserTank.java class
         mKillingCannonball = 0;
         mExplosionAnimations = new HashSet<>();
 
@@ -206,7 +208,8 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             opponentTank.draw(canvas);
         }
 
-        drawExplosions(canvas, mExplosionAnimations);
+        drawExplosions(canvas);
+        drawScores(canvas);
     }
 
     /**
@@ -385,6 +388,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                     mCannonballSet.remove(killingCannonball);
                     mExplosionAnimations.add(
                             new ExplosionAnimation(mOpponentTanks.get(opponentId)));
+                    mOpponentTanks.get(opponentId).incrementScore();
                 }
             }
 
@@ -421,7 +425,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         }
 
         // Get the margin between the joystick base and the edge of the screen
-        int controlXMargin = UserUtils.scaleGraphicsInt(CONTROL_X_MARGIN_CONST);
+        int controlXMargin = UserUtils.scaleGraphicsInt(CONTROL_MARGIN_X_CONST);
         int controlYMargin = (int) (controlHeight - 2*mJoystickBaseRadius) / 2;
 
         // Set the joystick base centre, the fire button centre, and the initial joystick position
@@ -442,7 +446,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * by the user.
      */
     @SuppressWarnings("UnnecessaryReturnStatement")
-    public void updateUserTank() {
+    private void updateUserTank() {
         // Determine the displacement of the joystick in the x and y axes
         int deltaX = mJoystickX-mJoystickBaseCenterX;
         int deltaY = mJoystickY-mJoystickBaseCenterY;
@@ -466,7 +470,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * 
      * @param canvas    the canvas on which the joystick is drawn
      */
-    public void drawJoystick(Canvas canvas) {
+    private void drawJoystick(Canvas canvas) {
         int controlRadius = mJoystickBaseRadius / 2;
 
         // Draw the base of the joystick
@@ -484,7 +488,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      *
      * @param canvas the canvas on which the fire button is drawn
      */
-    public void drawFireButton(Canvas canvas) {
+    private void drawFireButton(Canvas canvas) {
         // Determine whether to draw the smaller pressed fire button bitmap
         // or the larger unpressed fire button bitmap
         if (mFireButtonPressed) {
@@ -500,17 +504,55 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * Draws explosions onto the canvas.
      *
      * @param canvas        the canvas on which the explosions are drawn
-     * @param explosions    the explosions to be drawn
      */
-    public void drawExplosions(Canvas canvas, HashSet<ExplosionAnimation> explosions) {
+    private void drawExplosions(Canvas canvas) {
         // Draw all of the explosions
-        for (Iterator<ExplosionAnimation> iterator = explosions.iterator();
+        for (Iterator<ExplosionAnimation> iterator = mExplosionAnimations.iterator();
              iterator.hasNext(); ) {
             ExplosionAnimation ExplosionAnimation = iterator.next();
             if (ExplosionAnimation.isRemovable()) {
                 iterator.remove();
             } else {
                 ExplosionAnimation.draw(canvas);
+        }
+        }
+    }
+
+    /**
+     * Draws the scores of all the users in the game at the top of the canvas.
+     *
+     * @param canvas    the canvas on which the scores are drawn
+     */
+    private void drawScores(Canvas canvas) {
+        if (mUserTank != null) {
+            // Get the dimensions of the tanks and scores
+            String score = Integer.toString(mUserTank.getScore());
+            int screenWidth = UserUtils.getScreenWidth();
+            int numTanks = mOpponentTanks.size() + 1;
+            int tankWidth = mUserTank.getWidth();            
+            int marginX = (screenWidth - numTanks*tankWidth) / (numTanks + 1);
+            int marginY = UserUtils.scaleGraphicsInt(SCORE_MARGIN_Y_CONST);
+            int textMargin = UserUtils.scaleGraphicsInt(SCORE_TEXT_MARGIN_Y_CONST);
+            int textY = marginY + mUserTank.getWidth() + textMargin;
+            int textSize = UserUtils.scaleGraphicsInt(SCORE_TEXT_SIZE_CONST);
+            int tankIndex = 1;
+
+            Paint textPaint = new Paint();
+            textPaint.setARGB(255, 0, 0, 0);
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            textPaint.setTextSize(textSize);
+
+            canvas.drawBitmap(mUserTank.getBitmap(), marginX, marginY, null);
+            canvas.drawText(score, marginX  + tankWidth/2, textY, textPaint);
+
+            for (OpponentTank opponentTank : mOpponentTanks.values()) {
+                Bitmap bitmap = opponentTank.getBitmap();
+                int offsetX = marginX + tankIndex * (tankWidth + marginX);
+                score = Integer.toString(opponentTank.getScore());
+
+                canvas.drawBitmap(bitmap, offsetX, marginY, null);
+                canvas.drawText(score,offsetX + tankWidth/2, textY, textPaint);
+                tankIndex++;
             }
         }
     }

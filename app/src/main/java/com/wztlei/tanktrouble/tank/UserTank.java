@@ -2,8 +2,6 @@ package com.wztlei.tanktrouble.tank;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.util.Log;
 
@@ -12,16 +10,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.wztlei.tanktrouble.Constants;
 import com.wztlei.tanktrouble.UserUtils;
 import com.wztlei.tanktrouble.battle.Position;
-import com.wztlei.tanktrouble.cannonball.Path;
-import com.wztlei.tanktrouble.map.MapUtils;
 import com.wztlei.tanktrouble.cannonball.Cannonball;
+import com.wztlei.tanktrouble.map.MapUtils;
 
 import java.util.Random;
-import java.util.UUID;
 
 public class UserTank extends Tank {
 
-    private Bitmap mBitmap;
     private DatabaseReference mUserDataRef;
     private long lastTime;
 
@@ -38,10 +33,11 @@ public class UserTank extends Tank {
         mHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
 
         // Get the tank bitmap and color
-        mColorIndex = tankColor.getIndex();
         mBitmap = tankColor.getTankBitmap(activity);
         mBitmap = Bitmap.createScaledBitmap(mBitmap, mWidth, mHeight, false);
-
+        mColorIndex = tankColor.getIndex();
+        mScore = 0;
+        mIsAlive = true;
 
         // Get the user document from Firebase
         String userId = UserUtils.getUserId();
@@ -61,19 +57,6 @@ public class UserTank extends Tank {
                     UserUtils.scaleGraphicsInt(0.9f*Constants.MAP_TOP_Y_CONST + 1));
             mDeg = randomInt(-180, 180);
         } while (MapUtils.tankWallCollision(mX, mY, mDeg, mWidth, mHeight));
-    }
-
-    /**
-     * Draws the tank bitmap onto a canvas with the proper rotation.
-     *
-     * @param canvas the canvas on which the tank is drawn.
-     */
-    public void draw(Canvas canvas) {
-        Matrix matrix = new Matrix();
-        matrix.setRotate(mDeg);
-        Bitmap rotatedBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
-                mBitmap.getWidth(), mBitmap.getHeight(), matrix, false);
-        canvas.drawBitmap(rotatedBitmap, mX, mY, null);
     }
 
     /**
@@ -235,6 +218,7 @@ public class UserTank extends Tank {
 
     public void kill(int killingCannonball) {
         updateDataRef(Constants.DEATH_KEY, killingCannonball);
+        incrementScore();
     }
 
     public void respawn(){

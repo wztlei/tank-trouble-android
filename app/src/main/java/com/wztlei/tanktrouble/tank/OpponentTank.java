@@ -2,8 +2,6 @@ package com.wztlei.tanktrouble.tank;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -20,7 +18,6 @@ public class OpponentTank extends Tank {
 
     private static final String TAG = "WL/OpponentTank";
 
-
     /**
      * @param activity      the activity in which the opponent tank is initialized
      * @param opponentId    the Firebase ID of the opponent
@@ -30,9 +27,11 @@ public class OpponentTank extends Tank {
         mHeight = Math.max(UserUtils.scaleGraphicsInt(TANK_HEIGHT_CONST), 1);
 
         // Get the tank bitmap
-        mColorIndex = tankColor.getIndex();
         mBitmap = tankColor.getTankBitmap(activity);
         mBitmap = Bitmap.createScaledBitmap(mBitmap, mWidth, mHeight, false);
+        mColorIndex = tankColor.getIndex();
+        mScore = 0;
+        mIsAlive = true;
 
         // Get the user document from Firebase
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
@@ -88,19 +87,5 @@ public class OpponentTank extends Tank {
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
-    }
-
-    /**
-     * Draws the tank bitmap onto a canvas with the proper rotation.
-     *
-     * @param canvas the canvas on which the tank is drawn.
-     */
-    public void draw(Canvas canvas) {
-
-        Matrix matrix = new Matrix();
-        matrix.setRotate(mDeg);
-        Bitmap rotatedBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
-                mBitmap.getWidth(), mBitmap.getHeight(), matrix, false);
-        canvas.drawBitmap(rotatedBitmap, mX, mY, null);
     }
 }

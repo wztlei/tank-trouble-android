@@ -1,7 +1,8 @@
 package com.wztlei.tanktrouble.tank;
 
 import android.graphics.Bitmap;
-import android.graphics.Paint;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.PointF;
 
 import com.wztlei.tanktrouble.Constants;
@@ -17,7 +18,6 @@ public class Tank {
     static final String USERS_KEY = Constants.USERS_KEY;
     static final String POS_KEY = Constants.POS_KEY;
     static final String FIRE_KEY = Constants.FIRE_KEY;
-    static final String DEATH_KEY = Constants.DEATH_KEY;
     static final float TANK_WIDTH_CONST = Constants.TANK_WIDTH_CONST;
     static final float TANK_HEIGHT_CONST = Constants.TANK_HEIGHT_CONST;
     private static final float GUN_LENGTH_RATIO = 1/7f;
@@ -356,7 +356,7 @@ public class Tank {
      */
     private static PointF weightedMidpoint(PointF pt1, PointF pt2, float weight) {
         // Check that that the weight is within the interval [0, 1]
-        if (!inRange( 0, weight,1)) {
+        if (!inRange(0, weight, 1)) {
             throw new IllegalArgumentException("weight is not between 0 and 1 inclusive");
         } else {
             return new PointF(pt1.x + (pt2.x - pt1.x) * weight,
@@ -364,12 +364,51 @@ public class Tank {
         }
     }
 
+    /**
+     * Draws the tank bitmap onto a canvas with the proper rotation.
+     *
+     * @param canvas the canvas on which the tank is drawn.
+     */
+    public void draw(Canvas canvas) {
+        if (mX != 0 || mY != 0) {
+            Matrix matrix = new Matrix();
+            matrix.setRotate(mDeg);
+            Bitmap rotatedBitmap = Bitmap.createBitmap(mBitmap, 0, 0,
+                    mBitmap.getWidth(), mBitmap.getHeight(), matrix, false);
+            canvas.drawBitmap(rotatedBitmap, mX, mY, null);
+        }
+    }
+
     public PointF getCenter() {
         return Tank.tankHitbox(mX, mY, mDeg, mWidth, mHeight)[7];
     }
 
+    public Bitmap getBitmap() {
+        return mBitmap;
+    }
+
+    public int getWidth() {
+        return mWidth;
+    }
+
+    public int getHeight() {
+        return mHeight;
+    }
+
     public int getColorIndex() {
         return mColorIndex;
+    }
+
+    public int getScore() {
+        return mScore;
+    }
+
+    public void incrementScore() {
+        mScore++;
+    }
+
+    public boolean isAlive() {
+        return mIsAlive;
     }
 
     /**
@@ -391,4 +430,6 @@ public class Tank {
     private static float sin(float rad) {
         return (float) Math.sin(rad);
     }
+
+
 }
