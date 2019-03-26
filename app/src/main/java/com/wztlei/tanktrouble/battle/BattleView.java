@@ -91,11 +91,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                     .child(Constants.GAMES_KEY).child(gamePin);
             mJoystickColor = TankColor.BLUE.getPaint();
             mCannonballSet = new CannonballSet();
-            addEnteringTanks(activity, mGameDataRef);
-
-            for (String opponentId : opponentIds) {
-                removeExitingTanks(mGameDataRef, opponentId);
-            }
+            addEnteringTanks(activity);
         } else {
             mUserTank = new UserTank(activity, TankColor.BLUE);
             mJoystickColor = TankColor.BLUE.getPaint();
@@ -140,6 +136,10 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             }
 
             retry = false;
+        }
+
+        if (mUserTank != null) {
+            mUserTank.reset();
         }
 
         // Remove the game if necessary
@@ -293,10 +293,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
      * Detects an opponent entering the game and adds the opponent tank to the HashMap.
      *
      * @param activity      the activity of the battle view
-     * @param gameDataRef   a Firebase Database reference for the game
      */
-    private void addEnteringTanks(final Activity activity, DatabaseReference gameDataRef) {
-        gameDataRef.addValueEventListener(new ValueEventListener() {
+    private void addEnteringTanks(final Activity activity) {
+        mGameDataRef.addValueEventListener(new ValueEventListener() {
             @SuppressWarnings("UnnecessaryContinue")
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -321,6 +320,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                         mOpponentTanks.put(key, new OpponentTank(activity, key, tankColor));
                         mCannonballSet.addOpponent(key);
                         addDeathDataRefListener(key);
+                        removeExitingTanks(mGameDataRef, key);
                     }
                 }
             }
@@ -380,11 +380,12 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                 Integer killingCannonball = dataSnapshot.getValue(Integer.class);
 
                 // Remove the cannonball and add an explosion animation
-                if (killingCannonball != null) {
+                OpponentTank opponentTank = mOpponentTanks.get(opponentId);
+
+                if (killingCannonball != null && opponentTank != null) {
                     mCannonballSet.remove(killingCannonball);
-                    mExplosionAnimations.add(
-                            new ExplosionAnimation(mOpponentTanks.get(opponentId)));
-                    mOpponentTanks.get(opponentId).incrementScore();
+                    mExplosionAnimations.add(new ExplosionAnimation(opponentTank));
+                    opponentTank.incrementScore();
                 }
             }
 

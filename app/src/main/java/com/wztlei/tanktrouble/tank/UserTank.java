@@ -225,6 +225,10 @@ public class UserTank extends Tank {
         updateDataRef(Constants.DEATH_KEY, null);
     }
 
+    public void reset() {
+        mUserDataRef.removeValue();
+    }
+
     /**
      * Accesses the user's data in the Firebase database with a key and
      * updates the data with a new value.
