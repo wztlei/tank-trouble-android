@@ -88,4 +88,12 @@ public class OpponentTank extends Tank {
             public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
     }
+
+    public void kill() {
+        mIsAlive = false;
+    }
+
+    public void respawn() {
+        mIsAlive = true;
+    }
 }

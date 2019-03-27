@@ -52,10 +52,10 @@ public class UserTank extends Tank {
 
         // Set the initial x and y coordinates for the tank
         do {
-            mX = randomInt(50, UserUtils.getScreenWidth());
-            mY = randomInt(UserUtils.scaleGraphicsInt(1.1f * Constants.MAP_TOP_Y_CONST),
+            mX = UserUtils.randomInt(50, UserUtils.getScreenWidth());
+            mY = UserUtils.randomInt(UserUtils.scaleGraphicsInt(1.1f * Constants.MAP_TOP_Y_CONST),
                     UserUtils.scaleGraphicsInt(0.9f*Constants.MAP_TOP_Y_CONST + 1));
-            mDeg = randomInt(-180, 180);
+            mDeg = UserUtils.randomInt(-180, 180);
         } while (MapUtils.tankWallCollision(mX, mY, mDeg, mWidth, mHeight));
     }
 
@@ -219,10 +219,12 @@ public class UserTank extends Tank {
     public void kill(int killingCannonball) {
         updateDataRef(Constants.DEATH_KEY, killingCannonball);
         incrementScore();
+        mIsAlive = false;
     }
 
-    public void respawn(){
+    public void respawn() {
         updateDataRef(Constants.DEATH_KEY, null);
+        mIsAlive = true;
     }
 
     public void reset() {
@@ -238,21 +240,5 @@ public class UserTank extends Tank {
      */
     private void updateDataRef(final String key, final Object value) {
         mUserDataRef.child(key).setValue(value);
-    }
-
-    /**
-     * Generates a random number on the closed interval [min, max].
-     *
-     * @param min   the minimum number that can be generated
-     * @param max   the maximum number that can be generated
-     * @return      the random number between min and max
-     */
-    private int randomInt (int min, int max){
-        Random random = new Random();
-        return random.nextInt(max-min+1) + min;
-    }
-
-    public int getDegrees() {
-        return mDeg;
     }
 }

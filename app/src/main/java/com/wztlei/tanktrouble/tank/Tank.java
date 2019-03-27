@@ -7,7 +7,7 @@ import android.graphics.PointF;
 
 import com.wztlei.tanktrouble.Constants;
 
-public class Tank {
+public abstract class Tank {
     Bitmap mBitmap;
     int mX, mY, mDeg;
     int mWidth, mHeight;
@@ -379,6 +379,10 @@ public class Tank {
         }
     }
 
+    public void kill() {
+
+    }
+
     public PointF getCenter() {
         return Tank.tankHitbox(mX, mY, mDeg, mWidth, mHeight)[7];
     }
@@ -395,6 +399,10 @@ public class Tank {
         return mHeight;
     }
 
+    public int getDegrees() {
+        return mDeg;
+    }
+
     public int getColorIndex() {
         return mColorIndex;
     }
@@ -405,6 +413,7 @@ public class Tank {
 
     public void incrementScore() {
         mScore++;
+        // TODO: Update the value in Firebase and read that score
     }
 
     public boolean isAlive() {
@@ -430,6 +439,4 @@ public class Tank {
     private static float sin(float rad) {
         return (float) Math.sin(rad);
     }
-
-
 }

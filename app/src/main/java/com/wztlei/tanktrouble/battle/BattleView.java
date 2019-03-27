@@ -184,7 +184,7 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
             // TODO: Make tank appear after x seconds
             // TODO: Increment the score
             // Update and draw the user's tank
-            if (mUserTank != null) {
+            if (mUserTank != null && mUserTank.isAlive()) {
                 updateUserTank();
                 mUserTank.draw(canvas);
                 mUserTank.kill(mKillingCannonball);
@@ -200,7 +200,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
 
         // Draw all of the opponents' tanks and their cannonballs while detecting collisions
         for (OpponentTank opponentTank : mOpponentTanks.values()) {
-            opponentTank.draw(canvas);
+            if (opponentTank != null && opponentTank.isAlive()) {
+                opponentTank.draw(canvas);
+            }
         }
 
         drawExplosions(canvas);
@@ -386,6 +388,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
                     mCannonballSet.remove(killingCannonball);
                     mExplosionAnimations.add(new ExplosionAnimation(opponentTank));
                     opponentTank.incrementScore();
+                    opponentTank.kill();
+                } else if (killingCannonball == null && opponentTank != null) {
+                    opponentTank.respawn();
                 }
             }
 
