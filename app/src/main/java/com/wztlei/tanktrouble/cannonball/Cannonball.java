@@ -34,23 +34,6 @@ public class Cannonball {
      * @param y     the y-coordinate from which the cannonball was fired
      * @param deg   the angle in degrees at which the cannonball was fired
      */
-    public Cannonball(int x, int y, int deg) {
-        mPath = generatePath(x, y, deg);
-        mPrevPathIndex = 0;
-        mX = x;
-        mY = y;
-        mFiringTime = System.currentTimeMillis();
-        mLastTime = mFiringTime;
-        mUUID = 0;
-    }
-
-    /**
-     * Constructor method for a cannonball created by the user tank.
-     *
-     * @param x     the x-coordinate from which the cannonball was fired
-     * @param y     the y-coordinate from which the cannonball was fired
-     * @param deg   the angle in degrees at which the cannonball was fired
-     */
     public Cannonball(int x, int y, int deg, int uuid) {
         mPath = generatePath(x, y, deg);
         mPrevPathIndex = 0;
@@ -66,7 +49,7 @@ public class Cannonball {
      *
      * @param path  the path of the cannonball
      */
-    public Cannonball(ArrayList<Coordinate> path) {
+    Cannonball(ArrayList<Coordinate> path) {
         mPath = path;
         mPrevPathIndex = 0;
         mX = mPath.get(0).x;
