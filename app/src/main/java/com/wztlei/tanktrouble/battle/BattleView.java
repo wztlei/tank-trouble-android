@@ -83,6 +83,9 @@ public class BattleView extends SurfaceView implements SurfaceHolder.Callback, V
         UserUtils.initialize(activity);
         ExplosionAnimation.initialize(activity);
 
+        // TODO: Fix black screen
+        // Try to replicate on Andy's phone
+
         // Set up the user and opponent tanks
         if (opponentIds != null && gamePin != null) {
             mUnusedTankColors = new boolean[]{true, true, true, true};
